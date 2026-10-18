@@ -1,0 +1,6 @@
+numpy>=1.24
+opencv-python>=4.8
+scipy>=1.11
+pillow>=10.0
+tqdm>=4.65
+pycolmap>=3.10

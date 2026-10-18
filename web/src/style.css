@@ -1,0 +1,38 @@
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html, body, #app { width: 100%; height: 100%; overflow: hidden; background: #0b0d10; }
+
+#view { width: 100%; height: 100%; display: block; }
+
+#hud {
+  position: fixed; top: 14px; left: 16px; z-index: 10;
+  font-family: ui-monospace, 'Cascadia Code', Consolas, monospace;
+  color: #e8eef5; pointer-events: none;
+}
+#title { font-size: 15px; letter-spacing: 0.35em; font-weight: 600; color: #7fd4ff; }
+#subtitle { font-size: 12px; margin-top: 4px; color: #9fb0c0; }
+
+#minimap {
+  position: fixed; top: 14px; right: 14px; z-index: 10;
+  width: 240px; height: 240px; border-radius: 10px;
+  background: rgba(10, 14, 18, 0.82);
+  border: 1px solid rgba(127, 212, 255, 0.25);
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.45);
+}
+
+#help {
+  position: fixed; bottom: 14px; left: 50%; transform: translateX(-50%);
+  z-index: 10; font-family: ui-monospace, monospace; font-size: 12px;
+  color: #9fb0c0; background: rgba(10, 14, 18, 0.72);
+  padding: 6px 14px; border-radius: 8px; pointer-events: none; white-space: nowrap;
+}
+#help b { color: #e8eef5; }
+
+#center-hint {
+  position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+  z-index: 10; font-family: ui-monospace, monospace; font-size: 14px;
+  color: #0b0d10; background: #7fd4ff; padding: 10px 22px; border-radius: 10px;
+  letter-spacing: 0.08em; cursor: pointer; user-select: none;
+  transition: opacity 0.25s;
+}
+#center-hint.hidden { opacity: 0; pointer-events: none; }

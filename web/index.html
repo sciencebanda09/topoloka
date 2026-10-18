@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>Namma Space</title>
+    <link rel="stylesheet" href="./src/style.css" />
+  </head>
+  <body>
+    <div id="app">
+      <canvas id="view"></canvas>
+
+      <div id="hud">
+        <div id="title">NAMMA SPACE</div>
+        <div id="subtitle">loading…</div>
+      </div>
+
+      <canvas id="minimap"></canvas>
+
+      <div id="help">
+        <b>WASD</b> walk · <b>mouse</b> look · <b>shift</b> faster · <b>click</b> to capture mouse
+      </div>
+
+      <div id="center-hint">click to enter walkthrough</div>
+    </div>
+    <script type="module" src="./src/main.ts"></script>
+  </body>
+</html>

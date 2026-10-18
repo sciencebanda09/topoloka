@@ -1,0 +1,28 @@
+# environments
+.venv/
+__pycache__/
+*.pyc
+
+# pipeline runs (heavy artifacts)
+pipeline/runs/
+capture/inbox/
+
+# web (built by vite)
+web/node_modules/
+web/dist/
+web/public/artifacts/*
+!web/public/artifacts/README.md
+
+# kaggle tooling
+kaggle/staging/
+kaggle/out/
+
+# large media kept out of git
+*.mp4
+*.mov
+!test/sample/*.mp4
+
+# local secrets (never commit)
+kaggle.json
+.env
+*_secret*

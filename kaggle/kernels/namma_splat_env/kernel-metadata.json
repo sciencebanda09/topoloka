@@ -1,0 +1,13 @@
+{
+  "id": "shashankdev09/namma-splat-env",
+  "title": "namma splat env",
+  "code_file": "namma_splat_env.py",
+  "language": "python",
+  "kernel_type": "script",
+  "is_private": true,
+  "enable_gpu": false,
+  "enable_internet": true,
+  "dataset_sources": [],
+  "competition_sources": [],
+  "kernel_sources": []
+}
