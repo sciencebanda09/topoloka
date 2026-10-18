@@ -9,7 +9,7 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
-from . import frames, geometry, sfm, splat_convert
+from . import depth, frames, geometry, qa, sfm, splat_convert
 
 
 def main() -> None:
@@ -39,6 +39,12 @@ def main() -> None:
     sc.add_argument("ply", type=Path, help="input gaussian PLY")
     sc.add_argument("out", type=Path, help="output .splat file")
 
+    q = sub.add_parser("qa", help="capture QA report (never blocks, always reports)")
+    q.add_argument("capture_dir", type=Path, help="capture working dir")
+
+    d = sub.add_parser("depth", help="metric depth fusion -> dense map.npz (GPU recommended)")
+    d.add_argument("capture_dir", type=Path, help="capture working dir (must contain sfm/)")
+
     args = parser.parse_args()
 
     if args.stage == "frames":
@@ -61,6 +67,11 @@ def main() -> None:
         geometry.run_geometry(args.capture_dir, cloud_path=args.cloud)
     elif args.stage == "splat-convert":
         splat_convert.convert_splat(args.ply, args.out)
+    elif args.stage == "qa":
+        checks = qa.run_qa(args.capture_dir)
+        qa.write_qa(args.capture_dir, checks)
+    elif args.stage == "depth":
+        depth.run_depth(args.capture_dir)
 
 
 if __name__ == "__main__":

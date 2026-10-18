@@ -49,6 +49,7 @@ class NavReport:
     points_used: int = 0
     floor_inliers: int = 0
     down_axis_source: str = "camera-y-mean"
+    scale_source: str = "chest-height"
     scale_m_per_unit: float = 0.0
     camera_height_units: float = 0.0
     grid_w: int = 0
@@ -178,12 +179,16 @@ def estimate_down_from_poses(poses_frames: list[dict]) -> np.ndarray:
 
 
 def align_scene(points: np.ndarray, cam_centers: np.ndarray, down: np.ndarray,
+                fixed_scale: float | None = None,
                 min_cam_z: float = 0.9, max_cam_z: float = 3.5):
     """Find the floor plane (below cameras, normal = ±down) and build the aligned frame.
 
     Returns (R, origin, scale_units_per_m, floor_report) such that
         p_aligned_m = ((p - origin) @ R) * scale
     has z=0 on the floor and meters as units.
+
+    When fixed_scale is given (depth-derived metric scale, or 1.0 for an
+    already-metric cloud+poses pair), the chest-height heuristic is skipped.
     """
     down = down / np.linalg.norm(down)
     cam_mean = cam_centers.mean(axis=0)
@@ -219,10 +224,10 @@ def align_scene(points: np.ndarray, cam_centers: np.ndarray, down: np.ndarray,
         raise SystemExit("no floor plane found (no horizontal plane below the cameras)")
 
     count, normal, d = best
-    # distance of camera mean from the floor plane (in scene units)
+    # distance of camera mean from the floor plane (in the input's units)
     cam_height_units = float(-(normal @ cam_mean + d))
     cam_height_units = max(cam_height_units, 0.2)
-    scale = CHEST_HEIGHT_M / cam_height_units
+    scale = fixed_scale if fixed_scale is not None else CHEST_HEIGHT_M / cam_height_units
 
     # rotation mapping floor normal -> +Z (up)
     up = -down
@@ -309,21 +314,42 @@ def run_geometry(capture_dir: Path, cloud_path: Path | None = None) -> NavReport
     out_dir.mkdir(parents=True, exist_ok=True)
 
     sfm_dir = capture_dir / "sfm"
-    poses_path = sfm_dir / "poses.json"
-    if not poses_path.exists():
-        raise SystemExit(f"missing {poses_path} (run `sfm` first)")
     cloud_path = Path(cloud_path) if cloud_path else sfm_dir / "sparse.ply"
     if not cloud_path.exists():
         raise SystemExit(f"missing cloud {cloud_path}")
 
+    # scale contract (one code path, two honest sources):
+    #  - metric .npz cloud (depth fusion): needs metric poses_m.json; scale = 1
+    #  - scene-unit .ply cloud: use the depth-derived metric scale when it
+    #    exists, else fall back to the chest-height heuristic
+    poses_path = sfm_dir / "poses.json"
+    fixed_scale: float | None = None
+    scale_source = "chest-height"
+    if cloud_path.suffix == ".npz":
+        poses_m = sfm_dir / "poses_m.json"
+        if not poses_m.exists():
+            raise SystemExit("metric cloud requires sfm/poses_m.json (run `depth` first)")
+        poses_path = poses_m
+        fixed_scale = 1.0
+        scale_source = "metric-input"
+    else:
+        scale_json = capture_dir / "depth" / "scale.json"
+        if scale_json.exists():
+            fixed_scale = float(json.loads(scale_json.read_text(encoding="utf-8"))
+                                ["scale_m_per_unit"])
+            scale_source = "depth-scale"
+    if not poses_path.exists():
+        raise SystemExit(f"missing {poses_path} (run `sfm` first)")
+
     t0 = time.time()
     report = NavReport()
+    report.scale_source = scale_source
     xyz, rgb = load_cloud(cloud_path)
     report.points_in = len(xyz)
     centers, _fwd, poses_frames = load_camera_centers(poses_path)
 
     down = estimate_down_from_poses(poses_frames)
-    R, origin, scale, floor_info = align_scene(xyz, centers, down)
+    R, origin, scale, floor_info = align_scene(xyz, centers, down, fixed_scale=fixed_scale)
     report.floor_inliers = floor_info["floor_inliers"]
     report.camera_height_units = round(floor_info["cam_height_units"], 3)
     report.scale_m_per_unit = round(scale, 4)
@@ -366,6 +392,7 @@ def run_geometry(capture_dir: Path, cloud_path: Path | None = None) -> NavReport
         "outline": outline,
         "trajectory": [[round(float(x), 3) for x in p] for p in traj_m],
         "scale_m_per_unit": report.scale_m_per_unit,
+        "scale_source": report.scale_source,
         "cam_height_units": report.camera_height_units,
         "down_axis_source": report.down_axis_source,
     }

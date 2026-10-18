@@ -74,7 +74,8 @@ def collect() -> None:
     OUT.mkdir(parents=True, exist_ok=True)
     for rel in ["frames_meta.json", "sfm/sfm_report.json", "sfm/poses.json",
                 "sfm/transforms.json", "sfm/sparse.ply",
-                "nav/nav.json", "nav/nav_report.json", "nav/occupancy.png"]:
+                "nav/nav.json", "nav/nav_report.json", "nav/occupancy.png",
+                "capture_qa.json", "capture_qa.md"]:
         src = RUN / rel
         if src.exists():
             shutil.copy2(src, OUT / Path(rel).name)
@@ -117,6 +118,7 @@ def main() -> None:
         run_stage(["frames", str(video), str(RUN), "--stride", STRIDE, "--max-width", MAX_WIDTH])
         run_stage(["sfm", str(RUN)])
         run_stage(["geometry", str(RUN)])
+        run_stage(["qa", str(RUN)])
     except Exception:
         error = traceback.format_exc()
         log("ERROR:\n" + error)

@@ -1,12 +1,17 @@
-"""Kaggle kernel (GPU): train the Gaussian splat for a capture and export web artifacts.
+"""Kaggle kernel (GPU): depth fusion + dense nav + splat training for a capture.
 
-Input:  namma-capture-v1 dataset = { frames.zip, transforms.json, sparse.ply }
-Output: /kaggle/working/out/ = { splat.ply (raw 3DGS), splat.splat (web format),
-                                 splat_convert_report.json, train_report.json }
+Input:  namma-capture-v1 dataset = { frames.zip, transforms.json, sparse.ply,
+         poses.json, sparse_txt.zip } (fetched from the namma-pipeline kernel)
 
-Trainer: nerfstudio splatfacto (the same proven path used by the Syntheta repo;
-their gsplat trainer is a stub). The kernel probes the environment first and
-aborts loudly if the pip install broke CUDA, rather than training on CPU.
+Flow (deliberate order -- cheap artifacts first, so a trainer failure never
+wastes the run):
+    1. metric depth fusion        -> depth/map.npz (dense, meters) + scale.json
+    2. geometry on the dense map  -> nav/nav.json (metric costmap) + outline
+    3. capture QA                 -> capture_qa.json/md
+    4. splatfacto training        -> splat.ply (raw 3DGS)
+    5. web conversion             -> splat.splat (32 bytes/gaussian)
+
+Output: /kaggle/working/out/ (fetched with kaggle/tools/fetch_output.ps1)
 """
 
 import json
@@ -44,19 +49,40 @@ def stage_code() -> None:
 
 
 def stage_capture() -> None:
+    """Build the capture dir layout the pipeline's stages expect.
+
+    RUN/                     <- capture dir AND nerfstudio --data dir
+      frames/*.jpg           <- referenced by transforms.json as frames/xxx.jpg
+      transforms.json        <- nerfstudio camera file (ply_file_path sparse.ply)
+      sparse.ply             <- init cloud for splatfacto
+      sfm/poses.json         <- pipeline pose file
+      sfm/sparse_txt/        <- COLMAP text model (depth scale needs point ids)
+      sfm/sparse.ply         <- pipeline default cloud for geometry
+    """
     root = next(INPUT.glob("namma-capture-v1*"), None)
     if not root or not root.is_dir():
         raise SystemExit("capture dataset namma-capture-v1 missing")
+
     RUN.mkdir(parents=True, exist_ok=True)
-    zips = list(root.glob("frames.zip"))
-    if not zips:
-        raise SystemExit("frames.zip missing in capture dataset")
-    with zipfile.ZipFile(zips[0]) as z:
+    with zipfile.ZipFile(root / "frames.zip") as z:
         z.extractall(RUN / "frames")
-    shutil.copy2(root / "transforms.json", RUN / "transforms.json")
-    if (root / "sparse.ply").exists():
-        shutil.copy2(root / "sparse.ply", RUN / "sparse.ply")
+    for f in ("transforms.json", "sparse.ply"):
+        shutil.copy2(root / f, RUN / f)
+
+    sfm = RUN / "sfm"
+    sfm.mkdir(exist_ok=True)
+    shutil.copy2(root / "poses.json", sfm / "poses.json")
+    with zipfile.ZipFile(root / "sparse_txt.zip") as z:
+        z.extractall(sfm / "sparse_txt")
+    shutil.copy2(root / "sparse.ply", sfm / "sparse.ply")
     log(f"capture staged: {len(list((RUN / 'frames').glob('*.jpg')))} frames")
+
+
+def run_stage(args: list[str]) -> None:
+    env = dict(os.environ, PYTHONIOENCODING="utf-8")
+    log(f"run: {' '.join(args)}")
+    subprocess.run([sys.executable, "-m", "namma.cli", *args],
+                   cwd=CODE, env=env, check=True)
 
 
 def ensure_nerfstudio() -> str:
@@ -65,11 +91,21 @@ def ensure_nerfstudio() -> str:
         return nerfstudio.__version__
     except ImportError:
         log("nerfstudio missing; pip install (this takes a few minutes)")
-        subprocess.run([sys.executable, "-m", "pip", "install", "-q", "nerfstudio"], check=True)
+        subprocess.run([sys.executable, "-m", "pip", "install", "-q", "nerfstudio"],
+                       check=True)
         import importlib
         importlib.invalidate_caches()
         import nerfstudio
         return nerfstudio.__version__
+
+
+def ensure_transformers() -> None:
+    try:
+        import transformers  # noqa: F401
+    except ImportError:
+        log("transformers missing; pip install")
+        subprocess.run([sys.executable, "-m", "pip", "install", "-q", "transformers"],
+                       check=True)
 
 
 def check_cuda() -> None:
@@ -104,7 +140,7 @@ def train() -> Path:
     return configs[-1]
 
 
-def export(config: Path) -> Path:
+def export_splat(config: Path) -> Path:
     export_dir = WORK / "export"
     cmd = ["ns-export", "gaussian-splat", "--load-config", str(config),
            "--output-dir", str(export_dir)]
@@ -128,36 +164,61 @@ def convert(ply: Path) -> None:
         raise SystemExit(f"splat-convert failed:\n{(r.stderr or '')[-2000:]}")
 
 
+def collect() -> None:
+    for rel in ("nav/nav.json", "nav/nav_report.json", "nav/occupancy.png",
+                "depth/scale.json", "depth/depth_report.json", "depth/map.npz",
+                "capture_qa.json", "capture_qa.md"):
+        src = RUN / rel
+        if src.exists():
+            shutil.copy2(src, OUT / Path(rel).name)
+    log(f"out: {sorted(p.name for p in OUT.iterdir())}")
+
+
 def main() -> None:
     t0 = time.time()
     error = None
     ns_version = ""
+    stage_errors: dict[str, str] = {}
+    OUT.mkdir(parents=True, exist_ok=True)
     try:
-        OUT.mkdir(parents=True, exist_ok=True)
         stage_code()
         stage_capture()
-        ns_version = ensure_nerfstudio()
-        log(f"nerfstudio {ns_version}")
-        check_cuda()
-        config = train()
-        ply = export(config)
-        shutil.copy2(ply, OUT / "splat.ply")
-        convert(ply)
+        ensure_transformers()
+        run_stage(["depth", str(RUN)])
+        run_stage(["geometry", str(RUN), "--cloud", str(RUN / "depth" / "map.npz")])
+        run_stage(["qa", str(RUN)])
     except Exception:
-        error = traceback.format_exc()
-        log("ERROR:\n" + error)
-    finally:
-        report = {
-            "kernel": "namma_splat",
-            "nerfstudio": ns_version,
-            "iterations": ITERS,
-            "elapsed_s": round(time.time() - t0, 1),
-            "status": "error" if error else "ok",
-            "error": error,
-            "out": sorted(p.name for p in OUT.iterdir()) if OUT.exists() else [],
-        }
-        (OUT / "train_report.json").write_text(json.dumps(report, indent=2), encoding="utf-8")
-        log("done")
+        error = "pre-train stage failed"
+        stage_errors["pre_train"] = traceback.format_exc()
+        log("PRE-TRAIN ERROR:\n" + stage_errors["pre_train"])
+    if not error:
+        try:
+            ns_version = ensure_nerfstudio()
+            log(f"nerfstudio {ns_version}")
+            check_cuda()
+            config = train()
+            ply = export_splat(config)
+            shutil.copy2(ply, OUT / "splat.ply")
+            convert(ply)
+        except Exception:
+            error = "splat stage failed"
+            stage_errors["splat"] = traceback.format_exc()
+            log("SPLAT ERROR:\n" + stage_errors["splat"])
+    try:
+        collect()
+    except Exception:
+        log("collect failed:\n" + traceback.format_exc())
+    report = {
+        "kernel": "namma_splat",
+        "nerfstudio": ns_version,
+        "iterations": ITERS,
+        "elapsed_s": round(time.time() - t0, 1),
+        "status": error or "ok",
+        "errors": stage_errors,
+        "out": sorted(p.name for p in OUT.iterdir()),
+    }
+    (OUT / "train_report.json").write_text(json.dumps(report, indent=2), encoding="utf-8")
+    log("done")
 
 
 if __name__ == "__main__":
