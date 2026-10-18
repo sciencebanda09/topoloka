@@ -223,14 +223,35 @@ def main() -> None:
     try:
         stage_code()
         stage_capture()
-        ensure_transformers()
-        run_stage(["depth", str(RUN)])
-        run_stage(["geometry", str(RUN), "--cloud", str(RUN / "depth" / "map.npz")])
-        run_stage(["qa", str(RUN)])
     except BaseException:  # SystemExit included -- reports must never lie
-        error = "pre-train stage failed"
-        stage_errors["pre_train"] = traceback.format_exc()
-        log("PRE-TRAIN ERROR:\n" + stage_errors["pre_train"])
+        error = "capture staging failed"
+        stage_errors["staging"] = traceback.format_exc()
+        log("STAGING ERROR:\n" + stage_errors["staging"])
+    if not error:
+        # Depth/geometry/QA are valuable but NOT prerequisites for training
+        # (the splat needs only transforms.json + sparse.ply + frames). A
+        # failure in any of them is recorded and must not burn the GPU run.
+        try:
+            ensure_transformers()
+            run_stage(["depth", str(RUN)])
+        except BaseException:
+            stage_errors["depth"] = traceback.format_exc()
+            log("DEPTH ERROR (training continues):\n" + stage_errors["depth"])
+        try:
+            cloud = RUN / "depth" / "map.npz"
+            if cloud.exists():
+                run_stage(["geometry", str(RUN), "--cloud", str(cloud)])
+            else:
+                log("no depth map; geometry falls back to the sparse cloud")
+                run_stage(["geometry", str(RUN)])
+        except BaseException:
+            stage_errors["geometry"] = traceback.format_exc()
+            log("GEOMETRY ERROR (training continues):\n" + stage_errors["geometry"])
+        try:
+            run_stage(["qa", str(RUN)])
+        except BaseException:
+            stage_errors["qa"] = traceback.format_exc()
+            log("QA ERROR (training continues):\n" + stage_errors["qa"])
     if not error:
         try:
             ns_version = ensure_nerfstudio()

@@ -39,8 +39,12 @@ kaggle kernels status shashankdev09/namma-pipeline
 
 Quota rules:
 - CPU kernels (SfM, geometry, checks) -- do not consume GPU quota. Preferred.
-- GPU kernels (depth, 3DGS training) -- share a weekly quota; keep runs deliberate,
-  write checkpoints to /kaggle/working so partial runs are never wasted.
+- GPU kernels (depth, 3DGS training) -- share a weekly quota; keep runs deliberate.
+- **All scratch work lives in `/tmp/namma`**, never in `/kaggle/working`: the
+  kaggle CLI publishes and downloads *everything* under `/kaggle/working`, so
+  `code/`, `runs/` and `ns/` checkpoints once turned a 60 MB fetch into a
+  ~1 GB partial download that died midway. Only `out/` is written to
+  `/kaggle/working` now.
 
 Never commit `kaggle.json`; credentials live in KAGGLE_CONFIG_DIR (dmx checkout).
 
@@ -65,3 +69,20 @@ Never commit `kaggle.json`; credentials live in KAGGLE_CONFIG_DIR (dmx checkout)
 - **Wait for a dataset version to be `ready` before pushing a kernel that
   mounts it**, otherwise the kernel starts with the dataset missing and fails
   in seconds (`code.tar not found under /kaggle/input`).
+- **The kaggle CLI on Windows dies printing unicode** (the kernel log contains
+  em-dashes): Python's stdout is cp1252 and raises `charmap codec` mid-download,
+  leaving a 0-byte log and exit code 1 even though files downloaded.
+  `fetch_output.ps1` sets `PYTHONIOENCODING=utf-8` and retries 3x.
+- **pycolmap 4.2.1 API shapes** (cost us one full 28-min kernel run):
+  `num_reg_images` / `num_points3D` / `reg_image_ids` and
+  `Image.cam_from_world` are **methods** (3.x had properties);
+  `Reconstruction.write()` / `write_text()` **require the target directory to
+  already exist**; `cam.model` prints as `CameraModelId.SIMPLE_RADIAL`.
+  `pipeline/tests/test_sfm_api.py` pins this; run the export paths against a
+  fetched `sparse/` model before trusting a full rerun.
+- **Extract with `CameraMode.SINGLE`** for a monocular video: pycolmap 4.x
+  defaults to one camera *per image*, which produced a ±13% focal spread on
+  our real capture; the dmx-slam reference does the same.
+- **Windows SIFT crashes with too many threads** (pycolmap native abort inside
+  faiss, "more threads crashed pycolmap SIFT on Windows" -- dmx reference).
+  `NM_THREADS=4` caps extraction/matching; Linux/Kaggle runs auto.
