@@ -24,7 +24,10 @@ from pathlib import Path
 from typing import Any
 
 import numpy as np
-import pycolmap
+
+# NOTE: pycolmap is imported lazily inside the functions that need it -- the
+# `namma.cli` entry point imports every module, and the GPU kernel runs
+# depth/geometry/qa/package without pycolmap installed.
 
 # pycolmap's pybind11 entry points expose no signatures; call strategies are
 # tried in order and the winner is recorded so behavior is never implicit.
@@ -36,7 +39,7 @@ class SfMReport:
     stage: str = "sfm"
     status: str = "ok"
     backend: str = "pycolmap"
-    pycolmap_version: str = pycolmap.__version__
+    pycolmap_version: str = ""
     matcher: str = ""
     extract_strategy: str = ""
     match_strategy: str = ""
@@ -63,6 +66,7 @@ def run_sfm(
     exhaustive_max: int = EXHAUSTIVE_MAX_IMAGES,
 ) -> SfMReport:
     capture_dir = Path(capture_dir)
+    import pycolmap
     frames_dir = capture_dir / "frames"
     if not frames_dir.is_dir():
         raise SystemExit(f"no frames dir: {frames_dir} (run `frames` first)")
@@ -76,7 +80,7 @@ def run_sfm(
     sparse_dir = out_dir / "sparse"
     sparse_dir.mkdir(exist_ok=True)
 
-    report = SfMReport(frames_in=len(images))
+    report = SfMReport(frames_in=len(images), pycolmap_version=pycolmap.__version__)
     t0 = time.time()
 
     # -- feature extraction -------------------------------------------------
@@ -154,6 +158,7 @@ def run_sfm(
 # pycolmap call strategies (API differs across 3.x/4.x; winner gets recorded)
 
 def _extract_features(database: Path, image_dir: Path) -> str:
+    import pycolmap
     try:
         pycolmap.extract_features(str(database), str(image_dir))
         return "positional"
@@ -170,6 +175,7 @@ def _extract_features(database: Path, image_dir: Path) -> str:
 
 
 def _match(database: Path, matcher: str) -> str:
+    import pycolmap
     fn = pycolmap.match_exhaustive if matcher == "exhaustive" else pycolmap.match_sequential
     try:
         fn(str(database))
@@ -189,6 +195,7 @@ def _match(database: Path, matcher: str) -> str:
 def _incremental_mapping(
     database: Path, image_dir: Path, sparse_dir: Path,
 ) -> tuple[list[pycolmap.Reconstruction], str]:
+    import pycolmap
     try:
         recs = pycolmap.incremental_mapping(str(database), str(image_dir), str(sparse_dir))
         return _as_list(recs), "positional"

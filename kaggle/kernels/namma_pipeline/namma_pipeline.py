@@ -55,7 +55,8 @@ def ensure_pycolmap() -> str:
         return pycolmap.__version__
     except ImportError:
         log("pycolmap missing; pip install")
-        subprocess.run([sys.executable, "-m", "pip", "install", "-q", "pycolmap"], check=True)
+        subprocess.run([sys.executable, "-m", "pip", "install", "-q", "pycolmap==4.2.1"],
+                       check=True)
         import pycolmap
         return pycolmap.__version__
 
