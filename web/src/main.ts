@@ -1,6 +1,6 @@
 /// <reference types="vite/client" />
 /**
- * Namma Space viewer entry point.
+ * Topoloka viewer entry point.
  * Loads the artifact bundle (nav.json + cloud.ply + optional splat.splat),
  * builds the scene, spawns the walker on the capture's first trajectory point,
  * and runs the loop. The splat, when present, renders in our scene/camera;
@@ -8,6 +8,7 @@
  */
 
 import { decodeGrid, loadCloud, loadNav, type NavData } from './artifacts';
+import { PRODUCT_NAME, PRODUCT_TAGLINE } from './brand';
 import { WalkControls } from './controls';
 import { Minimap } from './minimap';
 import { Costmap } from './nav';
@@ -16,6 +17,10 @@ import { Viewer } from './viewer';
 
 const CAPTURE = new URLSearchParams(location.search).get('capture') ?? 'house_v1';
 const BASE = `${import.meta.env.BASE_URL}artifacts/${CAPTURE}`;
+
+const titleEl = document.getElementById('title');
+if (titleEl) titleEl.textContent = PRODUCT_NAME.toUpperCase();
+document.title = `${PRODUCT_NAME} — indoor twins in a link`;
 
 const subtitle = document.getElementById('subtitle') as HTMLDivElement;
 const hint = document.getElementById('center-hint') as HTMLDivElement;
@@ -41,7 +46,7 @@ async function loadMeta(): Promise<Meta> {
 }
 
 async function boot(): Promise<void> {
-  subtitle.textContent = `${CAPTURE} · fetching artifacts…`;
+  subtitle.textContent = `${PRODUCT_NAME} · ${PRODUCT_TAGLINE} · fetching ${CAPTURE}…`;
   const [nav, meta] = await Promise.all([loadNav(BASE), loadMeta()]);
   const grid = await decodeGrid(nav.grid);
   const costmap = new Costmap(nav, grid);

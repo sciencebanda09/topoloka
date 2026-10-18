@@ -1,11 +1,12 @@
-# Namma Space — spatial twin engine
+# Topoloka — spatial twin engine
 
 **One video in. Google Maps for indoors out — in a link.**
 
-Turns an ordinary phone capture of an indoor space into a photorealistic,
-interactive 3D digital twin served as a shareable web link: free first-person
-roaming, spatial search, and obstacle-aware walking directions. Built for
-Techfest 2026-27 "Namma Space" (IIT Bombay).
+*Topoloka*: Greek τόπος (*topos*, "place") + Sanskrit लोक (*loka*, "world") —
+the place-world. Turns an ordinary phone capture of an indoor space into a
+photorealistic, interactive 3D digital twin served as a shareable web link:
+free first-person roaming, spatial search, and obstacle-aware walking
+directions. Built for Techfest 2026-27 (IIT Bombay).
 
 ```
 phone capture ──► Kaggle pipeline ──► artifact bundle ──► web app (static link)

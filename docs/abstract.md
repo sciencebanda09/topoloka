@@ -1,6 +1,10 @@
-# Namma Space — One Video In. Google Maps for Indoors Out — In a Link.
+# Topoloka — One Video In. Google Maps for Indoors Out — In a Link.
 
 **Technical abstract · Round 1 · Techfest 2026-27**
+
+*Topoloka* — Greek τόπος (*topos*, "place") + Sanskrit लोक (*loka*, "world"):
+the place-world. A spatial twin engine that turns one ordinary phone video of
+a walkthrough into a navigable, photorealistic world in a link.
 
 > Working draft. Numbers marked `[RESULT]` are filled from the end-to-end run
 > that is currently executing on Kaggle; nothing here is invented.
