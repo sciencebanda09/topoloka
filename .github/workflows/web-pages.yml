@@ -1,15 +1,15 @@
 # Builds the web viewer and deploys it to GitHub Pages.
 #
-# NOTE: web/public/artifacts/* is gitignored (large pipeline outputs). For this
-# workflow to deploy a usable viewer, commit a demo capture under
-# web/public/artifacts/<name>/ (git add -f) or extend this workflow to fetch
-# the artifact bundle from Kaggle/another store first.
+# Artifacts: web/public/artifacts/* is gitignored (large pipeline outputs).
+# The committed sample capture lives in test/house_v1/web/ and is copied into
+# web/public/artifacts/house_v1/ here before the build, so the deployed viewer
+# can serve ?capture=house_v1 without any duplicate data in git.
 name: web-pages
 
 on:
   push:
     branches: [main]
-    paths: ['web/**', '.github/workflows/web-pages.yml']
+    paths: ['web/**', 'test/house_v1/web/**', '.github/workflows/web-pages.yml']
   workflow_dispatch:
 
 permissions:
@@ -25,6 +25,12 @@ jobs:
         working-directory: web
     steps:
       - uses: actions/checkout@v4
+      - name: Stage committed sample capture
+        if: ${{ hashFiles('test/house_v1/web/nav.json') != '' }}
+        working-directory: .
+        run: |
+          mkdir -p web/public/artifacts/house_v1
+          cp -r test/house_v1/web/. web/public/artifacts/house_v1/
       - uses: actions/setup-node@v4
         with:
           node-version: 22

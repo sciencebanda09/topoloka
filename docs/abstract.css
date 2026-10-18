@@ -83,4 +83,12 @@ th { background: #edf2f7; }
 
 hr { border: none; border-top: 1px solid #ccd; margin: 0.9rem 0; }
 
+img {
+  max-width: 100%;
+  height: auto;
+  page-break-inside: avoid;
+  border: 1px solid #dde3ea;
+  border-radius: 4px;
+}
+
 a { color: #1155aa; text-decoration: none; }
