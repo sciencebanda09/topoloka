@@ -31,7 +31,7 @@ OUT = WORK / "out"
 CODE = WORK / "code"
 RUN = WORK / "run"
 NS_OUT = WORK / "ns"
-ITERS = os.environ.get("NM_ITERS", "15000")
+ITERS = os.environ.get("NM_ITERS", "20000")
 MAX_GAUSSIANS = os.environ.get("NM_MAX_GAUSSIANS", "1500000")
 
 
@@ -140,6 +140,10 @@ def train() -> Path:
         "--pipeline.datamanager.dataparser.orientation-method", "none",
         "--pipeline.datamanager.dataparser.center-method", "none",
         "--pipeline.datamanager.dataparser.auto-scale-poses", "False",
+        # Seed the gaussians from our SfM cloud (nerfstudio 1.1.5's splatfacto
+        # method config already sets this, but pass it explicitly: random init
+        # would silently ruin convergence).
+        "--pipeline.datamanager.dataparser.load-3D-points", "True",
     ]
     log(" ".join(cmd))
     r = subprocess.run(cmd, capture_output=True, text=True, timeout=6 * 3600)
