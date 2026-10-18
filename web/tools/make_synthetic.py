@@ -175,10 +175,16 @@ def _write_ply(path: Path, xyz: np.ndarray, rgb: np.ndarray) -> None:
               "property float x\nproperty float y\nproperty float z\n"
               "property uchar red\nproperty uchar green\nproperty uchar blue\n"
               "end_header\n").encode("ascii")
+    xyz = xyz.astype("<f4")
+    rgb = rgb.astype(np.uint8)
+    vertex = np.empty(len(xyz), dtype=np.dtype(
+        [("x", "<f4"), ("y", "<f4"), ("z", "<f4"),
+         ("red", "u1"), ("green", "u1"), ("blue", "u1")]))
+    vertex["x"], vertex["y"], vertex["z"] = xyz[:, 0], xyz[:, 1], xyz[:, 2]
+    vertex["red"], vertex["green"], vertex["blue"] = rgb[:, 0], rgb[:, 1], rgb[:, 2]
     with open(path, "wb") as f:
         f.write(header)
-        f.write(xyz.astype("<f4").tobytes())
-        f.write(rgb.astype(np.uint8).tobytes())
+        f.write(vertex.tobytes())
 
 
 def _write_splat(path: Path, xyz: np.ndarray, rgb: np.ndarray) -> None:

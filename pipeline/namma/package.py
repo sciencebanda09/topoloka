@@ -35,6 +35,7 @@ def _apply_align(xyz: np.ndarray, align: dict) -> np.ndarray:
 
 
 def _write_ply(path: Path, xyz: np.ndarray, rgb: np.ndarray) -> None:
+    """Binary little-endian PLY, PER-VERTEX layout (see sfm._write_ply)."""
     header = (
         "ply\nformat binary_little_endian 1.0\n"
         f"element vertex {len(xyz)}\n"
@@ -42,10 +43,16 @@ def _write_ply(path: Path, xyz: np.ndarray, rgb: np.ndarray) -> None:
         "property uchar red\nproperty uchar green\nproperty uchar blue\n"
         "end_header\n"
     ).encode("ascii")
+    xyz = xyz.astype("<f4")
+    rgb = rgb.astype(np.uint8)
+    vertex = np.empty(len(xyz), dtype=np.dtype(
+        [("x", "<f4"), ("y", "<f4"), ("z", "<f4"),
+         ("red", "u1"), ("green", "u1"), ("blue", "u1")]))
+    vertex["x"], vertex["y"], vertex["z"] = xyz[:, 0], xyz[:, 1], xyz[:, 2]
+    vertex["red"], vertex["green"], vertex["blue"] = rgb[:, 0], rgb[:, 1], rgb[:, 2]
     with open(path, "wb") as f:
         f.write(header)
-        f.write(xyz.astype("<f4").tobytes())
-        f.write(rgb.astype(np.uint8).tobytes())
+        f.write(vertex.tobytes())
 
 
 def run_package(capture_dir: Path) -> dict:

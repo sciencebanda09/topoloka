@@ -266,7 +266,14 @@ def _as_list(recs: Any) -> list[pycolmap.Reconstruction]:
 # exports
 
 def _write_ply(rec: pycolmap.Reconstruction, path: Path) -> None:
-    """Binary little-endian PLY: xyz float32 + rgb uint8. No external deps."""
+    """Binary little-endian PLY, standard PER-VERTEX layout: x,y,z,r,g,b.
+
+    Payload layout matters: the PLY spec stores each vertex's properties
+    consecutively (interleaved), and every reader we use --
+    geometry.load_cloud, nerfstudio's trimesh/open3d point loading, three.js
+    PLYLoader -- assumes that. An xyz-block-then-rgb-block variant silently
+    garbled the nav grid on the 2026-10-18 run.
+    """
     pts = rec.points3D
     n = len(pts)
     header = (
@@ -281,10 +288,14 @@ def _write_ply(rec: pycolmap.Reconstruction, path: Path) -> None:
     for i, p in enumerate(pts.values()):
         xyz[i] = np.asarray(_get(p, "xyz"), dtype=np.float32)
         rgb[i] = np.asarray(_get(p, "color"), dtype=np.uint8)
+    vertex = np.empty(n, dtype=np.dtype(
+        [("x", "<f4"), ("y", "<f4"), ("z", "<f4"),
+         ("red", "u1"), ("green", "u1"), ("blue", "u1")]))
+    vertex["x"], vertex["y"], vertex["z"] = xyz[:, 0], xyz[:, 1], xyz[:, 2]
+    vertex["red"], vertex["green"], vertex["blue"] = rgb[:, 0], rgb[:, 1], rgb[:, 2]
     with open(path, "wb") as f:
         f.write(header)
-        f.write(xyz.astype("<f4").tobytes())
-        f.write(rgb.tobytes())
+        f.write(vertex.tobytes())
 
 
 def _poses(rec: pycolmap.Reconstruction, frames_dir: Path) -> dict[str, Any]:
