@@ -26,11 +26,12 @@ import zipfile
 from pathlib import Path
 
 INPUT = Path("/kaggle/input")
-WORK = Path("/kaggle/working")
+WORK = Path("/kaggle/working")          # only out/ is published as kernel output
+SCRATCH = Path("/tmp/namma")            # code/run/ns/export stay OFF the output list
 OUT = WORK / "out"
-CODE = WORK / "code"
-RUN = WORK / "run"
-NS_OUT = WORK / "ns"
+CODE = SCRATCH / "code"
+RUN = SCRATCH / "run"
+NS_OUT = SCRATCH / "ns"
 ITERS = os.environ.get("NM_ITERS", "20000")
 MAX_GAUSSIANS = os.environ.get("NM_MAX_GAUSSIANS", "1500000")
 
@@ -173,7 +174,7 @@ def train() -> Path:
 
 
 def export_splat(config: Path) -> Path:
-    export_dir = WORK / "export"
+    export_dir = SCRATCH / "export"
     cmd = ["ns-export", "gaussian-splat", "--load-config", str(config),
            "--output-dir", str(export_dir)]
     r = subprocess.run(cmd, capture_output=True, text=True, timeout=3600)

@@ -18,6 +18,7 @@ Design rules (mirroring the Syntheta SLAM robustness brief):
 from __future__ import annotations
 
 import json
+import os
 import time
 from dataclasses import dataclass, asdict, field
 from pathlib import Path
@@ -32,6 +33,9 @@ import numpy as np
 # pycolmap's pybind11 entry points expose no signatures; call strategies are
 # tried in order and the winner is recorded so behavior is never implicit.
 EXHAUSTIVE_MAX_IMAGES = 300  # above this, plain exhaustive matching gets slow
+# COLMAP SIFT crashed on Windows above ~4 threads in the dmx reference work;
+# 0 = auto (COLMAP default -1). Kaggle Linux runs fine on auto.
+THREADS = int(os.environ.get("NM_THREADS", "0"))
 
 
 @dataclass
@@ -94,7 +98,8 @@ def run_sfm(
 
     # -- incremental mapping --------------------------------------------------
     recs, report.map_strategy = _incremental_mapping(database, frames_dir, sparse_dir)
-    recs = sorted(recs, key=lambda r: r.num_reg_images, reverse=True)
+    # pycolmap 4.x: num_reg_images is a method; 3.x: a property -- _get handles both
+    recs = sorted(recs, key=lambda r: _get(r, "num_reg_images"), reverse=True)
     report.models_found = len(recs)
     if not recs:
         report.status = "failed_no_model"
@@ -114,12 +119,14 @@ def run_sfm(
         rec.write(str(model_dir))
     except TypeError:  # older/newer API name
         rec.write_binary(str(model_dir))
-    rec.write_text(str(out_dir / "sparse_txt"))
+    txt_dir = out_dir / "sparse_txt"
+    txt_dir.mkdir(exist_ok=True)  # 4.2.1 requires the target dir to exist
+    rec.write_text(str(txt_dir))
 
     # -- stats ----------------------------------------------------------------
-    report.frames_registered = rec.num_reg_images
-    report.registered_fraction = round(rec.num_reg_images / len(images), 3)
-    report.points3d = rec.num_points3D
+    report.frames_registered = int(_get(rec, "num_reg_images"))
+    report.registered_fraction = round(report.frames_registered / len(images), 3)
+    report.points3d = int(_get(rec, "num_points3D"))
     errors = [p.error for p in rec.points3D.values() if p.error is not None]
     if errors:
         report.mean_reprojection_error_px = round(float(np.mean(errors)), 3)
@@ -158,25 +165,67 @@ def run_sfm(
 # pycolmap call strategies (API differs across 3.x/4.x; winner gets recorded)
 
 def _extract_features(database: Path, image_dir: Path) -> str:
+    """One shared SIMPLE_RADIAL camera for the whole capture (monocular video).
+
+    pycolmap 4.x defaults to per-image cameras; the intrinsics then vary frame
+    to frame (we measured ±13% focal spread on a real capture). A phone video
+    has ONE camera -- sharing it makes the intrinsics a global, well-constrained
+    estimate and gives the .splat stage honest focal numbers.
+    """
     import pycolmap
+    kwargs: dict[str, Any] = {}
+    if THREADS > 0:
+        opts = pycolmap.FeatureExtractionOptions()
+        opts.num_threads = THREADS
+        kwargs["extraction_options"] = opts
     try:
+        pycolmap.extract_features(str(database), str(image_dir),
+                                  camera_mode=pycolmap.CameraMode.SINGLE, **kwargs)
+        return "camera_mode=SINGLE" + (f" threads={THREADS}" if THREADS > 0 else "")
+    except (TypeError, AttributeError, ValueError):
+        pass
+    try:  # plain SINGLE, no options object
+        pycolmap.extract_features(str(database), str(image_dir),
+                                  camera_mode=pycolmap.CameraMode.SINGLE)
+        return "camera_mode=SINGLE"
+    except (TypeError, AttributeError, ValueError):
+        pass
+    try:  # pycolmap 3.x accepted a string
+        pycolmap.extract_features(str(database), str(image_dir), camera_mode="SINGLE")
+        return "camera_mode='SINGLE'"
+    except (TypeError, AttributeError, ValueError):
+        pass
+    try:  # positional; may fall back to per-image cameras
         pycolmap.extract_features(str(database), str(image_dir))
-        return "positional"
+        return "positional (per-image cameras)"
     except TypeError:
         pass
     try:
         opts = pycolmap.FeatureExtractionOptions.create()
         pycolmap.extract_features(str(database), str(image_dir), extraction_options=opts)
-        return "FeatureExtractionOptions.create"
+        return "FeatureExtractionOptions.create (per-image cameras)"
     except (TypeError, AttributeError):
         pass
     pycolmap.extract_features(str(database), str(image_dir), camera_mode="AUTO")
-    return "camera_mode_string"
+    return "camera_mode_string AUTO (per-image cameras)"
 
 
 def _match(database: Path, matcher: str) -> str:
     import pycolmap
     fn = pycolmap.match_exhaustive if matcher == "exhaustive" else pycolmap.match_sequential
+    kwargs: dict[str, Any] = {}
+    if THREADS > 0:
+        try:
+            mopts = pycolmap.FeatureMatchingOptions()
+            mopts.num_threads = THREADS
+            kwargs["matching_options"] = mopts
+        except Exception:
+            kwargs = {}
+    try:
+        fn(str(database), **kwargs)
+        return "positional" + (f" threads={THREADS}" if kwargs else "")
+    except (TypeError, ValueError):
+        pass
     try:
         fn(str(database))
         return "positional"
@@ -230,8 +279,8 @@ def _write_ply(rec: pycolmap.Reconstruction, path: Path) -> None:
     xyz = np.empty((n, 3), np.float32)
     rgb = np.empty((n, 3), np.uint8)
     for i, p in enumerate(pts.values()):
-        xyz[i] = p.xyz
-        rgb[i] = p.color
+        xyz[i] = np.asarray(_get(p, "xyz"), dtype=np.float32)
+        rgb[i] = np.asarray(_get(p, "color"), dtype=np.uint8)
     with open(path, "wb") as f:
         f.write(header)
         f.write(xyz.astype("<f4").tobytes())
@@ -241,7 +290,7 @@ def _write_ply(rec: pycolmap.Reconstruction, path: Path) -> None:
 def _poses(rec: pycolmap.Reconstruction, frames_dir: Path) -> dict[str, Any]:
     """Raw COLMAP poses: world->camera (x right, y down, z forward)."""
     frames = []
-    for image_id in rec.reg_image_ids():
+    for image_id in _get(rec, "reg_image_ids"):
         img = rec.image(image_id)
         cam = rec.camera(img.camera_id)
         w2c = _matrix(_get(img, "cam_from_world"))
@@ -258,11 +307,12 @@ def _poses(rec: pycolmap.Reconstruction, frames_dir: Path) -> dict[str, Any]:
 
 def _transforms(rec: pycolmap.Reconstruction, frames_dir: Path) -> dict[str, Any]:
     """nerfstudio-style transforms.json, camera->world, OpenGL convention."""
-    first_id = list(rec.reg_image_ids())[0]
+    image_ids = list(_get(rec, "reg_image_ids"))
+    first_id = image_ids[0]
     cam0 = rec.camera(rec.image(first_id).camera_id)
     flip = np.diag([1.0, -1.0, -1.0, 1.0])
     frames = []
-    for image_id in rec.reg_image_ids():
+    for image_id in image_ids:
         img = rec.image(image_id)
         w2c = _matrix(_get(img, "cam_from_world"))
         c2w = np.linalg.inv(w2c) @ flip  # OpenGL: y up, z back
@@ -276,7 +326,7 @@ def _transforms(rec: pycolmap.Reconstruction, frames_dir: Path) -> dict[str, Any
     # assume one camera (phone capture); record it explicitly if not
     cams = {i.camera_id for i in rec.images.values()}
     out = {
-        "camera_model": str(cam0.model),
+        "camera_model": _model_name(cam0),
         "w": cam0.width, "h": cam0.height,
         "fl_x": fl_x, "fl_y": fl_y,
         "cx": _principal(cam0, 0), "cy": _principal(cam0, 1),
@@ -287,6 +337,15 @@ def _transforms(rec: pycolmap.Reconstruction, frames_dir: Path) -> dict[str, Any
     return out
 
 
+def _model_name(cam: Any) -> str:
+    """'SIMPLE_RADIAL' -- 4.x stores an enum whose str() is 'CameraModelId.X'."""
+    model = cam.model
+    name = getattr(model, "name", None)
+    if isinstance(name, str):
+        return name
+    return str(model).rsplit(".", 1)[-1]
+
+
 def _get(obj: Any, name: str) -> Any:
     v = getattr(obj, name)
     return v() if callable(v) else v
@@ -294,15 +353,15 @@ def _get(obj: Any, name: str) -> Any:
 
 def _matrix(rigid: Any) -> list[list[float]]:
     m = np.eye(4)
-    m[:3, :3] = np.asarray(rigid.rotation.matrix())
-    m[:3, 3] = np.asarray(rigid.translation)
+    m[:3, :3] = np.asarray(_get(_get(rigid, "rotation"), "matrix"), dtype=np.float64)
+    m[:3, 3] = np.asarray(_get(rigid, "translation"), dtype=np.float64)
     return m.tolist()
 
 
 def _focal(cam: Any, axis: int) -> float:
     name = ("focal_length_x", "focal_length_y")[axis]
     if hasattr(cam, name):
-        return float(getattr(cam, name))
+        return float(_get(cam, name))
     # fallback: params[0] is focal for most models (SIMPLE_PINHOLE..OPENCV)
     return float(cam.params[0])
 
@@ -310,7 +369,7 @@ def _focal(cam: Any, axis: int) -> float:
 def _principal(cam: Any, axis: int) -> float:
     names = ("principal_point_x", "principal_point_y")
     if hasattr(cam, names[axis]):
-        return float(getattr(cam, names[axis]))
+        return float(_get(cam, names[axis]))
     return float(cam.params[1 + axis])
 
 

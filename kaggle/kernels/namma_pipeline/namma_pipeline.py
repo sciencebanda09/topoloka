@@ -19,10 +19,11 @@ import traceback
 from pathlib import Path
 
 INPUT = Path("/kaggle/input")
-WORK = Path("/kaggle/working")
+WORK = Path("/kaggle/working")          # only out/ is published as kernel output
+SCRATCH = Path("/tmp/namma")            # code/ and runs/ stay OFF the output list
 OUT = WORK / "out"
-CODE = WORK / "code"
-RUN = WORK / "runs" / "capture_v1"
+CODE = SCRATCH / "code"
+RUN = SCRATCH / "runs" / "capture_v1"
 TARGET_RATE = os.environ.get("NM_TARGET_RATE", "2.5")
 MAX_WIDTH = os.environ.get("NM_MAX_W", "1600")
 

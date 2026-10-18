@@ -8,6 +8,12 @@ param(
 $ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot '..\config.ps1')
 
+# The kaggle CLI prints unicode (the kernel log contains em-dashes etc.) and
+# Windows PowerShell hands Python a cp1252 stdout: it dies with a 'charmap'
+# codec error and leaves a 0-byte log. Force UTF-8 for all child processes.
+$env:PYTHONIOENCODING = 'utf-8'
+$env:PYTHONUTF8 = '1'
+
 $ref = "$NammaUser/" + ($Name -replace '_', '-')
 
 if ($Watch) {
