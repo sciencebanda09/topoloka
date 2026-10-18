@@ -17,10 +17,10 @@ web/public/artifacts/*
 kaggle/staging/
 kaggle/out/
 
-# large media kept out of git
+# large media kept out of git (sample data under test/ is allowed)
 *.mp4
 *.mov
-!test/sample/*.mp4
+!test/**/*.mp4
 
 # local secrets (never commit)
 kaggle.json
