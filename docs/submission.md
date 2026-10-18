@@ -9,7 +9,8 @@ Round 1 deliverables and their exact state. Update status as items land.
 - [ ] Fill `[RESULT]` placeholders from the first end-to-end run
       (`capture_qa.md`, `sfm/sfm_report.json`, `depth/scale.json`,
       `splat/splat_convert_report.json`)
-- [ ] Convert to PDF (pandoc or browser print-to-PDF), check page count
+- [x] PDF toolchain: `tools/build_pdf.ps1` (pandoc + Chrome headless);
+      draft renders at 3 pages — re-render after filling results
 - [ ] Add 2–3 figures: pipeline diagram (reuse abstract §4), viewer
       screenshot, occupancy grid vs splat overlay
 - [ ] Proofread once out loud; numbers must match the repo artifacts
