@@ -9,7 +9,7 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
-from . import depth, frames, geometry, qa, sfm, splat_convert
+from . import depth, frames, geometry, package, qa, sfm, splat_convert
 
 
 def main() -> None:
@@ -45,6 +45,9 @@ def main() -> None:
     d = sub.add_parser("depth", help="metric depth fusion -> dense map.npz (GPU recommended)")
     d.add_argument("capture_dir", type=Path, help="capture working dir (must contain sfm/)")
 
+    pk = sub.add_parser("package", help="assemble the web artifact bundle (<capture>/web/)")
+    pk.add_argument("capture_dir", type=Path, help="capture working dir")
+
     args = parser.parse_args()
 
     if args.stage == "frames":
@@ -72,6 +75,8 @@ def main() -> None:
         qa.write_qa(args.capture_dir, checks)
     elif args.stage == "depth":
         depth.run_depth(args.capture_dir)
+    elif args.stage == "package":
+        package.run_package(args.capture_dir)
 
 
 if __name__ == "__main__":

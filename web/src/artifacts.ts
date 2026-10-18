@@ -8,6 +8,13 @@ export interface NavGrid {
   data_b64: string;
 }
 
+export interface NavAlign {
+  R_row_major: number[][];
+  origin: [number, number, number];
+  scale_m_per_unit: number;
+  formula: string;
+}
+
 export interface NavData {
   version: number;
   units: string;
@@ -17,8 +24,11 @@ export interface NavData {
   outline: [number, number][];
   trajectory: [number, number, number][];
   scale_m_per_unit: number;
+  scale_source?: string;
   cam_height_units: number;
   down_axis_source: string;
+  /** raw reconstruction frame -> metric nav frame (places the splat) */
+  align?: NavAlign;
 }
 
 export const FREE = 0, OBSTACLE = 1, UNKNOWN = 2;

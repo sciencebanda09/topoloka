@@ -79,6 +79,13 @@ def collect() -> None:
         src = RUN / rel
         if src.exists():
             shutil.copy2(src, OUT / Path(rel).name)
+    web = RUN / "web"
+    if web.is_dir():
+        dst = OUT / "web"
+        dst.mkdir(exist_ok=True)
+        for f in sorted(web.iterdir()):
+            if f.is_file():
+                shutil.copy2(f, dst / f.name)
     txt = RUN / "sfm" / "sparse_txt"
     if txt.is_dir():
         shutil.make_archive(str(OUT / "sparse_txt"), "zip", root_dir=txt)
@@ -119,6 +126,7 @@ def main() -> None:
         run_stage(["sfm", str(RUN)])
         run_stage(["geometry", str(RUN)])
         run_stage(["qa", str(RUN)])
+        run_stage(["package", str(RUN)])
     except Exception:
         error = traceback.format_exc()
         log("ERROR:\n" + error)

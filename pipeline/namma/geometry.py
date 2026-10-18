@@ -395,6 +395,15 @@ def run_geometry(capture_dir: Path, cloud_path: Path | None = None) -> NavReport
         "scale_source": report.scale_source,
         "cam_height_units": report.camera_height_units,
         "down_axis_source": report.down_axis_source,
+        # The alignment from the raw reconstruction frame (scene units) into
+        # this metric frame -- needed by the web app to place the splat:
+        #     p_nav_m = scale * R^T @ (p_scene_units - origin)
+        "align": {
+            "R_row_major": [[round(float(v), 7) for v in row] for row in R],
+            "origin": [round(float(v), 7) for v in origin],
+            "scale_m_per_unit": report.scale_m_per_unit,
+            "formula": "p_nav_m = scale * R^T @ (p_scene_units - origin)",
+        },
     }
     (out_dir / "nav.json").write_text(json.dumps(nav), encoding="utf-8")
 

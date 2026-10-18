@@ -14,7 +14,9 @@ export class Viewer {
   readonly renderer: THREE.WebGLRenderer;
   readonly scene: THREE.Scene;
   readonly camera: THREE.PerspectiveCamera;
+  pointsVisible = true;
   private routeLine: THREE.Line | null = null;
+  private pointsObj: THREE.Points | null = null;
 
   constructor(canvas: HTMLCanvasElement) {
     this.renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
@@ -53,8 +55,14 @@ export class Viewer {
     });
     const points = new THREE.Points(geo, mat);
     points.frustumCulled = false;
+    this.pointsObj = points;
     this.scene.add(points);
     return n;
+  }
+
+  setPointsVisible(visible: boolean): void {
+    this.pointsVisible = visible;
+    if (this.pointsObj) this.pointsObj.visible = visible;
   }
 
   addOutline(points: [number, number][]): void {

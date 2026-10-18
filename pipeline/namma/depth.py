@@ -186,8 +186,9 @@ def fuse(capture_dir: Path, scale: float) -> tuple[np.ndarray, np.ndarray, int, 
         cam_pts = np.stack([x, y, z], axis=1)          # meters, camera frame
         w2c = np.asarray(fr["w2c"], np.float64)
         R, t = w2c[:3, :3], w2c[:3, 3]
-        world_units = (cam_pts - t) @ R                 # = R^T (p_cam - t), scene units
-        world_m = world_units * scale
+        # p_scene = R^T (p_cam_units - t), p_cam_units = p_cam_m / scale
+        # => p_world_m = scale * p_scene = R^T (p_cam_m - scale * t)
+        world_m = (cam_pts - t * scale) @ R
         cols = cv2.cvtColor(bgr, cv2.COLOR_BGR2RGB)[vv, uu]
         all_pts.append(world_m.astype(np.float32))
         all_cols.append(cols.astype(np.uint8))

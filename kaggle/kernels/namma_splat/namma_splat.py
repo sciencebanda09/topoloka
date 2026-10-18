@@ -126,6 +126,13 @@ def train() -> Path:
         "--max-num-iterations", ITERS,
         "--viewer.quit-on-train-completion", "True",
         "--pipeline.model.cull-alpha-thresh", "0.005",
+        # Keep the splat in OUR camera frame. nerfstudio's defaults re-orient
+        # (up), re-center (poses) and auto-scale the scene, which would break
+        # alignment with the metric nav frame. nav.json carries the exact
+        # alignment transform; training must not add its own.
+        "--pipeline.datamanager.dataparser.orientation-method", "none",
+        "--pipeline.datamanager.dataparser.center-method", "none",
+        "--pipeline.datamanager.dataparser.auto-scale-poses", "False",
     ]
     log(" ".join(cmd))
     r = subprocess.run(cmd, capture_output=True, text=True, timeout=6 * 3600)
@@ -157,7 +164,7 @@ def export_splat(config: Path) -> Path:
 def convert(ply: Path) -> None:
     env = dict(os.environ, PYTHONIOENCODING="utf-8")
     cmd = [sys.executable, "-m", "namma.cli", "splat-convert",
-           str(ply), str(OUT / "splat.splat")]
+           str(ply), str(RUN / "splat" / "splat.splat")]
     r = subprocess.run(cmd, cwd=CODE, env=env, capture_output=True, text=True, timeout=1800)
     log(f"splat-convert exit {r.returncode}")
     if r.returncode != 0:
@@ -165,8 +172,14 @@ def convert(ply: Path) -> None:
 
 
 def collect() -> None:
-    for rel in ("nav/nav.json", "nav/nav_report.json", "nav/occupancy.png",
-                "depth/scale.json", "depth/depth_report.json", "depth/map.npz",
+    web = RUN / "web"
+    if web.is_dir():
+        dst = OUT / "web"
+        dst.mkdir(exist_ok=True)
+        for f in sorted(web.iterdir()):
+            if f.is_file():
+                shutil.copy2(f, dst / f.name)
+    for rel in ("depth/scale.json", "depth/depth_report.json", "depth/map.npz",
                 "capture_qa.json", "capture_qa.md"):
         src = RUN / rel
         if src.exists():
@@ -200,6 +213,7 @@ def main() -> None:
             ply = export_splat(config)
             shutil.copy2(ply, OUT / "splat.ply")
             convert(ply)
+            run_stage(["package", str(RUN)])
         except Exception:
             error = "splat stage failed"
             stage_errors["splat"] = traceback.format_exc()
