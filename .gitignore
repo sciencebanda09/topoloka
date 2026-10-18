@@ -16,6 +16,7 @@ web/public/artifacts/*
 # kaggle tooling
 kaggle/staging/
 kaggle/out/
+kaggle/config.local.ps1
 
 # large media kept out of git (sample data under test/ is allowed)
 *.mp4
