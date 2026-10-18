@@ -87,7 +87,7 @@ def run_package(capture_dir: Path) -> dict:
         splat = {"present": True, "bytes": splat_src.stat().st_size}
         if rep.exists():
             r = json.loads(rep.read_text(encoding="utf-8"))
-            splat["gaussians"] = r.get("gaussians")
+            splat["gaussians"] = r.get("gaussians_out")
 
     qa = None
     qa_path = capture_dir / "capture_qa.json"

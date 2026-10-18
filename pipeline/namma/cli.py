@@ -20,6 +20,8 @@ def main() -> None:
     f.add_argument("video", type=Path, help="input video file")
     f.add_argument("out_dir", type=Path, help="capture working dir (frames land in <out_dir>/frames)")
     f.add_argument("--stride", type=int, default=6, help="window size in source frames (default 6)")
+    f.add_argument("--target-rate", type=float, default=None,
+                   help="compute stride for this many kept frames per second (fps-aware)")
     f.add_argument("--max-width", type=int, default=0, help="downscale kept frames to this width (0 = native)")
     f.add_argument("--max-seconds", type=float, default=None, help="stop after this many seconds")
     f.add_argument("--start", type=float, default=0.0, help="skip this many seconds at the start")
@@ -38,6 +40,8 @@ def main() -> None:
     sc = sub.add_parser("splat-convert", help="3DGS .ply -> web .splat")
     sc.add_argument("ply", type=Path, help="input gaussian PLY")
     sc.add_argument("out", type=Path, help="output .splat file")
+    sc.add_argument("--max-gaussians", type=int, default=0,
+                    help="prune to this many gaussians (0 = keep all above alpha floor)")
 
     q = sub.add_parser("qa", help="capture QA report (never blocks, always reports)")
     q.add_argument("capture_dir", type=Path, help="capture working dir")
@@ -55,6 +59,7 @@ def main() -> None:
             args.video,
             args.out_dir,
             stride=args.stride,
+            target_rate_hz=args.target_rate,
             max_width=args.max_width,
             max_seconds=args.max_seconds,
             start_s=args.start,
@@ -69,7 +74,8 @@ def main() -> None:
     elif args.stage == "geometry":
         geometry.run_geometry(args.capture_dir, cloud_path=args.cloud)
     elif args.stage == "splat-convert":
-        splat_convert.convert_splat(args.ply, args.out)
+        splat_convert.convert_splat(args.ply, args.out,
+                                    max_gaussians=args.max_gaussians)
     elif args.stage == "qa":
         checks = qa.run_qa(args.capture_dir)
         qa.write_qa(args.capture_dir, checks)

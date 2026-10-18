@@ -69,6 +69,7 @@ def extract_frames(
     out_dir: Path,
     *,
     stride: int = 6,
+    target_rate_hz: float | None = None,
     max_width: int = 0,
     max_seconds: float | None = None,
     start_s: float = 0.0,
@@ -78,6 +79,10 @@ def extract_frames(
 
     Args:
         stride: window size in source frames (window advances by stride).
+        target_rate_hz: if set, stride is computed from the video's fps so that
+            kept frames land at this rate (e.g. 2.5 -> one frame per 0.4 s).
+            The Kaggle kernels use this so 30/60/120 fps sources all produce
+            similar frame counts.
         max_width: downscale kept frames so width <= max_width (0 = native).
         max_seconds: stop reading after this many seconds of video.
         start_s: skip the first this many seconds.
@@ -95,6 +100,8 @@ def extract_frames(
         raise SystemExit(f"cannot open video: {video}")
     fps = cap.get(cv2.CAP_PROP_FPS) or 30.0
     total = int(cap.get(cv2.CAP_PROP_FRAME_COUNT) or 0)
+    if target_rate_hz and target_rate_hz > 0:
+        stride = max(1, int(round(fps / target_rate_hz)))
 
     start_index = int(start_s * fps)
     limit_index = start_index + int(max_seconds * fps) if max_seconds else None
@@ -147,6 +154,7 @@ def extract_frames(
         "video_fps": fps,
         "video_frames": total,
         "stride": stride,
+        "target_rate_hz": target_rate_hz,
         "max_width": max_width,
         "max_seconds": max_seconds,
         "start_s": start_s,

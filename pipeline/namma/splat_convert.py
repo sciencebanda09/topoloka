@@ -12,6 +12,10 @@ used by antimatter15-style web viewers:
     rotation  4 x uint8     (w, x, y, z; mapped from [-1,1] to [0,255])
 
 A 1M-gaussian scene lands at ~32 MB (vs ~240 MB as PLY).
+
+Optionally prunes to a gaussian budget (--max-gaussians): drops low-alpha
+gaussians first, then keeps the most visually important ones (alpha x scale),
+because web payload and viewer load time are first-class product constraints.
 """
 
 from __future__ import annotations
@@ -23,6 +27,7 @@ from pathlib import Path
 import numpy as np
 
 SH_C0 = 0.28209479177387814
+ALPHA_MIN = 0.02  # gaussians this transparent are never worth their bytes
 
 
 @dataclass
@@ -30,10 +35,14 @@ class SplatReport:
     stage: str = "splat_convert"
     ply: str = ""
     out: str = ""
-    gaussians: int = 0
+    gaussians_in: int = 0
+    gaussians_out: int = 0
+    dropped_alpha: int = 0
+    dropped_budget: int = 0
     splat_bytes: int = 0
     source_bytes: int = 0
     dropped_sh_bands: int = 0
+    max_gaussians: int = 0
 
     def to_dict(self) -> dict:
         return self.__dict__.copy()
@@ -71,7 +80,8 @@ def _read_ply_props(path: Path) -> tuple[np.ndarray, list[str]]:
     return data, names
 
 
-def convert_splat(ply_path: Path, out_path: Path) -> SplatReport:
+def convert_splat(ply_path: Path, out_path: Path,
+                  max_gaussians: int = 0) -> SplatReport:
     ply_path, out_path = Path(ply_path), Path(out_path)
     data, names = _read_ply_props(ply_path)
     need = ["x", "y", "z", "f_dc_0", "f_dc_1", "f_dc_2", "opacity",
@@ -80,7 +90,7 @@ def convert_splat(ply_path: Path, out_path: Path) -> SplatReport:
     if missing:
         raise SystemExit(f"PLY lacks gaussian properties: {missing} (found {len(names)})")
 
-    n = len(data)
+    n_in = len(data)
     pos = np.stack([data["x"], data["y"], data["z"]], axis=1).astype(np.float32)
 
     # color: SH DC -> [0,1]; alpha: sigmoid(opacity)
@@ -98,9 +108,23 @@ def convert_splat(ply_path: Path, out_path: Path) -> SplatReport:
     quat = np.where(norm > 1e-12, quat / norm, np.array([1.0, 0.0, 0.0, 0.0]))
     quat_u8 = np.clip(quat * 128 + 128, 0, 255).astype(np.uint8)
 
-    color_u8 = np.empty((n, 4), np.uint8)
+    color_u8 = np.empty((n_in, 4), np.uint8)
     color_u8[:, :3] = np.round(rgb * 255).astype(np.uint8)
     color_u8[:, 3] = np.round(alpha * 255).astype(np.uint8)
+
+    # -- pruning: bytes and load time are product constraints ----------------
+    keep = alpha >= ALPHA_MIN
+    dropped_alpha = int(n_in - keep.sum())
+    idx = np.flatnonzero(keep)
+    dropped_budget = 0
+    if max_gaussians and len(idx) > max_gaussians:
+        importance = alpha[idx] * np.cbrt(scale[idx].astype(np.float64).prod(axis=1))
+        sel = np.argpartition(importance, -max_gaussians)[-max_gaussians:]
+        dropped_budget = len(idx) - max_gaussians
+        idx = idx[sel]
+
+    n = len(idx)
+    pos, scale, color_u8, quat_u8 = pos[idx], scale[idx], color_u8[idx], quat_u8[idx]
 
     records = np.empty((n, 32), np.uint8)
     records[:, 0:12] = pos.view(np.uint8).reshape(n, 12)
@@ -110,16 +134,19 @@ def convert_splat(ply_path: Path, out_path: Path) -> SplatReport:
 
     out_path.parent.mkdir(parents=True, exist_ok=True)
     with open(out_path, "wb") as f:
-        # header written by the JS viewers' expectation: none -- raw records only
+        # raw records only -- no header: this is the .splat format
         f.write(records.tobytes())
 
     report = SplatReport(
-        ply=str(ply_path), out=str(out_path), gaussians=n,
+        ply=str(ply_path), out=str(out_path),
+        gaussians_in=n_in, gaussians_out=n,
+        dropped_alpha=dropped_alpha, dropped_budget=dropped_budget,
         splat_bytes=out_path.stat().st_size, source_bytes=ply_path.stat().st_size,
-        dropped_sh_bands=len(names) - 14,
+        dropped_sh_bands=len(names) - 14, max_gaussians=max_gaussians,
     )
     (out_path.parent / "splat_convert_report.json").write_text(
         json.dumps(report.to_dict(), indent=2), encoding="utf-8")
-    print(f"[splat_convert] {n} gaussians -> {report.splat_bytes / 1e6:.1f} MB "
+    print(f"[splat_convert] {n_in} gaussians -> {n} kept ({dropped_alpha} low-alpha, "
+          f"{dropped_budget} over budget) -> {report.splat_bytes / 1e6:.1f} MB "
           f"(from {report.source_bytes / 1e6:.1f} MB)")
     return report

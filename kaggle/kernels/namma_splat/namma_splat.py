@@ -32,6 +32,7 @@ CODE = WORK / "code"
 RUN = WORK / "run"
 NS_OUT = WORK / "ns"
 ITERS = os.environ.get("NM_ITERS", "15000")
+MAX_GAUSSIANS = os.environ.get("NM_MAX_GAUSSIANS", "1500000")
 
 
 def log(msg: str) -> None:
@@ -164,7 +165,8 @@ def export_splat(config: Path) -> Path:
 def convert(ply: Path) -> None:
     env = dict(os.environ, PYTHONIOENCODING="utf-8")
     cmd = [sys.executable, "-m", "namma.cli", "splat-convert",
-           str(ply), str(RUN / "splat" / "splat.splat")]
+           str(ply), str(RUN / "splat" / "splat.splat"),
+           "--max-gaussians", MAX_GAUSSIANS]
     r = subprocess.run(cmd, cwd=CODE, env=env, capture_output=True, text=True, timeout=1800)
     log(f"splat-convert exit {r.returncode}")
     if r.returncode != 0:

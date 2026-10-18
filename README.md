@@ -34,14 +34,16 @@ See `kaggle/README.md`.
 
 - [x] Repo skeleton, capture fixture (house video)
 - [x] Stage 1: frame picking (`pipeline/namma/frames.py`)
-- [x] Stage 2: SfM (`pipeline/namma/sfm.py`) — first Kaggle run in progress
-- [ ] Stage 3: geometry — floor plane, gravity align, 2.5D costmap
-- [ ] Stage 4: depth (Depth Anything V2 Metric Indoor)
-- [ ] Stage 5: 3DGS splat training
-- [ ] Stage 6: POIs (open-vocab detect + CLIP)
-- [ ] Web: first-person viewer + minimap
-- [ ] Web: search + pathfinding + route rendering
-- [ ] AR mode (QR-anchored relocalization)
+- [x] Stage 2: SfM (`pipeline/namma/sfm.py`) — Kaggle run in progress
+- [x] Stage 3: geometry — floor plane, gravity align, 2.5D costmap (`pipeline/namma/geometry.py`)
+- [x] Stage 4: depth — Depth Anything V2 metric fusion + scale alignment (`pipeline/namma/depth.py`)
+- [x] Stage 5: capture QA (`pipeline/namma/qa.py`)
+- [x] Stage 6: splat training kernel (nerfstudio splatfacto) + web conversion
+- [x] Stage 7: web bundle packaging (`pipeline/namma/package.py`)
+- [x] Web: first-person viewer + minimap + splat renderer (synthetic fixture verified)
+- [ ] First end-to-end run on the house capture (kernels in flight)
+- [ ] Web: search + pathfinding + route rendering (R2)
+- [ ] AR mode (QR-anchored relocalization, R3)
 
 ## Deadlines
 

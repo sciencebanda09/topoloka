@@ -23,7 +23,7 @@ WORK = Path("/kaggle/working")
 OUT = WORK / "out"
 CODE = WORK / "code"
 RUN = WORK / "runs" / "capture_v1"
-STRIDE = os.environ.get("NM_STRIDE", "12")
+TARGET_RATE = os.environ.get("NM_TARGET_RATE", "2.5")
 MAX_WIDTH = os.environ.get("NM_MAX_W", "1600")
 
 
@@ -100,7 +100,7 @@ def summary(pycolmap_version: str, video: Path, t_seconds: float, error: str | N
         "namma pipeline kernel v2",
         f"python      {sys.version.split()[0]}",
         f"pycolmap    {pycolmap_version}",
-        f"stride      {STRIDE}",
+        f"target_rate {TARGET_RATE}",
         f"max_width   {MAX_WIDTH}",
         f"video       {video.name} ({video.stat().st_size / 1e6:.1f} MB)"
         if video.exists() else "video       n/a",
@@ -122,7 +122,8 @@ def main() -> None:
         pycolmap_version = ensure_pycolmap()
         log(f"pycolmap {pycolmap_version}")
         video = find_video()
-        run_stage(["frames", str(video), str(RUN), "--stride", STRIDE, "--max-width", MAX_WIDTH])
+        run_stage(["frames", str(video), str(RUN), "--target-rate", TARGET_RATE,
+                   "--max-width", MAX_WIDTH])
         run_stage(["sfm", str(RUN)])
         run_stage(["geometry", str(RUN)])
         run_stage(["qa", str(RUN)])

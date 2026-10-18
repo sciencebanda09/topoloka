@@ -16,6 +16,7 @@ export class Minimap {
   private k = 1;
   private minX = 0;
   private minY = 0;
+  private route: [number, number][] = [];
 
   constructor(canvas: HTMLCanvasElement, nav: NavData, grid: { w: number; h: number; data: Uint8Array }) {
     const dpr = Math.min(window.devicePixelRatio, 2);
@@ -64,6 +65,10 @@ export class Minimap {
   private mx(x: number): number { return (x - this.minX) * this.k; }
   private my(y: number): number { return (y - this.minY) * this.k; }
 
+  setRoute(route: [number, number][] | null): void {
+    this.route = route ?? [];
+  }
+
   draw(pos: [number, number, number], headingRad: number): void {
     const { ctx, nav } = this;
     ctx.clearRect(0, 0, 240, 240);
@@ -95,6 +100,15 @@ export class Minimap {
       for (const [x, y] of nav.trajectory.slice(1)) ctx.lineTo(this.mx(x), this.my(y));
       ctx.strokeStyle = 'rgba(127, 212, 255, 0.35)';
       ctx.lineWidth = 1;
+      ctx.stroke();
+    }
+
+    if (this.route.length >= 2) {
+      ctx.beginPath();
+      ctx.moveTo(this.mx(this.route[0][0]), this.my(this.route[0][1]));
+      for (const [x, y] of this.route.slice(1)) ctx.lineTo(this.mx(x), this.my(y));
+      ctx.strokeStyle = 'rgba(64, 224, 138, 0.95)';
+      ctx.lineWidth = 2;
       ctx.stroke();
     }
 
