@@ -215,11 +215,20 @@ def main() -> None:
             ply = export_splat(config)
             shutil.copy2(ply, OUT / "splat.ply")
             convert(ply)
-            run_stage(["package", str(RUN)])
         except Exception:
             error = "splat stage failed"
             stage_errors["splat"] = traceback.format_exc()
             log("SPLAT ERROR:\n" + stage_errors["splat"])
+    # packaging runs whenever the minimal inputs exist (nav.json + a cloud) --
+    # a trainer failure must never cost us the dense nav bundle. Without a
+    # splat the viewer still works in point-cloud mode.
+    try:
+        run_stage(["package", str(RUN)])
+    except Exception:
+        stage_errors["package"] = traceback.format_exc()
+        log("PACKAGE ERROR:\n" + stage_errors["package"])
+        if not error:
+            error = "package stage failed"
     try:
         collect()
     except Exception:
