@@ -3,7 +3,7 @@
 $ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot '..\config.ps1')
 
-$src = Join-Path $NammaRoot 'kaggle\out\namma_pipeline'
+$src = Join-Path $NammaRoot 'kaggle\out\namma_pipeline\out'
 $stage = Join-Path $NammaRoot 'kaggle\staging\capture'
 Remove-Item -Recurse -Force $stage -ErrorAction SilentlyContinue
 New-Item -ItemType Directory -Force -Path $stage | Out-Null

@@ -34,6 +34,21 @@ if ($Watch) {
 $outDir = Join-Path $NammaRoot "kaggle\out\$Name"
 Remove-Item -Recurse -Force $outDir -ErrorAction SilentlyContinue
 New-Item -ItemType Directory -Force -Path $outDir | Out-Null
-kaggle kernels output $ref -p $outDir
-if ($LASTEXITCODE -ne 0) { throw "output fetch failed ($LASTEXITCODE)" }
+
+# Retry: a single CLI hiccup (network, unicode console bug) must not cost a
+# completed kernel run. Re-runs resume: up-to-date files are skipped.
+$ok = $false
+for ($i = 1; $i -le 3; $i++) {
+    kaggle kernels output $ref -p $outDir
+    if ($LASTEXITCODE -eq 0) { $ok = $true; break }
+    Write-Host "fetch attempt $i failed (rc=$LASTEXITCODE); retrying in 20 s"
+    Start-Sleep -Seconds 20
+}
+if (-not $ok) { throw "output fetch failed after 3 attempts" }
+
+$summary = Join-Path $outDir 'out\summary.txt'
+if (Test-Path $summary) {
+    Write-Host "---- summary.txt ----"
+    Get-Content $summary
+}
 Get-ChildItem -Recurse $outDir | Select-Object FullName, Length
