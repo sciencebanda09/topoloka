@@ -21,7 +21,10 @@ $meta = @'
   "licenses": [{"name": "other"}]
 }
 '@
-$meta | Set-Content -Path (Join-Path $stage 'dataset-metadata.json') -Encoding UTF8
+# NB: Set-Content -Encoding UTF8 writes a BOM in Windows PowerShell 5.1,
+# which breaks the Kaggle CLI's JSON parser -- write raw UTF-8 without BOM.
+[System.IO.File]::WriteAllText((Join-Path $stage 'dataset-metadata.json'), $meta,
+    (New-Object System.Text.UTF8Encoding($false)))
 
 $dataset = "$NammaUser/namma-capture-v1"
 $oldPref = $ErrorActionPreference

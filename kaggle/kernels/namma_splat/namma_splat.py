@@ -58,6 +58,10 @@ def stage_code() -> None:
 def stage_capture() -> None:
     """Build the capture dir layout the pipeline's stages expect.
 
+    Accepts either shipping form: Kaggle datasets sometimes expose uploaded
+    archives pre-extracted, so frames/sparse_txt may arrive as zip files or
+    as plain directories. Handle both.
+
     RUN/                     <- capture dir AND nerfstudio --data dir
       frames/*.jpg           <- referenced by transforms.json as frames/xxx.jpg
       transforms.json        <- nerfstudio camera file (ply_file_path sparse.ply)
@@ -71,16 +75,26 @@ def stage_capture() -> None:
         raise SystemExit("capture dataset namma-capture-v1 missing")
 
     RUN.mkdir(parents=True, exist_ok=True)
-    with zipfile.ZipFile(root / "frames.zip") as z:
-        z.extractall(RUN / "frames")
+
+    def stage_archive(stem: str, dst: Path) -> None:
+        z = root / f"{stem}.zip"
+        d = root / stem
+        if z.exists():
+            with zipfile.ZipFile(z) as zf:
+                zf.extractall(dst)
+        elif d.is_dir():
+            shutil.copytree(d, dst, dirs_exist_ok=True)
+        else:
+            raise SystemExit(f"capture dataset has neither {stem}.zip nor {stem}/")
+
+    stage_archive("frames", RUN / "frames")
     for f in ("transforms.json", "sparse.ply"):
         shutil.copy2(root / f, RUN / f)
 
     sfm = RUN / "sfm"
     sfm.mkdir(exist_ok=True)
     shutil.copy2(root / "poses.json", sfm / "poses.json")
-    with zipfile.ZipFile(root / "sparse_txt.zip") as z:
-        z.extractall(sfm / "sparse_txt")
+    stage_archive("sparse_txt", sfm / "sparse_txt")
     shutil.copy2(root / "sparse.ply", sfm / "sparse.ply")
     log(f"capture staged: {len(list((RUN / 'frames').glob('*.jpg')))} frames")
 
