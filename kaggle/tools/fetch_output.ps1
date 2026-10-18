@@ -14,10 +14,12 @@ if ($Watch) {
     $deadline = (Get-Date).AddMinutes($TimeoutMinutes)
     while ((Get-Date) -lt $deadline) {
         $status = (kaggle kernels status $ref 2>&1 | Out-String)
-        if ($status -match '"complete"') { Write-Host 'kernel complete'; break }
-        if ($status -match '"error"|"cancelled"') {
-            Write-Host $status.Trim()
-            throw "kernel ended: $status"
+        # status text is like: <ref> has status "KernelWorkerStatus.COMPLETE"
+        if ($status -match 'COMPLETE') { Write-Host 'kernel complete'; break }
+        if ($status -match 'ERROR|CANCELLED') {
+            # still download whatever was produced: summaries/logs explain the failure
+            Write-Host "kernel ended with: $($status.Trim())"
+            break
         }
         Start-Sleep -Seconds 30
     }

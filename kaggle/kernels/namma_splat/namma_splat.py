@@ -40,12 +40,18 @@ def log(msg: str) -> None:
 
 
 def stage_code() -> None:
+    """Extract our pipeline source (code.tar preferred; loose package fallback)."""
     tar = next(INPUT.glob("**/code.tar"), None)
-    if not tar:
-        raise SystemExit("code.tar missing (dataset namma-code)")
-    CODE.mkdir(parents=True, exist_ok=True)
-    with tarfile.open(tar) as t:
-        t.extractall(CODE)
+    if tar:
+        CODE.mkdir(parents=True, exist_ok=True)
+        with tarfile.open(tar) as t:
+            t.extractall(CODE)
+    else:
+        cli = next(INPUT.glob("**/namma/cli.py"), None)
+        if not cli:
+            raise SystemExit("no code.tar and no namma/cli.py under /kaggle/input "
+                             "(dataset namma-code missing?)")
+        shutil.copytree(cli.parents[1], CODE, dirs_exist_ok=True)
     log(f"code: {sorted(p.name for p in CODE.iterdir())}")
 
 
@@ -202,7 +208,7 @@ def main() -> None:
         run_stage(["depth", str(RUN)])
         run_stage(["geometry", str(RUN), "--cloud", str(RUN / "depth" / "map.npz")])
         run_stage(["qa", str(RUN)])
-    except Exception:
+    except BaseException:  # SystemExit included -- reports must never lie
         error = "pre-train stage failed"
         stage_errors["pre_train"] = traceback.format_exc()
         log("PRE-TRAIN ERROR:\n" + stage_errors["pre_train"])
@@ -215,7 +221,7 @@ def main() -> None:
             ply = export_splat(config)
             shutil.copy2(ply, OUT / "splat.ply")
             convert(ply)
-        except Exception:
+        except BaseException:
             error = "splat stage failed"
             stage_errors["splat"] = traceback.format_exc()
             log("SPLAT ERROR:\n" + stage_errors["splat"])
@@ -224,7 +230,7 @@ def main() -> None:
     # splat the viewer still works in point-cloud mode.
     try:
         run_stage(["package", str(RUN)])
-    except Exception:
+    except BaseException:
         stage_errors["package"] = traceback.format_exc()
         log("PACKAGE ERROR:\n" + stage_errors["package"])
         if not error:

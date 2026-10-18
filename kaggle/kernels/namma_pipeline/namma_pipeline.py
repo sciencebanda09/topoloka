@@ -32,13 +32,20 @@ def log(msg: str) -> None:
 
 
 def stage_code() -> None:
-    """Extract our pipeline source from the namma-code dataset (code.tar)."""
+    """Extract our pipeline source (code.tar preferred; loose package fallback)."""
     tars = sorted(INPUT.glob("**/code.tar"))
-    if not tars:
-        raise SystemExit("code.tar not found under /kaggle/input (dataset namma-code missing)")
-    CODE.mkdir(parents=True, exist_ok=True)
-    with tarfile.open(tars[0]) as t:
-        t.extractall(CODE)
+    if tars:
+        CODE.mkdir(parents=True, exist_ok=True)
+        with tarfile.open(tars[0]) as t:
+            t.extractall(CODE)
+    else:
+        # fallback: a dataset that ships the pipeline source as loose files
+        cli = next(INPUT.glob("**/namma/cli.py"), None)
+        if not cli:
+            listing = sorted(str(p.relative_to(INPUT)) for p in INPUT.iterdir())
+            raise SystemExit(f"no code.tar and no namma/cli.py under /kaggle/input "
+                             f"(dataset namma-code missing? mounts: {listing})")
+        shutil.copytree(cli.parents[1], CODE, dirs_exist_ok=True)
     log(f"code: {sorted(p.name for p in CODE.iterdir())}")
 
 
@@ -128,7 +135,7 @@ def main() -> None:
         run_stage(["geometry", str(RUN)])
         run_stage(["qa", str(RUN)])
         run_stage(["package", str(RUN)])
-    except Exception:
+    except BaseException:  # SystemExit included -- the summary must never lie
         error = traceback.format_exc()
         log("ERROR:\n" + error)
     finally:
