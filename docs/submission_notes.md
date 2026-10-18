@@ -8,12 +8,17 @@ copy.
 
 | Item | Link | Status |
 |------|------|--------|
-| Repo | https://github.com/sciencebanda09/topoloka (to be created) | pending |
-| Viewer (hosted) | (GitHub Pages URL, filled after deploy) | pending |
+| Repo | https://github.com/sciencebanda09/topoloka | public, created 2026-10-18 |
+| Viewer (hosted) | https://sciencebanda09.github.io/topoloka/?capture=house_v1 | live (viewer shell); real twin bundle lands after the GPU run |
 | Demo video | (YouTube unlisted, filled after recording) | pending |
 | Abstract PDF | `docs/abstract.pdf` in repo | draft |
 
 ## Log
+
+- 2026-10-18 — Public repo created (GitHub Pages via Actions deployed and
+  verified). Viewer hosting pipelines: committed sample under
+  `test/house_v1/web/` is copied into the Pages build by
+  `.github/workflows/web-pages.yml` -- no duplicated data in git.
 
 - 2026-10-18 — R1 build sprint: pipeline v2 kernel (frames→sfm→geometry→qa→
   package) rerun after fixing code staging; GPU splat kernel prepared
