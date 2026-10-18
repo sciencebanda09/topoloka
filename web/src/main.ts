@@ -79,7 +79,12 @@ async function boot(): Promise<void> {
     const path = costmap.findPath([spawn.position[0], spawn.position[1]], [last[0], last[1]]);
     if (path) {
       viewer.setRoute(path);
-      subtitle.textContent = `${CAPTURE} · route ${path.length} waypoints`;
+      minimap.setRoute(path);
+      let meters = 0;
+      for (let i = 1; i < path.length; i++) {
+        meters += Math.hypot(path[i][0] - path[i - 1][0], path[i][1] - path[i - 1][1]);
+      }
+      subtitle.textContent = `${CAPTURE} · route ${path.length} wp · ${meters.toFixed(1)} m`;
     } else {
       subtitle.textContent = `${CAPTURE} · route: no path found`;
     }
