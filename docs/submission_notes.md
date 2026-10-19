@@ -60,3 +60,24 @@ copy.
   after dropping 56 far outliers, per-vertex interleaved). namma-code and
   namma-capture-v1 re-pushed as new versions; both verified `ready`, GPU
   kernel still queued at mount time.
+
+- 2026-10-19 (afternoon) — GPU run 1 post-mortem and fixes:
+    * namma-splat v1 came back COMPLETE in 2.1 s: namma-code mounted, but
+      namma-capture-v1 did not. The kernel was pushed at 23:57 while the
+      capture dataset was mid-re-versioning (v2/v3 pushes overlapped), and
+      the mount was resolved against that unstable state and dropped
+      silently. By morning the dataset was `ready` and its file list shows
+      frames/*.jpg — Kaggle unpacked frames.zip at upload, so kernel staging
+      must accept both zip files and pre-extracted directories.
+    * Staging hardened: the capture root is now found by content
+      (transforms.json / frames.zip / frames/ / poses.json) rather than by
+      mount name, and the failure path dumps the /kaggle/input tree. Kernel
+      re-pushed (v2, queued 13:29 IST) with re-versioning long finished.
+    * geometry cam_height sign bug fixed: the plane distance was negated, so
+      every heuristic (non-fixed-scale) run was clamped to
+      CHEST_HEIGHT_M / 0.2 = 6.75 regardless of camera height. Affects the
+      CPU fallback path only — the GPU run uses the metric depth scale.
+      Pinned by pipeline/tests/test_geometry_align.py (3 tests).
+    * Local test suite green (13 tests across 5 files); abstract PDF
+      toolchain re-verified (draft renders 3 pages: pandoc + headless
+      Chrome).
