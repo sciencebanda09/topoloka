@@ -19,7 +19,16 @@ $ref = "$NammaUser/" + ($Name -replace '_', '-')
 if ($Watch) {
     $deadline = (Get-Date).AddMinutes($TimeoutMinutes)
     while ((Get-Date) -lt $deadline) {
-        $status = (kaggle kernels status $ref 2>&1 | Out-String)
+        # A transient CLI/network hiccup must not kill the watcher: the CLI
+        # prints python errors (connection resets etc.) to stderr, which
+        # EAP=Stop would turn into a terminating error.
+        $ErrorActionPreference = 'Continue'
+        try {
+            $status = (kaggle kernels status $ref 2>&1 | Out-String)
+        } catch {
+            $status = "watch: status check threw: $($_.Exception.Message)"
+        }
+        $ErrorActionPreference = 'Stop'
         # status text is like: <ref> has status "KernelWorkerStatus.COMPLETE"
         if ($status -match 'COMPLETE') { Write-Host 'kernel complete'; break }
         if ($status -match 'ERROR|CANCELLED') {
@@ -39,9 +48,12 @@ New-Item -ItemType Directory -Force -Path $outDir | Out-Null
 # completed kernel run. Re-runs resume: up-to-date files are skipped.
 $ok = $false
 for ($i = 1; $i -le 3; $i++) {
+    $ErrorActionPreference = 'Continue'   # CLI stderr is not a terminating error
     kaggle kernels output $ref -p $outDir
-    if ($LASTEXITCODE -eq 0) { $ok = $true; break }
-    Write-Host "fetch attempt $i failed (rc=$LASTEXITCODE); retrying in 20 s"
+    $rc = $LASTEXITCODE
+    $ErrorActionPreference = 'Stop'
+    if ($rc -eq 0) { $ok = $true; break }
+    Write-Host "fetch attempt $i failed (rc=$rc); retrying in 20 s"
     Start-Sleep -Seconds 20
 }
 if (-not $ok) { throw "output fetch failed after 3 attempts" }
