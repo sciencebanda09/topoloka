@@ -60,20 +60,34 @@ def stage_capture() -> None:
     """Build the capture dir layout the pipeline's stages expect.
 
     Accepts either shipping form: Kaggle datasets sometimes expose uploaded
-    archives pre-extracted, so frames/sparse_txt may arrive as zip files or
-    as plain directories. Handle both.
-
-    RUN/                     <- capture dir AND nerfstudio --data dir
-      frames/*.jpg           <- referenced by transforms.json as frames/xxx.jpg
-      transforms.json        <- nerfstudio camera file (ply_file_path sparse.ply)
-      sparse.ply             <- init cloud for splatfacto
-      sfm/poses.json         <- pipeline pose file
-      sfm/sparse_txt/        <- COLMAP text model (depth scale needs point ids)
-      sfm/sparse.ply         <- pipeline default cloud for geometry
+    archives pre-extracted (we saw frames.zip arrive as frames/*.jpg), so
+    frames/sparse_txt may arrive as zip files or as plain directories, and the
+    dataset root may sit at a different mount name. Find it by content, not by
+    name, and keep both branch handlers.
     """
-    root = next(INPUT.glob("namma-capture-v1*"), None)
-    if not root or not root.is_dir():
-        raise SystemExit("capture dataset namma-capture-v1 missing")
+    def looks_like_capture(p: Path) -> bool:
+        return ((p / "transforms.json").exists() or (p / "frames.zip").exists()
+                or (p / "frames").is_dir() or (p / "poses.json").exists())
+
+    def find_root() -> Path | None:
+        # 1) the expected mount name (verify it really holds capture files)
+        for p in sorted(INPUT.glob("namma-capture-v1*")):
+            if p.is_dir() and looks_like_capture(p):
+                return p
+        # 2) fallback: any mounted dir that looks like our capture
+        for marker in ("**/transforms.json", "**/frames.zip", "**/poses.json"):
+            for p in sorted(INPUT.glob(marker)):
+                cand = p.parent
+                if looks_like_capture(cand):
+                    return cand
+        return None
+
+    root = find_root()
+    if root is None:
+        tree = [str(p.relative_to(INPUT)) for p in sorted(INPUT.rglob("*"))[:80]]
+        raise SystemExit("capture dataset namma-capture-v1 not found; "
+                         "/kaggle/input tree (first 80):\n" + "\n".join(tree))
+    log(f"capture root: {root}")
 
     RUN.mkdir(parents=True, exist_ok=True)
 
