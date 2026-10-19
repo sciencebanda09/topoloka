@@ -213,8 +213,10 @@ def align_scene(points: np.ndarray, cam_centers: np.ndarray, down: np.ndarray,
         # orient normal to point "up" (against down)
         if normal @ down > 0:
             normal, d = -normal, -d
-        height_cam_mean = -(normal @ cam_mean + d)   # floor below cameras => negative
-        if not (-4.0 < height_cam_mean < -0.4):
+        # signed distance of the camera mean above the plane (positive, since
+        # normal points up and the floor lies below the cameras)
+        h_cam = float(normal @ cam_mean + d)
+        if not (0.4 < h_cam < 4.0):
             continue
         count = int(mask.sum())
         if best is None or count > best[0]:
@@ -224,9 +226,10 @@ def align_scene(points: np.ndarray, cam_centers: np.ndarray, down: np.ndarray,
         raise SystemExit("no floor plane found (no horizontal plane below the cameras)")
 
     count, normal, d = best
-    # distance of camera mean from the floor plane (in the input's units)
-    cam_height_units = float(-(normal @ cam_mean + d))
-    cam_height_units = max(cam_height_units, 0.2)
+    # distance of the camera mean above the floor plane (in the input's units).
+    # Was negated until 2026-10-19, which clamped every heuristic run to
+    # scale = CHEST_HEIGHT_M / 0.2 = 6.75 regardless of camera height.
+    cam_height_units = max(float(normal @ cam_mean + d), 0.2)
     scale = fixed_scale if fixed_scale is not None else CHEST_HEIGHT_M / cam_height_units
 
     # rotation mapping floor normal -> +Z (up)
