@@ -30,3 +30,33 @@ copy.
   Kaggle Python 3.13 image with no torch downgrade; pycolmap 4.2.1 has a
   cp313 manylinux wheel; open3d 0.20.0 too (required by the dataparser's
   point-cloud loading).
+
+- 2026-10-19 — Pipeline v3 ran green end-to-end (status ok, 39.7 min of
+  Kaggle CPU): 158 frames kept; SfM 157/158 registered (99.4%), 54,931
+  points, median reprojection error 0.563 px; geometry found 1,277 floor
+  inliers and a 19.21 m² walkable outline (chest-height scale on the CPU
+  path — the GPU run supersedes it with the metric depth scale). QA: WARN
+  only on the geometry scale check. Three real bugs were found and fixed:
+    * pycolmap 4.2.1 API drift — num_reg_images / num_points3D /
+      reg_image_ids and Image.cam_from_world are METHODS now (properties in
+      3.x), and Reconstruction.write()/write_text() require the target
+      directory to exist. SfM itself had been healthy (99.4% registered);
+      the crash was in our post-processing. Pinned by
+      pipeline/tests/test_sfm_api.py.
+    * PLY layout — our writers emitted "all xyz, then all rgb" while the PLY
+      spec (and every reader: geometry.load_cloud, trimesh/open3d for the
+      splat init, three.js PLYLoader) reads per-vertex x,y,z,r,g,b. The nav
+      grid had been built from misparsed points. Writers fixed + byte-exact
+      round-trip tests (pipeline/tests/test_ply_roundtrip.py).
+    * one camera per capture — extraction now uses CameraMode.SINGLE (same
+      as the dmx-slam reference); the 4.x default made one camera per image
+      with a ±13% focal spread.
+  Kernel scratch (code/, runs/, ns/) moved to /tmp so output fetches pull
+  only out/; fetch script forces UTF-8 (the kaggle CLI died printing unicode)
+  and retries twice.
+
+- 2026-10-19 — Capture dataset re-shipped clean before the queued GPU run
+  started: sparse.ply rebuilt from COLMAP's own text model (54,875 points
+  after dropping 56 far outliers, per-vertex interleaved). namma-code and
+  namma-capture-v1 re-pushed as new versions; both verified `ready`, GPU
+  kernel still queued at mount time.
