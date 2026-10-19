@@ -122,17 +122,22 @@ def run_stage(args: list[str]) -> None:
 
 
 def ensure_nerfstudio() -> str:
+    import importlib.metadata
+
     try:
-        import nerfstudio
-        return nerfstudio.__version__
+        import nerfstudio  # noqa: F401
     except ImportError:
         log("nerfstudio missing; pip install (this takes a few minutes)")
-        subprocess.run([sys.executable, "-m", "pip", "install", "-q", "nerfstudio"],
-                       check=True)
+        r = subprocess.run([sys.executable, "-m", "pip", "install", "-q",
+                            "nerfstudio==1.1.5"],
+                           capture_output=True, text=True)
+        if r.returncode != 0:
+            raise SystemExit(f"pip install nerfstudio failed:\n{(r.stderr or '')[-2000:]}")
         import importlib
         importlib.invalidate_caches()
-        import nerfstudio
-        return nerfstudio.__version__
+    # nerfstudio's __init__.py is license-only (no __version__) -- read the
+    # distribution metadata instead
+    return importlib.metadata.version("nerfstudio")
 
 
 def ensure_transformers() -> None:
@@ -145,7 +150,10 @@ def ensure_transformers() -> None:
 
 
 def check_cuda() -> None:
-    code = "import torch;print(torch.cuda.is_available(), torch.__version__, torch.version.cuda)"
+    code = ("import torch;"
+            "print(torch.cuda.is_available(), torch.cuda.device_count(), "
+            "torch.__version__, torch.version.cuda, "
+            "torch.cuda.get_device_name(0) if torch.cuda.is_available() else '-')")
     r = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True)
     log(f"cuda probe: {r.stdout.strip()} {r.stderr.strip()[:200]}")
     if "True" not in r.stdout:
@@ -162,6 +170,10 @@ def train() -> Path:
         "--max-num-iterations", ITERS,
         "--viewer.quit-on-train-completion", "True",
         "--pipeline.model.cull-alpha-thresh", "0.005",
+        # 1080p frames at full res would strain a 16 GB T4; 0.5 keeps the
+        # demo fidelity while making OOM/timeouts unlikely (verified flag
+        # exists in the 1.1.5 wheel: camera_res_scale_factor).
+        "--pipeline.datamanager.camera-res-scale-factor", "0.5",
         # Keep the splat in OUR camera frame. nerfstudio's defaults re-orient
         # (up), re-center (poses) and auto-scale the scene, which would break
         # alignment with the metric nav frame. nav.json carries the exact
@@ -221,7 +233,8 @@ def collect() -> None:
             if f.is_file():
                 shutil.copy2(f, dst / f.name)
     for rel in ("depth/scale.json", "depth/depth_report.json", "depth/map.npz",
-                "capture_qa.json", "capture_qa.md"):
+                "capture_qa.json", "capture_qa.md", "metricize.json",
+                "nav/nav.json", "nav/nav_report.json"):
         src = RUN / rel
         if src.exists():
             shutil.copy2(src, OUT / Path(rel).name)
@@ -266,6 +279,25 @@ def main() -> None:
         except BaseException:
             stage_errors["qa"] = traceback.format_exc()
             log("QA ERROR (training continues):\n" + stage_errors["qa"])
+    metricized = False
+    if not error:
+        # Frame contract: nav.json's align maps the SPLAT'S TRAINING FRAME ->
+        # nav. With a depth scale present, align was built against the metric
+        # cloud, so the splat must train in metric units too (see
+        # namma/metricize.py). Without a depth scale, geometry aligned the SfM
+        # cloud and SfM-frame training is already consistent.
+        if (RUN / "depth" / "scale.json").exists():
+            try:
+                run_stage(["metricize", str(RUN)])
+                metricized = True
+            except BaseException:
+                stage_errors["metricize"] = traceback.format_exc()
+                log("METRICIZE ERROR (skipping training -- a splat trained in "
+                    "SfM units would not match nav.json's metric align):\n"
+                    + stage_errors["metricize"])
+                error = "metricize failed"
+        else:
+            log("no depth scale; splat trains in SfM units (align covers that frame)")
     if not error:
         try:
             ns_version = ensure_nerfstudio()
@@ -297,6 +329,7 @@ def main() -> None:
         "kernel": "namma_splat",
         "nerfstudio": ns_version,
         "iterations": ITERS,
+        "metricized": metricized,
         "elapsed_s": round(time.time() - t0, 1),
         "status": error or "ok",
         "errors": stage_errors,
