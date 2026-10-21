@@ -156,6 +156,8 @@ def build_web(pipe_out: Path, splat_out: Path, dest: Path,
 
 
 def _fmt_size(n: int) -> str:
+    if n < 1_000:
+        return f"{n} B"
     return f"{n / 1e6:.2f} MB" if n >= 1_000_000 else f"{n / 1e3:.0f} KB"
 
 
