@@ -147,3 +147,23 @@ copy.
   row->y convention), results table complete, viewer + code links in.
   Remaining R1 items are user actions: demo video, video link in the abstract,
   fresh-profile cold-load check.
+
+- 2026-10-21 18:05-19:05 - Hosted-viewer bug: on GitHub Pages the twin hung on
+  "loading splat..." forever and logged an uncaught
+  "Viewer::addSplatScene -> Could not load file". The same bundle and file
+  loaded locally, and the deployed JS was byte-identical to the local build.
+  Root cause: Pages serves .splat with Content-Encoding: gzip, so the
+  Content-Length header (11,304,115 B) is the *compressed* size while the
+  decoded stream is 11,752,128 B. gaussian-splats-3d sizes its staging
+  ArrayBuffer from that header, so the stream overran it:
+  "RangeError: Invalid typed array length: 856078" (the offending chunk size).
+  The library also wraps loads in a custom AbortablePromise whose then()
+  ignores rejection callbacks, so a failed load never rejects the awaited
+  promise -- the app hung instead of falling back to the point cloud. (The
+  race is why it only reproduced on Pages; a local static server with gzip on
+  .splat reproduced it exactly.)
+  Fix: the viewer now fetches the .splat itself (native fetch decodes gzip),
+  hands the library a blob: URL with format: SceneFormat.Splat, and races the
+  load against a 180 s timeout so any future failure falls back to points with
+  a console warning. Verified against the gzip repro server and on the live
+  Pages URL: "splat 0.37M / QA PASS" with no exceptions.

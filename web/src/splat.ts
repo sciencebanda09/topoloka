@@ -62,13 +62,36 @@ export class SplatLayer {
     const rotation = new THREE.Quaternion();
     const scale = new THREE.Vector3(1, 1, 1);
     if (m) m.decompose(position, rotation, scale);
-    await this.viewer.addSplatScene(url, {
-      showLoadingUI: false,
-      splatAlphaRemovalThreshold: 10,
-      position: position.toArray(),
-      rotation: rotation.toArray(), // xyzw
-      scale: scale.toArray(),
-    });
+
+    // Fetch the .splat ourselves and hand the library a blob: URL.
+    // GitHub Pages serves .splat with Content-Encoding: gzip, and the library
+    // sizes its staging buffer from the Content-Length header -- which is then
+    // the *compressed* size -- so the decoded stream overruns it mid-download
+    // ("RangeError: Invalid typed array length"). A blob URL carries the exact
+    // byte length (or none, in which case the library safely buffers first).
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`splat fetch failed: ${res.status} ${res.statusText}`);
+    const bytes = await res.arrayBuffer();
+    const blobUrl = URL.createObjectURL(new Blob([bytes], { type: 'application/octet-stream' }));
+
+    try {
+      // The library's custom AbortablePromise ignores rejection callbacks, so a
+      // failed load would hang this await forever; race it against a timeout.
+      await withTimeout(
+        this.viewer.addSplatScene(blobUrl, {
+          format: GaussianSplats3D.SceneFormat.Splat, // blob URLs carry no extension
+          showLoadingUI: false,
+          splatAlphaRemovalThreshold: 10,
+          position: position.toArray(),
+          rotation: rotation.toArray(), // xyzw
+          scale: scale.toArray(),
+        }) as unknown as Promise<void>,
+        180_000,
+        'splat build timed out',
+      );
+    } finally {
+      URL.revokeObjectURL(blobUrl);
+    }
     this.loaded = true;
   }
 
@@ -79,4 +102,21 @@ export class SplatLayer {
   render(): void {
     this.viewer.render();
   }
+}
+
+/** Settle `p`, or reject if it takes longer than `ms` (see AbortablePromise note above). */
+function withTimeout<T>(p: Promise<T>, ms: number, message: string): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error(message)), ms);
+    p.then(
+      (value) => {
+        clearTimeout(timer);
+        resolve(value);
+      },
+      (err) => {
+        clearTimeout(timer);
+        reject(err);
+      },
+    );
+  });
 }

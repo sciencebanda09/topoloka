@@ -13,6 +13,7 @@ declare module '@mkkellogg/gaussian-splats-3d' {
     addSplatScenes(options: Record<string, unknown>[]): Promise<void>;
   }
   export const LogLevel: { None: number; Error: number; Warn: number; Info: number; Debug: number };
+  export const SceneFormat: { Splat: number; KSplat: number; Ply: number; Spz: number };
   export const SceneRevealMode: { Default: number; Gradual: number; Instant: number };
   export const RenderMode: { Always: number; OnChange: number; Never: number };
   export const WebXRMode: { None: number; VR: number; AR: number };
