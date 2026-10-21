@@ -27,6 +27,11 @@ const hint = document.getElementById('center-hint') as HTMLDivElement;
 const canvas = document.getElementById('view') as HTMLCanvasElement;
 const minimapCanvas = document.getElementById('minimap') as HTMLCanvasElement;
 
+// ?clean hides the click-to-enter prompt and the fps readout
+// (stills, README, demo recording); the fps counter is meaningless off-vsync
+const CLEAN = new URLSearchParams(location.search).has('clean');
+if (CLEAN) hint.classList.add('hidden');
+
 interface Meta {
   capture?: string;
   cloud_points?: number;
@@ -116,7 +121,8 @@ async function boot(): Promise<void> {
     } else if (nPoints) {
       parts.push(`${nPoints.toLocaleString()} pts${viewer.pointsVisible ? '' : ' (hidden)'}`);
     }
-    parts.push(`${walkable} m² walkable`, `${fps.toFixed(0)} fps`);
+    parts.push(`${walkable} m² walkable`);
+    if (!CLEAN) parts.push(`${fps.toFixed(0)} fps`);
     if (meta.qa_overall) parts.push(`QA ${meta.qa_overall}`);
     return parts.join(' · ');
   }
