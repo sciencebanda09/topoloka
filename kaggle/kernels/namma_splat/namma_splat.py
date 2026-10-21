@@ -225,15 +225,51 @@ def train() -> Path:
     return configs[-1]
 
 
+EXPORT_SNIPPET = r'''
+"""Export the trained splat, tolerating torch>=2.6's weights_only default.
+
+nerfstudio 1.1.5 calls torch.load() without weights_only=..., while torch>=2.6
+defaults it to True; our checkpoint records numpy scalars in the dataparser
+metadata, which the strict loader rejects. The checkpoint was produced by our
+own training run minutes earlier, so restore the legacy behaviour.
+"""
+import sys
+from pathlib import Path
+
+import torch
+
+_orig_load = torch.load
+
+
+def _load(*args, **kwargs):
+    kwargs.setdefault("weights_only", False)
+    return _orig_load(*args, **kwargs)
+
+
+torch.load = _load
+
+from nerfstudio.scripts.exporter import ExportGaussianSplat  # noqa: E402
+
+config = Path(sys.argv[1])
+out = Path(sys.argv[2])
+ExportGaussianSplat(load_config=config, output_dir=out).main()
+print("EXPORT_DONE", flush=True)
+'''
+
+
 def export_splat(config: Path) -> Path:
     export_dir = SCRATCH / "export"
-    cmd = ["ns-export", "gaussian-splat", "--load-config", str(config),
-           "--output-dir", str(export_dir)]
+    export_dir.mkdir(parents=True, exist_ok=True)
+    script = SCRATCH / "export_api.py"
+    script.write_text(EXPORT_SNIPPET, encoding="utf-8")
+    cmd = [sys.executable, str(script), str(config), str(export_dir)]
+    log(" ".join(cmd))
     r = subprocess.run(cmd, capture_output=True, text=True, timeout=3600)
-    log(f"ns-export exit {r.returncode}")
-    if r.returncode != 0:
-        raise SystemExit(f"ns-export failed:\n{(r.stderr or '')[-2000:]}")
-    plys = list(export_dir.glob("*.ply"))
+    log(f"export exit {r.returncode}")
+    log((r.stdout or "")[-500:])
+    if r.returncode != 0 or "EXPORT_DONE" not in (r.stdout or ""):
+        raise SystemExit(f"export failed:\n{(r.stderr or '')[-2000:]}")
+    plys = sorted(export_dir.glob("*.ply"))
     if not plys:
         raise SystemExit("no ply exported")
     return plys[0]
@@ -337,6 +373,21 @@ def main() -> None:
             error = "splat stage failed"
             stage_errors["splat"] = traceback.format_exc()
             log("SPLAT ERROR:\n" + stage_errors["splat"])
+            # Never lose a finished training run to a downstream bug: publish
+            # the checkpoint + config so an export fix can reuse them.
+            try:
+                run_dirs = sorted(NS_OUT.glob("capture/splatfacto/*"))
+                if run_dirs:
+                    ns_dst = OUT / "ns"
+                    ns_dst.mkdir(exist_ok=True)
+                    cfg_file = run_dirs[-1] / "config.yml"
+                    if cfg_file.exists():
+                        shutil.copy2(cfg_file, ns_dst / "config.yml")
+                    for ck in (run_dirs[-1] / "nerfstudio_models").glob("*.ckpt"):
+                        shutil.copy2(ck, ns_dst / ck.name)
+                    log(f"checkpoint preserved: {sorted(p.name for p in ns_dst.iterdir())}")
+            except Exception:
+                log("checkpoint preservation failed:\n" + traceback.format_exc())
     # packaging runs whenever the minimal inputs exist (nav.json + a cloud) --
     # a trainer failure must never cost us the dense nav bundle. Without a
     # splat the viewer still works in point-cloud mode.
