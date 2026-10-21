@@ -87,7 +87,10 @@ Three design decisions carried most of the weight:
 ## 5. Novelty, stated precisely
 
 1. **IMU-aware capture SOP with measurable QA** — the contract is checkable
-   numbers, not vibes. [RESULT: QA table from the house capture]
+   numbers, not vibes. On the house capture, 6/6 checks pass: p10 Laplacian
+   sharpness 367 (gate ≥ 100), 158 frames at 2.5 Hz, 157/158 views registered
+   (99.4%), 0.563 px median reprojection error (gate ≤ 1.0), 56-point floor
+   outline enclosing 13.89 m², and no geometry warnings.
 2. **Zero-touch semantic POIs (R2)** — open-vocabulary detection + CLIP
    embeddings projected into 3D, so "where's the nearest washroom" works on a
    space nobody annotated.
@@ -100,18 +103,18 @@ Three design decisions carried most of the weight:
    report; the abstract states where the system is weak (below) instead of
    cropping it out.
 
-## 6. Results (house capture, [RESULT: date])
+## 6. Results (house capture, Oct 2026)
 
 | Metric | Value |
 |---|---|
-| Input | `[RESULT: input]` phone video, 1 walk, +Sensor Logger bundle |
-| Frames kept | `[RESULT: frames]` (sharpest-per-window @ 2.5 Hz) |
-| SfM registered fraction | `[RESULT: reg]` (gate ≥ 60%) |
-| Median reprojection error | `[RESULT: reproj]` px (gate ≤ 1.0) |
-| Metric scale | `[RESULT: scale]` (MAD `[RESULT: mad]`) |
-| Costmap | `[RESULT: grid]` @ 5 cm, `[RESULT: area]` m² walkable |
+| Input | 63 s OnePlus phone video (30 fps), 1 walk, +Sensor Logger bundle |
+| Frames kept | 158 at 1600×900 (sharpest-per-window @ 2.5 Hz) |
+| SfM registered fraction | 157/158 = 99.4% (gate ≥ 60%) |
+| Median reprojection error | 0.563 px (gate ≤ 1.0) |
+| Metric scale | 0.4361 m/unit from metric depth (MAD 9.9%) |
+| Costmap | 214×297 grid @ 5 cm, 13.89 m² walkable |
 | Splat | `[RESULT: gaussians]` gaussians, `[RESULT: splatMB]` MB web payload |
-| Pipeline time (Kaggle free tier) | CPU `[RESULT]` min + GPU `[RESULT]` min |
+| Pipeline time (Kaggle free tier) | CPU 39.7 min + GPU `[RESULT]` min |
 
 Viewer: `[RESULT: link]` · Video: `[RESULT: link]` · Code: `[RESULT: repo]`
 
