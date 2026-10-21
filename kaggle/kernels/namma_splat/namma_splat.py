@@ -160,38 +160,64 @@ def check_cuda() -> None:
         raise SystemExit("CUDA unavailable after install; refusing to train on CPU")
 
 
+TRAIN_SNIPPET = r'''
+"""Train splatfacto via nerfstudio's Python API (no tyro CLI).
+
+`ns-train`'s dataparser is a tyro subcommand, and its flag grammar differs
+between tyro versions (older: `--auto-scale-poses False`; 1.x: `--no-auto-scale-poses`)
+and requires the `nerfstudio-data` token in a specific position. Building the
+TrainerConfig directly is version-proof and logs every setting.
+"""
+import copy
+import sys
+from pathlib import Path
+
+from nerfstudio.configs.method_configs import method_configs
+from nerfstudio.data.dataparsers.nerfstudio_dataparser import NerfstudioDataParserConfig
+
+RUN = Path(sys.argv[1])
+NS_OUT = Path(sys.argv[2])
+ITERS = int(sys.argv[3])
+RES = float(sys.argv[4])
+
+cfg = copy.deepcopy(method_configs["splatfacto"])
+cfg.output_dir = NS_OUT
+cfg.experiment_name = "capture"
+cfg.timestamp = "run1"
+cfg.max_num_iterations = ITERS
+cfg.viewer.quit_on_train_completion = True
+cfg.pipeline.model.cull_alpha_thresh = 0.005
+cfg.pipeline.datamanager.camera_res_scale_factor = RES
+# Keep OUR frame: no auto-orient/center/scale, seed from the SfM cloud.
+cfg.pipeline.datamanager.dataparser = NerfstudioDataParserConfig(
+    data=RUN,
+    orientation_method="none",
+    center_method="none",
+    auto_scale_poses=False,
+    load_3D_points=True,
+)
+print("base dir:", cfg.get_base_dir(), flush=True)
+print("dataparser:", cfg.pipeline.datamanager.dataparser, flush=True)
+cfg.save_config()
+trainer = cfg.setup(local_rank=0, world_size=1)
+trainer.setup()
+trainer.train()
+print("TRAIN_DONE", flush=True)
+'''
+
+
 def train() -> Path:
-    cmd = [
-        "ns-train", "splatfacto",
-        "--data", str(RUN),
-        "--output-dir", str(NS_OUT),
-        "--experiment-name", "capture",
-        "--timestamp", "run1",
-        "--max-num-iterations", ITERS,
-        "--viewer.quit-on-train-completion", "True",
-        "--pipeline.model.cull-alpha-thresh", "0.005",
-        # 1080p frames at full res would strain a 16 GB T4; 0.5 keeps the
-        # demo fidelity while making OOM/timeouts unlikely (verified flag
-        # exists in the 1.1.5 wheel: camera_res_scale_factor).
-        "--pipeline.datamanager.camera-res-scale-factor", "0.5",
-        # Keep the splat in OUR camera frame. nerfstudio's defaults re-orient
-        # (up), re-center (poses) and auto-scale the scene, which would break
-        # alignment with the metric nav frame. nav.json carries the exact
-        # alignment transform; training must not add its own.
-        "--pipeline.datamanager.dataparser.orientation-method", "none",
-        "--pipeline.datamanager.dataparser.center-method", "none",
-        "--pipeline.datamanager.dataparser.auto-scale-poses", "False",
-        # Seed the gaussians from our SfM cloud (nerfstudio 1.1.5's splatfacto
-        # method config already sets this, but pass it explicitly: random init
-        # would silently ruin convergence).
-        "--pipeline.datamanager.dataparser.load-3D-points", "True",
-    ]
+    script = SCRATCH / "train_api.py"
+    script.parent.mkdir(parents=True, exist_ok=True)
+    script.write_text(TRAIN_SNIPPET, encoding="utf-8")
+    cmd = [sys.executable, str(script), str(RUN), str(NS_OUT), ITERS, "0.5"]
     log(" ".join(cmd))
     r = subprocess.run(cmd, capture_output=True, text=True, timeout=6 * 3600)
-    log(f"ns-train exit {r.returncode}")
-    if r.returncode != 0:
-        tail = (r.stderr or "")[-3000:] + (r.stdout or "")[-1000:]
-        raise SystemExit(f"ns-train failed:\n{tail}")
+    log(f"train exit {r.returncode}")
+    log((r.stdout or "")[-600:])
+    if r.returncode != 0 or "TRAIN_DONE" not in (r.stdout or ""):
+        tail = (r.stderr or "")[-3000:] + (r.stdout or "")[-1500:]
+        raise SystemExit(f"training failed:\n{tail}")
     configs = sorted(NS_OUT.glob("capture/splatfacto/*/config.yml"))
     if not configs:
         raise SystemExit("no config.yml found after training")

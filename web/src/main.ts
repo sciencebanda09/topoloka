@@ -61,17 +61,16 @@ async function boot(): Promise<void> {
 
   // splat, when the pipeline has produced one: render in our scene/camera
   let splat: SplatLayer | null = null;
-  try {
-    const head = await fetch(`${BASE}/splat.splat`, { method: 'HEAD' });
-    if (head.ok && head.headers.get('content-length') !== '0') {
+  if (meta.splat?.present) {
+    try {
       subtitle.textContent = `${CAPTURE} · loading splat…`;
       splat = new SplatLayer(viewer.renderer, viewer.scene, viewer.camera);
       await splat.load(`${BASE}/splat.splat`, nav);
       viewer.setPointsVisible(false); // splat carries the visuals; P re-shows points
+    } catch (err) {
+      console.warn('splat load failed, falling back to points:', err);
+      splat = null;
     }
-  } catch (err) {
-    console.warn('splat load failed, falling back to points:', err);
-    splat = null;
   }
 
   const spawn = viewer.spawnAt(nav);
