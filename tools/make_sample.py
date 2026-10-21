@@ -33,6 +33,7 @@ import numpy as np
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "pipeline"))
 
+from namma import qa  # noqa: E402
 from namma.geometry import load_cloud  # noqa: E402
 from namma.package import _write_ply  # noqa: E402
 from namma.splat_convert import convert_splat  # noqa: E402
@@ -234,6 +235,15 @@ def main() -> None:
 
     meta = build_web(pipe_out, splat_out, args.dest,
                      args.max_points, args.max_gaussians)
+    # Regenerate QA where the sample carries the inputs: the GPU kernel ships a
+    # SKIP report because frames_meta.json / sfm_report.json never reach it.
+    try:
+        checks = qa.run_qa(args.dest)
+        qa.write_qa(args.dest, checks)
+        passed = sum(1 for c in checks if c.status == "PASS")
+        print(f"  QA regenerated on the sample: {passed}/{len(checks)} PASS")
+    except Exception as exc:  # QA is a report, never a blocker
+        print(f"  QA regeneration skipped: {exc}")
     write_readme(args.dest, meta, n)
 
     total = sum(p.stat().st_size for p in args.dest.rglob("*") if p.is_file())
