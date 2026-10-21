@@ -115,3 +115,35 @@ copy.
   200 for a missing splat.splat, which hung boot in "loading splat...").
   Synthetic capture verified end-to-end in headless Chrome (splat, minimap,
   HUD).
+
+- 2026-10-21 14:39-15:30 - GPU run v4 retrained successfully (20k iters,
+  30.3 min on a T4 -> 903,308 gaussians) but died in export: nerfstudio 1.1.5
+  calls torch.load() without weights_only, and torch >= 2.6 defaults it to
+  True, so our own checkpoint was rejected by the strict unpickler. The
+  checkpoint lived in scratch and was not published, so the 30-minute training
+  was lost.
+- 2026-10-21 15:00-15:25 - GPU run v5: export now goes through the
+  ExportGaussianSplat Python API with a weights_only=False shim (same trusted
+  checkpoint), and the kernel publishes the checkpoint to out/ns/ if the splat
+  stage fails, so training can never be lost to a downstream bug again.
+  Result: status ok, 41.9 min total, splat.ply 255.7 MB -> splat.splat
+  28.9 MB (903,308 gaussians; export 1.5 min).
+- 2026-10-21 15:30-15:40 - Alignment audit before shipping: transform splat
+  centres into the nav frame with nav.json.align and compare with the dense
+  cloud: centroid delta 0.10-0.17 m, 71.6% of gaussians within 0.3 m of a
+  cloud voxel, 96.1% inside the capture volume + 1 m. The outliers are
+  confident gaussians beyond walls/windows -> the sample build now crops to
+  the cloud bounds + 1 m (367,254 gaussians, 11.8 MB payload).
+- 2026-10-21 15:40-15:45 - test/house_v1 committed (22.1 MB: 14 preview
+  frames, SfM poses/cloud, depth scale, metric nav, cropped splat, QA 6/6
+  PASS regenerated locally from frames_meta + sfm_report) and pushed; the
+  Pages workflow staged it and https://sciencebanda09.github.io/topoloka/
+  ?capture=house_v1 now serves nav.json + cloud.ply + splat.splat (verified
+  200 + byte sizes). Headless Chrome render of the sample confirms the twin:
+  room geometry, furniture, minimap, HUD; the 3D trajectory wire is hidden
+  while the splat is visible.
+- 2026-10-21 15:45 - Abstract finalized at 4 pages with two generated
+  figures (pipeline map; occupancy map drawn from nav.json in the viewer's
+  row->y convention), results table complete, viewer + code links in.
+  Remaining R1 items are user actions: demo video, video link in the abstract,
+  fresh-profile cold-load check.
