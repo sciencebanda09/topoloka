@@ -39,6 +39,11 @@ light: `test/house_v1/` (14 preview frames, SfM cloud, metric nav, splat,
 
 **Hosted twin:** <https://sciencebanda09.github.io/topoloka/?capture=house_v1>
 
+![The house twin in a browser: splat, minimap, QA status](docs/fig/twin.png)
+
+*The shipped sample twin in the viewer: 367,254 Gaussian splats, the metric
+minimap (red = obstacles, blue = capture path), and the QA verdict in the HUD.*
+
 **Locally** (Node 20+):
 
 ```powershell

@@ -109,18 +109,25 @@ Three design decisions carried most of the weight:
 | Median reprojection error | 0.563 px (gate ≤ 1.0) |
 | Metric scale | 0.4361 m/unit from metric depth (MAD 9.9%) |
 | Costmap | 214×297 grid @ 5 cm, 13.89 m² walkable |
-| Splat | 903,308 gaussians, 28.9 MB web payload (hosted sample: 400,000 / 12.8 MB) |
+| Splat | 903,308 gaussians, 28.9 MB web payload (hosted sample: 367,254 / 11.8 MB) |
 | Pipeline time (Kaggle free tier) | CPU 39.7 min + GPU 41.9 min |
 
 Training is 20,000 iterations of splatfacto on a single T4 (30.3 min); export
-takes 1.5 min more. The hosted sample is the same twin decimated to 400,000
-gaussians so the page stays light.
+takes 1.5 min more. The hosted sample is the same twin, opacity-pruned to
+400,000 gaussians and cropped to the capture volume (367,254 gaussians,
+11.8 MB), so the page stays light.
 
 ![House capture: 5 cm occupancy grid with the 157-camera trajectory.](fig/nav.png)
 
 *Figure 2 — the metric costmap the viewer uses for collision and (R2) routing:
 white = observed free cells (13.89 m² walkable), red = obstacle band 0.1-1.5 m
 above the floor, gray = unobserved, blue = camera path; 214×297 cells at 5 cm.*
+
+![The house twin in the browser.](fig/twin.png)
+
+*Figure 3 — the shipped twin in a browser (hosted sample, 367,254 gaussians):
+the splat, the metric minimap (red = obstacles, blue = capture path) and the
+QA verdict in the HUD. The viewpoint is the walker's spawn on the capture path.*
 
 Viewer: <https://sciencebanda09.github.io/topoloka/?capture=house_v1> ·
 Code: <https://github.com/sciencebanda09/topoloka> ·

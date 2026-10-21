@@ -1,16 +1,16 @@
-# R1 submission checklist (due Oct 31, 2026)
+﻿# R1 submission checklist (due Oct 31, 2026)
 
 Round 1 deliverables and their exact state.
 
-## 1. Technical abstract PDF (≤ 5 pages)
+## 1. Technical abstract PDF (â‰¤ 5 pages)
 
 - [x] Draft: `docs/abstract.md` (narrative, architecture, novelty, honest
       limitations, roadmap)
 - [x] Every `[RESULT]` filled from the end-to-end run (158 frames, 157/158
-      registered, 0.563 px, 0.4361 m/unit, 13.89 m², 903,308 gaussians,
+      registered, 0.563 px, 0.4361 m/unit, 13.89 mÂ², 903,308 gaussians,
       28.9 MB payload, CPU 39.7 min + GPU 41.9 min)
 - [x] PDF renders at 4 pages (`tools/build_pdf.ps1`)
-- [x] Figures: pipeline stage map (Fig. 1) + metric occupancy map (Fig. 2)
+- [x] Figures: pipeline stage map (Fig. 1), metric occupancy map (Fig. 2), hosted twin still (Fig. 3)
 - [ ] Proofread once out loud; numbers must match the repo artifacts
       (all numbers above trace to `test/house_v1/`)
 - [ ] `Demo video:` line updated with the upload link (record first)
@@ -22,11 +22,11 @@ Round 1 deliverables and their exact state.
       of the house twin: splat, minimap, HUD)
 - [x] Deployed on GitHub Pages, serving the committed sample:
       <https://sciencebanda09.github.io/topoloka/?capture=house_v1>
-- [x] Link added to the abstract
-- [ ] Link tested from a fresh browser profile (cold cache first-load time) —
+- [x] Link added to the abstract; loads in a clean profile (splat 0.37M, no console errors)
+- [ ] Link tested from a fresh browser profile (cold cache first-load time) â€”
       first load fetches 11.8 MB splat + 3.8 MB cloud
 
-## 3. Demo video (3–5 min)
+## 3. Demo video (3â€“5 min)
 
 - [x] `docs/demo_script.md` shot list with the measured numbers on hand
 - [ ] Record with the real twin (local bundle in
@@ -43,7 +43,7 @@ Round 1 deliverables and their exact state.
       scale, metric nav, 367K-gaussian cropped splat, QA 6/6 PASS) with a
       generated README that reproduces the local viewer in two commands
 - [x] Repo public (MIT), README quickstart + hosted link + controls
-- [ ] Fresh-clone check: `git clone` → follow README → `npm run dev` shows
+- [ ] Fresh-clone check: `git clone` â†’ follow README â†’ `npm run dev` shows
       the sample twin without any Kaggle run
 
 ## 5. Budget / dependencies
