@@ -31,6 +31,40 @@ phone capture ──► Kaggle pipeline ──► artifact bundle ──► web 
 The local machine only edits code, commits, and talks to the Kaggle CLI.
 See `kaggle/README.md`.
 
+## Quickstart (viewer + sample data)
+
+The committed sample capture is a real house walk, decimated so the repo stays
+light: `test/house_v1/` (14 preview frames, SfM cloud, metric nav, splat,
+`capture_qa.md`). It is the same data the hosted link serves.
+
+**Hosted twin:** <https://sciencebanda09.github.io/topoloka/?capture=house_v1>
+
+**Locally** (Node 20+):
+
+```powershell
+# stage the committed sample where the viewer fetches artifacts
+New-Item -ItemType Directory -Force web/public/artifacts/house_v1 | Out-Null
+Copy-Item -Recurse -Force test/house_v1/web/* web/public/artifacts/house_v1/
+cd web
+npm ci
+npm run dev        # open http://127.0.0.1:5173/?capture=house_v1
+```
+
+```bash
+# same, on a POSIX shell
+mkdir -p web/public/artifacts/house_v1
+cp -r test/house_v1/web/. web/public/artifacts/house_v1/
+cd web && npm ci && npm run dev
+```
+
+Drag to look, **WASD/arrows** to walk, **M** toggles the minimap, **P** toggles
+the point cloud behind the splat. `npm run build` produces a static `dist/`
+that can be served from any web host.
+
+**Reproduce the pipeline:** the exact kernels that produced this capture are
+in `kaggle/kernels/` and are driven by the scripts in `kaggle/tools/` — see
+`kaggle/README.md` and `test/house_v1/README.md`.
+
 ## Status
 
 - [x] Repo skeleton, capture fixture (house video)
