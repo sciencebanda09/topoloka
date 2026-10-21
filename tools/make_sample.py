@@ -155,6 +155,10 @@ def build_web(pipe_out: Path, splat_out: Path, dest: Path,
     return meta
 
 
+def _fmt_size(n: int) -> str:
+    return f"{n / 1e6:.2f} MB" if n >= 1_000_000 else f"{n / 1e3:.0f} KB"
+
+
 def write_readme(dest: Path, meta: dict, n_frames: int) -> None:
     rows = []
     total = 0
@@ -168,7 +172,9 @@ def write_readme(dest: Path, meta: dict, n_frames: int) -> None:
         for p in sorted(d.iterdir()):
             if p.is_file():
                 rows.append((str(p.relative_to(dest)).replace("\\", "/"), p.stat().st_size))
-    table = "\n".join(f"| `{name}` | {size/1e6:.2f} MB |" for name, size in rows)
+    table = "\n".join(f"| `{name}` | {_fmt_size(size)} |" for name, size in rows)
+    g = meta.get("splat_gaussians")
+    splat_txt = f"splat pruned to {int(g):,} gaussians" if g else "no splat in this build"
     readme = f"""# house_v1 -- sample capture
 
 Everything here was produced by the Topoloka pipeline on Kaggle from a single
@@ -179,20 +185,26 @@ live in git so anyone can inspect or serve it without a Kaggle account.
 |---|---|
 {table}
 
-Total: **{total/1e6:.1f} MB** (cloud decimated to {meta.get('cloud_points', 0):,} points,
-splat pruned to {meta.get('splat_gaussians', 'n/a')} gaussians; preview frames: {n_frames}).
+Total: **{total / 1e6:.1f} MB** (cloud decimated to {meta.get('cloud_points', 0):,}
+points, {splat_txt}; preview frames: {n_frames}).
 
 ## View it
 
+Stage this folder where the viewer looks for artifacts, then start the app:
+
 ```powershell
-cd web
-npm install
-npm run dev
-# then open http://localhost:5173/?capture=house_v1
+New-Item -ItemType Directory -Force ..\\..\\web\\public\\artifacts\\house_v1 | Out-Null
+Copy-Item -Recurse -Force .\\* ..\\..\\web\\public\\artifacts\\house_v1\\
+cd ..\\..\\web
+npm ci
+npm run dev   # open http://127.0.0.1:5173/?capture=house_v1
 ```
 
-(copy this folder to `web/public/artifacts/house_v1/` first, or use
-`web/tools/sync_artifacts.ps1` when the kernel outputs are present.)
+Hosted twin (same data): <https://sciencebanda09.github.io/topoloka/?capture=house_v1>
+
+Drag to look, WASD/arrows to walk, M toggles the minimap, P toggles the
+point cloud behind the splat. (Internal refreshes from fresh kernel outputs:
+`web/tools/sync_artifacts.ps1` performs the same copy.)
 
 ## What each piece proves
 
