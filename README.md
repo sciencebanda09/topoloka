@@ -76,7 +76,10 @@ in `kaggle/kernels/` and are driven by the scripts in `kaggle/tools/` — see
 - [x] Stage 6: splat training kernel (nerfstudio splatfacto) + web conversion
 - [x] Stage 7: web bundle packaging (`pipeline/namma/package.py`)
 - [x] Web: first-person viewer + minimap + splat renderer (synthetic fixture verified)
-- [ ] First end-to-end run on the house capture (kernels in flight)
+- [x] End-to-end run on the house capture — CPU SfM 39.7 min, GPU depth +
+      20k-iteration splatfacto 41.9 min, 903,308 gaussians (28.9 MB payload)
+- [x] Hosted sample twin: <https://sciencebanda09.github.io/topoloka/?capture=house_v1>
+      (367,254 gaussians / 11.8 MB, cropped to the capture volume, QA 6/6 PASS)
 - [ ] Web: search + pathfinding + route rendering (R2)
 - [ ] AR mode (QR-anchored relocalization, R3)
 
