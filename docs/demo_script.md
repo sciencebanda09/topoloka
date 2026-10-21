@@ -26,10 +26,10 @@ the artifact files, not from a slide.
 - Voice-over live while walking (not a post-dub) — breaths sell the scale.
 - Export H.264, ≤ 500 MB, upload unlisted YouTube; link goes in the abstract.
 
-## Numbers to have on hand (fill from `capture_qa.md`)
+## Numbers to have on hand (from `capture_qa.md` / `nav_report.json`)
 
-- frames kept / registered fraction / median reprojection error
-- metric scale + source (`depth-scale` vs fallback) + MAD
-- walkable area (m²), costmap cell 5 cm
-- splat gaussians + web payload MB + viewer load time (stopwatch it)
-- pipeline wall time: CPU kernel min + GPU kernel min
+- 158 frames kept at 2.5 Hz; 157/158 registered (99.4%); median reprojection 0.563 px
+- metric scale 0.4361 m/unit from phone depth (MAD 9.9%); sparsity 54,931 SfM points
+- walkable 13.89 m²; costmap 214×297 cells @ 5 cm
+- splat gaussians + web payload MB + viewer load time (stopwatch it) `[after training run]`
+- pipeline wall time: CPU 39.7 min; GPU `[after training run]`
