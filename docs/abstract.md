@@ -6,8 +6,9 @@
 the place-world. A spatial twin engine that turns one ordinary phone video of
 a walkthrough into a navigable, photorealistic world in a link.
 
-> Working draft. Numbers marked `[RESULT]` are filled from the end-to-end run
-> that is currently executing on Kaggle; nothing here is invented.
+> Every number in this document comes from the shipped artifacts of the
+> end-to-end run on the house capture (the files under `test/house_v1/` and the
+> kernel outputs they were assembled from); nothing here is invented.
 
 ## 1. The problem we actually solve
 
@@ -108,8 +109,12 @@ Three design decisions carried most of the weight:
 | Median reprojection error | 0.563 px (gate ≤ 1.0) |
 | Metric scale | 0.4361 m/unit from metric depth (MAD 9.9%) |
 | Costmap | 214×297 grid @ 5 cm, 13.89 m² walkable |
-| Splat | `[RESULT: gaussians]` gaussians, `[RESULT: splatMB]` MB web payload |
-| Pipeline time (Kaggle free tier) | CPU 39.7 min + GPU `[RESULT]` min |
+| Splat | 903,308 gaussians, 28.9 MB web payload (hosted sample: 400,000 / 12.8 MB) |
+| Pipeline time (Kaggle free tier) | CPU 39.7 min + GPU 41.9 min |
+
+Training is 20,000 iterations of splatfacto on a single T4 (30.3 min); export
+takes 1.5 min more. The hosted sample is the same twin decimated to 400,000
+gaussians so the page stays light.
 
 ![House capture: 5 cm occupancy grid with the 157-camera trajectory.](fig/nav.png)
 
@@ -117,7 +122,9 @@ Three design decisions carried most of the weight:
 white = observed free cells (13.89 m² walkable), red = obstacle band 0.1-1.5 m
 above the floor, gray = unobserved, blue = camera path; 214×297 cells at 5 cm.*
 
-Viewer: `[RESULT: link]` · Video: `[RESULT: link]` · Code: `[RESULT: repo]`
+Viewer: <https://sciencebanda09.github.io/topoloka/?capture=house_v1> ·
+Code: <https://github.com/sciencebanda09/topoloka> ·
+Demo video: **pending upload**
 
 ## 7. Where the system is weak (and what we do about it)
 

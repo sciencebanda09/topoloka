@@ -67,6 +67,7 @@ async function boot(): Promise<void> {
       splat = new SplatLayer(viewer.renderer, viewer.scene, viewer.camera);
       await splat.load(`${BASE}/splat.splat`, nav);
       viewer.setPointsVisible(false); // splat carries the visuals; P re-shows points
+      viewer.setTrajectoryVisible(false); // minimap keeps the path; the 3D wire is clutter
     } catch (err) {
       console.warn('splat load failed, falling back to points:', err);
       splat = null;

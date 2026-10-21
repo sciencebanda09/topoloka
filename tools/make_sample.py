@@ -96,6 +96,29 @@ def pick_frames(frames_zip: Path, dst: Path, count: int) -> int:
     return len(picked)
 
 
+def prune_splat_to_box(splat_path: Path, nav: dict, lo: np.ndarray, hi: np.ndarray,
+                       margin: float = 1.0) -> int:
+    """Drop gaussians outside the capture volume (training-frame -> nav via align).
+
+    Splatfacto keeps a few confident gaussians far outside the room (through
+    windows, past under-observed walls). They render as floating blobs and are
+    useless for a room-scale twin, so the shipped sample is cropped to the dense
+    cloud's bounds plus a metre.
+    """
+    raw = np.fromfile(splat_path, dtype=np.uint8)
+    n = raw.size // 32
+    rec = raw[: n * 32].reshape(n, 32)
+    pos = rec[:, :12].copy().view(np.float32).reshape(n, 3)
+    al = nav["align"]
+    s = float(al["scale_m_per_unit"])
+    R = np.asarray(al["R_row_major"], dtype=np.float64).reshape(3, 3)
+    o = np.asarray(al["origin"], dtype=np.float64)
+    p_nav = s * (pos.astype(np.float64) - o) @ R
+    keep = ((p_nav >= lo - margin) & (p_nav <= hi + margin)).all(axis=1)
+    splat_path.write_bytes(np.ascontiguousarray(rec[keep]).tobytes())
+    return int(keep.sum())
+
+
 def build_web(pipe_out: Path, splat_out: Path, dest: Path,
               max_points: int, max_gaussians: int) -> dict:
     web_src = splat_out / "web" if (splat_out / "web").is_dir() else pipe_out / "web"
@@ -136,6 +159,14 @@ def build_web(pipe_out: Path, splat_out: Path, dest: Path,
     elif (web_src / "splat.splat").exists():
         shutil.copy2(web_src / "splat.splat", web / "splat.splat")
         meta["splat_from"] = "copied from web bundle"
+
+    # crop the shipped splat to the capture volume (the raw export keeps a few
+    # confident gaussians tens of metres outside the room)
+    if (web / "splat.splat").exists():
+        nav_doc = json.loads((web / "nav.json").read_text(encoding="utf-8"))
+        kept = prune_splat_to_box(web / "splat.splat", nav_doc, xyz.min(0), xyz.max(0))
+        meta["splat_gaussians"] = kept
+        meta["splat_bytes"] = int((web / "splat.splat").stat().st_size)
 
     # keep web/meta.json honest about what the sample actually ships
     meta_path = web / "meta.json"
@@ -256,6 +287,14 @@ def main() -> None:
         qa.write_qa(args.dest, checks)
         passed = sum(1 for c in checks if c.status == "PASS")
         print(f"  QA regenerated on the sample: {passed}/{len(checks)} PASS")
+        # the viewer HUD reads meta.json -- keep it honest about THIS report
+        order = {"SKIP": 0, "PASS": 1, "WARN": 2, "FAIL": 3}
+        overall = max(checks, key=lambda c: order.get(c.status, 0)).status
+        meta_path = args.dest / "web" / "meta.json"
+        if meta_path.exists():
+            m = json.loads(meta_path.read_text(encoding="utf-8"))
+            m["qa_overall"] = overall
+            meta_path.write_text(json.dumps(m, indent=2), encoding="utf-8")
     except Exception as exc:  # QA is a report, never a blocker
         print(f"  QA regeneration skipped: {exc}")
     write_readme(args.dest, meta, n)

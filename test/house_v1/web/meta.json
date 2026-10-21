@@ -1,0 +1,16 @@
+{
+  "capture": "run",
+  "created": "2026-10-21 09:51:30",
+  "cloud_source": "depth/map.npz",
+  "cloud_points": 250000,
+  "splat": {
+    "present": true,
+    "bytes": 11752128,
+    "gaussians": 367254
+  },
+  "scale_source": "metric-input",
+  "walkable_area_m2": 13.89,
+  "qa_overall": "PASS",
+  "packaging_seconds": 0.2,
+  "sample": "decimated copy of the Kaggle pipeline output"
+}

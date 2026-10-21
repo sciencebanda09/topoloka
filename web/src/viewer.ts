@@ -17,6 +17,7 @@ export class Viewer {
   pointsVisible = true;
   private routeLine: THREE.Line | null = null;
   private pointsObj: THREE.Points | null = null;
+  private trajectory: THREE.Line | null = null;
 
   constructor(canvas: HTMLCanvasElement) {
     this.renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
@@ -78,7 +79,13 @@ export class Viewer {
     const pts = points.map(([x, y, z]) => navToThree(x, y, z + 0.02));
     const geo = new THREE.BufferGeometry().setFromPoints(pts);
     const mat = new THREE.LineBasicMaterial({ color: 0x5c6874, transparent: true, opacity: 0.9 });
-    this.scene.add(new THREE.Line(geo, mat));
+    this.trajectory = new THREE.Line(geo, mat);
+    this.scene.add(this.trajectory);
+  }
+
+  /** The minimap already shows the path; inside a splat it reads as a wire. */
+  setTrajectoryVisible(visible: boolean): void {
+    if (this.trajectory) this.trajectory.visible = visible;
   }
 
   addGroundGrid(extent = 30): void {
