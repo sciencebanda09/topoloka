@@ -12,7 +12,8 @@ $css = Join-Path $root 'docs\abstract.css'
 $html = Join-Path $env:TEMP 'topoloka_doc.html'
 
 if (-not (Test-Path $inPath)) { throw "input not found: $inPath" }
-pandoc $inPath -f gfm -t html5 -s -c $css --embed-resources -o $html
+$docDir = Split-Path $inPath -Parent
+pandoc $inPath -f gfm -t html5 -s -c $css --embed-resources --resource-path="$docDir" -o $html
 if ($LASTEXITCODE -ne 0) { throw "pandoc failed ($LASTEXITCODE)" }
 
 $chromeCandidates = @(

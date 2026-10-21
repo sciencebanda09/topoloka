@@ -56,16 +56,11 @@ compensation the pipeline applies. "Recapture, don't patch."
 
 ## 4. System architecture
 
-```
-phone video (+IMU)          Kaggle free tier                 static web link
-──────────────────    ─────────────────────────────    ─────────────────────────
-SOP capture      →    frames  → SfM (COLMAP)         →   viewer (three.js +
-(Sensor Logger)       → metric depth fusion              Gaussian splat renderer)
-                      → gravity align → costmap  →       search + routing (R2)
-                      → QA → splat training      →       minimap, ETA, AR (R3)
-                      → web bundle (nav.json,
-                        cloud, splat.splat)
-```
+![Pipeline: one phone video in, splat + metric nav graph out, served as a static link.](fig/pipeline.png)
+
+*Figure 1 — the whole pipeline runs on the Kaggle free tier; the repo's tooling
+pushes kernels and fetches artifacts, and the deliverable is a folder of static
+files (no server, no database, no account).*
 
 Three design decisions carried most of the weight:
 
@@ -115,6 +110,12 @@ Three design decisions carried most of the weight:
 | Costmap | 214×297 grid @ 5 cm, 13.89 m² walkable |
 | Splat | `[RESULT: gaussians]` gaussians, `[RESULT: splatMB]` MB web payload |
 | Pipeline time (Kaggle free tier) | CPU 39.7 min + GPU `[RESULT]` min |
+
+![House capture: 5 cm occupancy grid with the 157-camera trajectory.](fig/nav.png)
+
+*Figure 2 — the metric costmap the viewer uses for collision and (R2) routing:
+white = observed free cells (13.89 m² walkable), red = obstacle band 0.1-1.5 m
+above the floor, gray = unobserved, blue = camera path; 214×297 cells at 5 cm.*
 
 Viewer: `[RESULT: link]` · Video: `[RESULT: link]` · Code: `[RESULT: repo]`
 
