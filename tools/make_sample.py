@@ -37,29 +37,42 @@ from namma.geometry import load_cloud  # noqa: E402
 from namma.package import _write_ply  # noqa: E402
 from namma.splat_convert import convert_splat  # noqa: E402
 
+# fetched kernels publish a FLAT out/ (collect() flattens stage dirs), so map
+# each source file onto the sample's documented folder structure
 COPY_FROM_PIPELINE = [
-    "frames_meta.json",
-    "sfm/poses.json",
-    "sfm/sfm_report.json",
-    "sfm/sparse.ply",
-    "nav/nav.json",
-    "nav/nav_report.json",
-    "nav/occupancy.png",
+    ("frames_meta.json", "frames_meta.json"),
+    ("poses.json", "sfm/poses.json"),
+    ("sfm_report.json", "sfm/sfm_report.json"),
+    ("sparse.ply", "sfm/sparse.ply"),
+    ("nav.json", "nav/nav.json"),
+    ("nav_report.json", "nav/nav_report.json"),
+    ("occupancy.png", "nav/occupancy.png"),
 ]
 COPY_FROM_SPLAT = [
-    "depth/scale.json",
-    "depth/depth_report.json",
-    "capture_qa.json",
-    "capture_qa.md",
+    ("scale.json", "depth/scale.json"),
+    ("depth_report.json", "depth/depth_report.json"),
+    ("metricize.json", "metricize.json"),
+    ("capture_qa.json", "capture_qa.json"),
+    ("capture_qa.md", "capture_qa.md"),
+    # the GPU run's nav is the authoritative metric one (dense depth cloud +
+    # metric poses); it must overwrite the CPU run's sparse-cloud nav
+    ("nav.json", "nav/nav.json"),
+    ("nav_report.json", "nav/nav_report.json"),
 ]
 
 
-def copy_rel(src_root: Path, rel: str, dst_root: Path) -> bool:
-    src = src_root / rel
+def out_dir(p: Path) -> Path:
+    """fetch_output mirrors /kaggle/working, so outputs live under out/."""
+    p = Path(p)
+    return p / "out" if (p / "out").is_dir() else p
+
+
+def copy_rel(src_root: Path, src_rel: str, dst_root: Path, dst_rel: str) -> bool:
+    src = src_root / src_rel
     if not src.exists():
-        print(f"  skip (missing): {rel}")
+        print(f"  skip (missing): {src_rel}")
         return False
-    dst = dst_root / rel
+    dst = dst_root / dst_rel
     dst.parent.mkdir(parents=True, exist_ok=True)
     shutil.copy2(src, dst)
     return True
@@ -93,6 +106,10 @@ def build_web(pipe_out: Path, splat_out: Path, dest: Path,
     for name in ("nav.json", "occupancy.png", "meta.json"):
         if (web_src / name).exists():
             shutil.copy2(web_src / name, web / name)
+    # the nav/ folder keeps the GPU run's occupancy too (CPU one is sparse-cloud)
+    if (web_src / "occupancy.png").exists():
+        (dest / "nav").mkdir(parents=True, exist_ok=True)
+        shutil.copy2(web_src / "occupancy.png", dest / "nav" / "occupancy.png")
 
     # cloud: decimate so the sample stays light
     xyz, rgb = load_cloud(web_src / "cloud.ply")
@@ -118,6 +135,22 @@ def build_web(pipe_out: Path, splat_out: Path, dest: Path,
     elif (web_src / "splat.splat").exists():
         shutil.copy2(web_src / "splat.splat", web / "splat.splat")
         meta["splat_from"] = "copied from web bundle"
+
+    # keep web/meta.json honest about what the sample actually ships
+    meta_path = web / "meta.json"
+    if meta_path.exists():
+        m = json.loads(meta_path.read_text(encoding="utf-8"))
+        m["cloud_points"] = int(len(xyz))
+        splat = m.setdefault("splat", {})
+        if (web / "splat.splat").exists():
+            splat["present"] = True
+            splat["bytes"] = int((web / "splat.splat").stat().st_size)
+            if "splat_gaussians" in meta:
+                splat["gaussians"] = int(meta["splat_gaussians"])
+        else:
+            splat["present"] = False
+        m["sample"] = "decimated copy of the Kaggle pipeline output"
+        meta_path.write_text(json.dumps(m, indent=2), encoding="utf-8")
     return meta
 
 
@@ -189,15 +222,17 @@ def main() -> None:
         print(f"note: {args.dest} already contains a bundle; overwriting files")
 
     print(f"assembling sample -> {args.dest}")
-    for root, rels in ((args.pipe_out, COPY_FROM_PIPELINE),
-                       (args.splat_out, COPY_FROM_SPLAT)):
-        for rel in rels:
-            copy_rel(root, rel, args.dest)
+    pipe_out = out_dir(args.pipe_out)
+    splat_out = out_dir(args.splat_out)
+    for root, rels in ((pipe_out, COPY_FROM_PIPELINE),
+                       (splat_out, COPY_FROM_SPLAT)):
+        for src_rel, dst_rel in rels:
+            copy_rel(root, src_rel, args.dest, dst_rel)
 
-    n = pick_frames(args.pipe_out / "frames.zip", args.dest / "frames", args.frames)
+    n = pick_frames(pipe_out / "frames.zip", args.dest / "frames", args.frames)
     print(f"  preview frames: {n}")
 
-    meta = build_web(args.pipe_out, args.splat_out, args.dest,
+    meta = build_web(pipe_out, splat_out, args.dest,
                      args.max_points, args.max_gaussians)
     write_readme(args.dest, meta, n)
 
