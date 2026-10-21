@@ -81,3 +81,37 @@ copy.
     * Local test suite green (13 tests across 5 files); abstract PDF
       toolchain re-verified (draft renders 3 pages: pandoc + headless
       Chrome).
+
+- 2026-10-20 — GPU run v2 (13:23) ended after 7.7 min: staging attached
+  (fix worked), depth fused 157/157 frames (97.7 s, 25.15 M raw points ->
+  875 K voxels, scale 0.4361 m/unit, MAD 9.9%), geometry kept 13.89 m2
+  walkable, packaging already shipped the point-cloud bundle — but the splat
+  died on a trivial bug: nerfstudio's __init__.py is license-header only (no
+  __version__), so ensure_nerfstudio() raised AttributeError right after a
+  successful pip install (1.1.5 is current on PyPI; verified against the
+  wheel).
+
+- 2026-10-20 (night) — Frame-contract fix before retraining: the depth stage
+  writes a metric cloud + metric poses, so nav.json's align is metric->nav
+  (scale 1.0), but the splat trained on transforms.json/sparse.ply in raw SfM
+  units -- the viewer would have placed it 2.29x off. New `metricize` stage
+  (namma/cli.py) multiplies camera centers and sparse points by the depth
+  scale, idempotent + guarded by metricize.json; 4 regression tests. Kernel
+  also pins nerfstudio==1.1.5, halves training resolution
+  (camera_res_scale_factor 0.5, T4-safe) and logs the CUDA device.
+
+- 2026-10-20 02:10-02:18 — GPU run v3: staging, depth, geometry, QA and
+  metricize all green on a Tesla T4 (metricize.json: 157 cams + 54,875
+  points x 0.4361). ns-train then failed in 20 s on CLI grammar: the
+  dataparser is a tyro subcommand and the 4 dataparser flags were
+  unrecognized. tyro 1.x also wants switch-style bools (--no-auto-scale-poses),
+  while older versions take values -- a version-dependent minefield.
+
+- 2026-10-21 13:50 — GPU run v4 replaces the ns-train subprocess with
+  nerfstudio's Python API (copy method_configs["splatfacto"], set dataparser
+  fields, save_config, config.setup -> trainer.setup -> trainer.train);
+  grammar-proof and logs every setting. Viewer also fixed: the splat is gated
+  on meta.splat.present instead of a HEAD probe (Vite's SPA fallback returned
+  200 for a missing splat.splat, which hung boot in "loading splat...").
+  Synthetic capture verified end-to-end in headless Chrome (splat, minimap,
+  HUD).
