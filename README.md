@@ -3,15 +3,15 @@
 **One video in. Google Maps for indoors out — in a link.**
 
 *Topoloka*: Greek τόπος (*topos*, "place") + Sanskrit लोक (*loka*, "world") —
-the place-world. Turns an ordinary phone capture of an indoor space into a
-photorealistic, interactive 3D digital twin served as a shareable web link:
-free first-person roaming, spatial search, and obstacle-aware walking
-directions. Built for Techfest 2026-27 (IIT Bombay).
+the place-world. Turns a walk-through video of an indoor space into an
+interactive, metric 3D digital twin served as a shareable web link: free
+first-person roaming now, spatial search and obstacle-aware walking directions
+next. Built for Techfest 2026-27 (IIT Bombay).
 
 ```
-phone capture ──► Kaggle pipeline ──► artifact bundle ──► web app (static link)
- video + IMU      frames → SfM           splat + nav graph      roam / search / route
- (our SOP)        → depth → 3DGS         + POIs + trust         (+ AR on-site)
+walk-through video ──► Kaggle pipeline ──► artifact bundle ──► web app (static link)
+ (phone SOP or         frames → SfM          splat + nav graph      roam / (R2) search
+  licensed clip)       → depth → 3DGS       + QA + align          and route / (R3) AR
 ```
 
 ## Repository layout
@@ -20,10 +20,11 @@ phone capture ──► Kaggle pipeline ──► artifact bundle ──► web 
 |---------------|------------|
 | `capture/`    | Capture SOP + capture QA tooling (the "how to record" contract) |
 | `pipeline/`   | Reconstruction pipeline (frames → SfM → geometry → depth → splat → POIs → export) |
-| `web/`        | The viewer web app (roaming, search, navigation, minimap) |
+| `web/`        | The viewer web app (roaming, minimap, navigation, splat renderer) |
 | `kaggle/`     | Kaggle tooling: code dataset, kernels, push/fetch scripts |
-| `docs/`       | Technical abstract, submission links, planning notes |
-| `test/`       | Sample capture data + reproduction instructions |
+| `docs/`       | Technical abstract, submission links, figures, demo storyboard |
+| `test/`       | Redistributable sample capture + reproduction instructions |
+| `tools/`      | Sample builder and figure helpers |
 
 ## Compute rule
 
@@ -31,62 +32,80 @@ phone capture ──► Kaggle pipeline ──► artifact bundle ──► web 
 The local machine only edits code, commits, and talks to the Kaggle CLI.
 See `kaggle/README.md`.
 
-## Quickstart (viewer + sample data)
+## The public sample
 
-The committed sample capture is a real house walk, decimated so the repo stays
-light: `test/house_v1/` (14 preview frames, SfM cloud, metric nav, splat,
-`capture_qa.md`). It is the same data the hosted link serves.
+The committed sample is a real, continuous walk through a Melbourne metro
+walkway, built from public footage:
 
-**Hosted twin:** <https://sciencebanda09.github.io/topoloka/?capture=house_v1>
+- **Source:** *Modern Melbourne Metro Walkway Urban Design* by Joolsmagool
+  (Pexels License), trimmed to 86.07 s, 1920×1080 / 30 fps.
+- **Bundle:** `test/metro_v1/` — 24.7 MB, 14 preview frames, SfM cloud + poses,
+  depth scale, metric nav, 457,221-gaussian web splat, QA report.
+- **Measured:** 216/216 frames registered, 0.403 px median reprojection,
+  6.2505 m/unit (7.54% MAD), 315.05 m² walkable, QA **6/6 PASS**.
 
-![The house twin in a browser: splat, minimap, QA status](docs/fig/twin.png)
+It is the same data the hosted link serves.
 
-*The shipped sample twin in the viewer: 367,254 Gaussian splats, the metric
-minimap (red = obstacles, blue = capture path), and the QA verdict in the HUD.*
+**Hosted twin:** <https://sciencebanda09.github.io/topoloka/?capture=metro_v1>
+
+![The metro twin in a browser: splat, minimap, QA status](docs/fig/twin.png)
+
+*The shipped sample twin: 457,221 Gaussian splats, the metric minimap
+(red = obstacles, blue = capture path), and the QA verdict in the HUD. The
+source walls are reflective, so they render softer than the tiled floor; the
+geometry and sightlines are metric.*
 
 **Locally** (Node 20+):
 
 ```powershell
 # stage the committed sample where the viewer fetches artifacts
-New-Item -ItemType Directory -Force web/public/artifacts/house_v1 | Out-Null
-Copy-Item -Recurse -Force test/house_v1/web/* web/public/artifacts/house_v1/
+New-Item -ItemType Directory -Force web\public\artifacts\metro_v1 | Out-Null
+Copy-Item -Recurse -Force test\metro_v1\web\* web\public\artifacts\metro_v1\
 cd web
 npm ci
-npm run dev        # open http://127.0.0.1:5173/?capture=house_v1
+npm run dev        # open http://127.0.0.1:5173/?capture=metro_v1
 ```
 
 ```bash
 # same, on a POSIX shell
-mkdir -p web/public/artifacts/house_v1
-cp -r test/house_v1/web/. web/public/artifacts/house_v1/
+mkdir -p web/public/artifacts/metro_v1
+cp -r test/metro_v1/web/. web/public/artifacts/metro_v1/
 cd web && npm ci && npm run dev
 ```
 
 Drag to look, **WASD/arrows** to walk, **M** toggles the minimap, **P** toggles
-the point cloud behind the splat. `npm run build` produces a static `dist/`
-that can be served from any web host.
+the point cloud behind the splat. Append `?t=<index>` to spawn at a trajectory
+point (useful for stills and the demo), and `?clean` to hide the click prompt
+and fps readout. `npm run build` produces a static `dist/` that can be served
+from any web host.
 
-**Reproduce the pipeline:** the exact kernels that produced this capture are
-in `kaggle/kernels/` and are driven by the scripts in `kaggle/tools/` — see
-`kaggle/README.md` and `test/house_v1/README.md`.
+**Reproduce the pipeline:** the exact kernels that produced this capture are in
+`kaggle/kernels/` and are driven by the scripts in `kaggle/tools/` — see
+`kaggle/README.md` and `test/metro_v1/README.md`.
 
 ## Status
 
-- [x] Repo skeleton, capture fixture (house video)
-- [x] Stage 1: frame picking (`pipeline/namma/frames.py`)
-- [x] Stage 2: SfM (`pipeline/namma/sfm.py`) — Kaggle run in progress
-- [x] Stage 3: geometry — floor plane, gravity align, 2.5D costmap (`pipeline/namma/geometry.py`)
-- [x] Stage 4: depth — Depth Anything V2 metric fusion + scale alignment (`pipeline/namma/depth.py`)
-- [x] Stage 5: capture QA (`pipeline/namma/qa.py`)
-- [x] Stage 6: splat training kernel (nerfstudio splatfacto) + web conversion
-- [x] Stage 7: web bundle packaging (`pipeline/namma/package.py`)
-- [x] Web: first-person viewer + minimap + splat renderer (synthetic fixture verified)
-- [x] End-to-end run on the house capture — CPU SfM 39.7 min, GPU depth +
-      20k-iteration splatfacto 41.9 min, 903,308 gaussians (28.9 MB payload)
-- [x] Hosted sample twin: <https://sciencebanda09.github.io/topoloka/?capture=house_v1>
-      (367,254 gaussians / 11.8 MB, cropped to the capture volume, QA 6/6 PASS)
-- [ ] Web: search + pathfinding + route rendering (R2)
+- [x] Repo skeleton, capture SOP, frame picking, QA gates
+- [x] SfM (`pycolmap` 4.2.1) — 216/216 registered on the metro clip
+- [x] Metric depth fusion (Depth Anything V2 Metric Indoor Large) + scale alignment
+- [x] Geometry: floor plane, gravity align, 2.5D 5 cm costmap, outline
+- [x] Splat training (nerfstudio 1.1.5 splatfacto, 25 k iters) + web `.splat` export
+- [x] Web: first-person viewer, collision, minimap, splat renderer, `?t` spawn
+- [x] End-to-end public run — CPU SfM 59.2 min; GPU 79.0 min total; 510,336
+      gaussians exported; 315.05 m² walkable; QA 6/6 PASS
+- [x] Hosted sample twin: <https://sciencebanda09.github.io/topoloka/?capture=metro_v1>
+      (457,221 gaussians / 14.63 MB, 3 m volume crop, 250 k-point cloud)
+- [ ] Demo video (3–5 min) — recorded after the hosted build; link goes in the abstract
+- [ ] Web: POI search + user-facing pathfinding (R2; A* / route rendering already scaffolded)
 - [ ] AR mode (QR-anchored relocalization, R3)
+
+## Credit and licences
+
+Sample footage: *Modern Melbourne Metro Walkway Urban Design* by **Joolsmagool**
+on Pexels, used under the [Pexels License](https://www.pexels.com/license/) and
+trimmed to 86 s. The derived sample artifacts in `test/metro_v1` are
+redistributed under that licence; the code is MIT. No personal capture is
+shipped.
 
 ## Deadlines
 

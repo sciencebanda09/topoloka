@@ -8,16 +8,19 @@ the artifact files, not from a slide.
 
 | # | Time | Shot | What it proves |
 |---|---|---|---|
-| 1 | 0:00–0:25 | Phone in hand walking through the house (10 s real capture footage from the original run). Text overlay: "One walk. One phone. No LiDAR." | The input is honest: a normal handheld video. |
+| 1 | 0:00–0:25 | The source walk-through: 10 s of the metro corridor clip (public Pexels footage, credited on screen). Text overlay: "One walk-through. One ordinary video. No LiDAR." | The input is honest: a single RGB clip, no depth sensor. |
 | 2 | 0:25–0:55 | Terminal: `push_code.ps1` → `push_kernel.ps1 namma_pipeline` → show the Kaggle kernel running; cut to GPU kernel (`namma_splat`). Speed-ramp the waits. | All compute runs on Kaggle free tier; reproducible from the repo's tooling. |
-| 3 | 0:55–1:25 | Artifacts landing in the repo: `nav.json`, `occupancy.png`, `capture_qa.md` scrolled on screen. Read 2–3 QA numbers out loud (registered %, reprojection px, scale source). | The QA/trust layer is real; scale is solved, not assumed. |
-| 4 | 1:25–2:45 | **The money shot.** Browser opens the viewer link: pointer-lock, walk with WASD through the splat twin. Turn the minimap corner. Walk into a wall, stop; explains collision from the metric costmap. | Free-roam, photorealistic, collision-honest twin in a link. |
-| 5 | 2:45–3:15 | Type a route (`?route` dev flag or search bar in R2): A* path renders in 3D + minimap with distance. | Navigation is metric and computed, not faked. |
-| 6 | 3:15–3:45 | Quick zoom-out animation of `occupancy.png` grid vs the splat's real geometry overlay (align transform). Blur the honesty slide: "where it's weak" (mirrors, low texture). | Frame conventions and limitations are handled, not hidden. |
-| 7 | 3:45–4:15 | Roadmap punch card: R2 POI search ("where's the washroom" on-screen demo mock), R3 on-site campus + QR AR. Close on the title card + repo URL. | The story continues beyond R1. |
+| 3 | 0:55–1:25 | Artifacts landing in the repo: `nav.json`, `occupancy.png`, `capture_qa.md` scrolled on screen. Read 2–3 QA numbers out loud: 216/216 registered, 0.403 px median, 6.2505 m/unit, 315.05 m² walkable. | The QA/trust layer is real; scale is solved, not assumed. |
+| 4 | 1:25–2:45 | **The money shot.** Browser opens the viewer link: pointer-lock, walk with WASD down the tiled corridor, past the ad screens, toward the "Platforms" sign. Turn the minimap corner. Walk into a wall, stop; explain collision from the metric costmap. | Free-roam twin + collision-honest navigation in a link, no install. |
+| 5 | 2:45–3:15 | Type `?route` (dev flag; search bar lands in R2): the A* path renders in 3D and on the minimap with its metric length, ending at the concourse. | Navigation is metric and computed, not faked. |
+| 6 | 3:15–3:45 | Zoom-out of `occupancy.png` vs the splat geometry; overlay the align transform. Honesty slide: reflective walls are soft, ceiling under-observed, DC-only splat. | Frame conventions and limitations are handled, not hidden. |
+| 7 | 3:45–4:15 | Roadmap punch card: R2 POI search ("where's the washroom" mock), R3 on-site campus + QR AR. Close on the title card + repo URL. | The story continues beyond R1. |
 
 ## Recording notes
 
+- **Hardware acceleration is mandatory.** Headless/software WebGL (SwiftShader)
+  stretches anisotropic gaussians and makes the twin look smeared. Check
+  `chrome://gpu` shows "Hardware accelerated", then record in normal Chrome.
 - Record at 1080p60; OBS or Win+G. Do a silent run-through first.
 - One continuous screen take for the viewer section — jump cuts in a free-roam
   demo read as faked.
@@ -26,10 +29,15 @@ the artifact files, not from a slide.
 - Voice-over live while walking (not a post-dub) — breaths sell the scale.
 - Export H.264, ≤ 500 MB, upload unlisted YouTube; link goes in the abstract.
 
-## Numbers to have on hand (from `capture_qa.md` / `nav_report.json`)
+## Numbers to have on hand (from `test/metro_v1/capture_qa.md`, `nav_report.json`, `train_report.json`)
 
-- 158 frames kept at 2.5 Hz; 157/158 registered (99.4%); median reprojection 0.563 px
-- metric scale 0.4361 m/unit from phone depth (MAD 9.9%); sparsity 54,931 SfM points
-- walkable 13.89 m²; costmap 214×297 cells @ 5 cm
-- splat gaussians + web payload MB + viewer load time (stopwatch it) `[after training run]`
-- pipeline wall time: CPU 39.7 min; GPU `[after training run]`
+- 216 frames kept at 2.5 Hz; 216/216 registered (100%); median reprojection 0.403 px (mean 0.613)
+- SfM: 51,677 points, 3,553 s (59.2 min) on Kaggle CPU
+- Metric scale 6.2505 m/unit; MAD 7.54% over 37,844 depth samples
+- Depth: 31.2 M raw → 10.28 M voxel points; 216/216 frames fused
+- Nav: 929,436 floor inliers; camera height 1.588 m; 315.05 m² walkable (126,020 free cells); grid 1188 × 1259 @ 5 cm; nav stage 61 s
+- Splat: 25,000 iters at 1600×900; full export 510,336 gaussians / 16.33 MB; hosted sample 457,221 / 14.63 MB after the 3 m crop
+- Sample bundle 24.7 MB total (splat + 250 k-point cloud + nav); stopwatch the cold load on the live URL
+- Pipeline wall time: CPU 59.2 min (SfM) + 61 s (nav); GPU 79.0 min total (depth, gsplat JIT, train, export)
+- Source clip: "Modern Melbourne Metro Walkway Urban Design", Joolsmagool,
+  Pexels License; trimmed to 86.07 s, 1920×1080 / 30 fps

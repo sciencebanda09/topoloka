@@ -1,0 +1,50 @@
+{
+  "stage": "qa",
+  "capture": "metro_v1",
+  "time": "2026-10-22 15:33:24",
+  "overall": "PASS",
+  "checks": [
+    {
+      "name": "frame_sharpness",
+      "status": "PASS",
+      "detail": "p10 Laplacian 582 (threshold 100)",
+      "compensation": "watch the demo video for soft zones; recapture the worst rooms in brighter light",
+      "value": null
+    },
+    {
+      "name": "frame_count",
+      "status": "PASS",
+      "detail": "216 frames kept (stride 12)",
+      "compensation": "fewer views -> weaker splat around fast-motion areas",
+      "value": null
+    },
+    {
+      "name": "sfm_registered_fraction",
+      "status": "PASS",
+      "detail": "216/216 frames registered",
+      "compensation": "unregistered stretches get no texture; walk slower with more overlap there",
+      "value": 1.0
+    },
+    {
+      "name": "sfm_reprojection_error",
+      "status": "PASS",
+      "detail": "median 0.403px (threshold 1.0)",
+      "compensation": "check video stabilization is OFF; EIS warps break rigid geometry",
+      "value": 0.403
+    },
+    {
+      "name": "floor_outline",
+      "status": "PASS",
+      "detail": "193 outline points, 315.05 m2 walkable",
+      "compensation": "sparse cloud can under-draw the footprint; the depth stage densifies it",
+      "value": null
+    },
+    {
+      "name": "geometry_warnings",
+      "status": "PASS",
+      "detail": "none",
+      "compensation": "see nav_report.json for details",
+      "value": null
+    }
+  ]
+}

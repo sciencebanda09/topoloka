@@ -32,7 +32,8 @@ OUT = WORK / "out"
 CODE = SCRATCH / "code"
 RUN = SCRATCH / "run"
 NS_OUT = SCRATCH / "ns"
-ITERS = os.environ.get("NM_ITERS", "20000")
+ITERS = os.environ.get("NM_ITERS", "25000")
+RES = os.environ.get("NM_RES", "1.0")   # train at the frames' native 1600x900
 MAX_GAUSSIANS = os.environ.get("NM_MAX_GAUSSIANS", "1500000")
 
 
@@ -210,14 +211,23 @@ def train() -> Path:
     script = SCRATCH / "train_api.py"
     script.parent.mkdir(parents=True, exist_ok=True)
     script.write_text(TRAIN_SNIPPET, encoding="utf-8")
-    cmd = [sys.executable, str(script), str(RUN), str(NS_OUT), ITERS, "0.5"]
+    cmd = [sys.executable, str(script), str(RUN), str(NS_OUT), ITERS, RES]
     log(" ".join(cmd))
-    r = subprocess.run(cmd, capture_output=True, text=True, timeout=6 * 3600)
+    # gsplat is installed from source here (no cp313/cu128 wheel), so the first
+    # import JIT-builds ~26 .cu files. The default MAX_JOBS (=cpu count) launched
+    # four heavy nvcc processes and the node killed the build mid-file. Two at
+    # a time is ~2x slower but stays inside the host RAM.
+    env = os.environ.copy()
+    env["MAX_JOBS"] = os.environ.get("NM_MAX_JOBS", "1")
+    env["TORCH_CUDA_ARCH_LIST"] = "7.5"          # T4
+    env["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
+    r = subprocess.run(cmd, capture_output=True, text=True, timeout=6 * 3600,
+                       env=env)
     log(f"train exit {r.returncode}")
     log((r.stdout or "")[-600:])
     if r.returncode != 0 or "TRAIN_DONE" not in (r.stdout or ""):
         tail = (r.stderr or "")[-3000:] + (r.stdout or "")[-1500:]
-        raise SystemExit(f"training failed:\n{tail}")
+        raise SystemExit(f"training failed (exit {r.returncode}):\n{tail}")
     configs = sorted(NS_OUT.glob("capture/splatfacto/*/config.yml"))
     if not configs:
         raise SystemExit("no config.yml found after training")

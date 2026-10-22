@@ -23,5 +23,5 @@ Generate a bundle outside Kaggle for a quick smoke test (from the repo root):
 …or sync the real thing from a fetched kernel run:
 
 ```powershell
-powershell -File web\tools\sync_artifacts.ps1 -Kernel namma_splat -Capture house_v1
+powershell -File web\tools\sync_artifacts.ps1 -Kernel namma_splat -Capture metro_v1
 ```

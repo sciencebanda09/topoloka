@@ -9,7 +9,7 @@
   "enable_internet": true,
   "dataset_sources": [
     "shashankdev09/namma-code",
-    "shashankdev09/house-video-v2-input"
+    "shashankdev09/metro-walk-video-v1"
   ],
   "competition_sources": [],
   "kernel_sources": []

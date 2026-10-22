@@ -120,7 +120,7 @@ def render_nav(nav_path: Path, out_path: Path) -> dict:
     report = json.loads((nav_path.parent / "nav_report.json").read_text(encoding="utf-8")) \
         if (nav_path.parent / "nav_report.json").exists() else {}
     area = report.get("walkable_area_m2")
-    title = "House capture: metric occupancy grid"
+    title = "Indoor capture: metric occupancy grid"
     if area:
         title += f" -- {area:.2f} m² walkable"
     ax.set_title(title, fontsize=10.5)

@@ -1,0 +1,2182 @@
+{
+  "stage": "frames",
+  "video": "/kaggle/input/metro-walk-video-v1/metro_walk_86s.mp4",
+  "video_fps": 30.0,
+  "video_frames": 2582,
+  "stride": 12,
+  "target_rate_hz": 2.5,
+  "max_width": 1600,
+  "max_seconds": null,
+  "start_s": 0.0,
+  "stats": {
+    "frames_kept": 216,
+    "windows_scored": 216,
+    "rank_blur_mean": 893.8857280924009,
+    "rank_blur_p10": 581.8621217617269,
+    "rank_blur_p90": 1113.3349239228332,
+    "rank_blur_min": 324.48523480222724,
+    "extract_seconds": 44.3
+  },
+  "frames": [
+    {
+      "name": "00000.jpg",
+      "seq": 0,
+      "index": 11,
+      "time_s": 0.367,
+      "blur": 297.7,
+      "rank_blur": 751.7,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00001.jpg",
+      "seq": 1,
+      "index": 12,
+      "time_s": 0.4,
+      "blur": 315.9,
+      "rank_blur": 763.1,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00002.jpg",
+      "seq": 2,
+      "index": 24,
+      "time_s": 0.8,
+      "blur": 307.9,
+      "rank_blur": 764.9,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00003.jpg",
+      "seq": 3,
+      "index": 45,
+      "time_s": 1.5,
+      "blur": 261.4,
+      "rank_blur": 721.1,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00004.jpg",
+      "seq": 4,
+      "index": 55,
+      "time_s": 1.833,
+      "blur": 269.9,
+      "rank_blur": 745.3,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00005.jpg",
+      "seq": 5,
+      "index": 60,
+      "time_s": 2.0,
+      "blur": 274.7,
+      "rank_blur": 757.6,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00006.jpg",
+      "seq": 6,
+      "index": 80,
+      "time_s": 2.667,
+      "blur": 268.1,
+      "rank_blur": 772.4,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00007.jpg",
+      "seq": 7,
+      "index": 84,
+      "time_s": 2.8,
+      "blur": 257.9,
+      "rank_blur": 740.9,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00008.jpg",
+      "seq": 8,
+      "index": 103,
+      "time_s": 3.433,
+      "blur": 230.6,
+      "rank_blur": 683.5,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00009.jpg",
+      "seq": 9,
+      "index": 119,
+      "time_s": 3.967,
+      "blur": 277.7,
+      "rank_blur": 693.5,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00010.jpg",
+      "seq": 10,
+      "index": 124,
+      "time_s": 4.133,
+      "blur": 299.0,
+      "rank_blur": 735.6,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00011.jpg",
+      "seq": 11,
+      "index": 140,
+      "time_s": 4.667,
+      "blur": 318.1,
+      "rank_blur": 788.3,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00012.jpg",
+      "seq": 12,
+      "index": 153,
+      "time_s": 5.1,
+      "blur": 318.5,
+      "rank_blur": 820.8,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00013.jpg",
+      "seq": 13,
+      "index": 158,
+      "time_s": 5.267,
+      "blur": 314.2,
+      "rank_blur": 818.1,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00014.jpg",
+      "seq": 14,
+      "index": 169,
+      "time_s": 5.633,
+      "blur": 334.6,
+      "rank_blur": 844.1,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00015.jpg",
+      "seq": 15,
+      "index": 188,
+      "time_s": 6.267,
+      "blur": 302.8,
+      "rank_blur": 798.8,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00016.jpg",
+      "seq": 16,
+      "index": 192,
+      "time_s": 6.4,
+      "blur": 301.7,
+      "rank_blur": 804.5,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00017.jpg",
+      "seq": 17,
+      "index": 205,
+      "time_s": 6.833,
+      "blur": 254.5,
+      "rank_blur": 761.1,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00018.jpg",
+      "seq": 18,
+      "index": 223,
+      "time_s": 7.433,
+      "blur": 222.2,
+      "rank_blur": 743.2,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00019.jpg",
+      "seq": 19,
+      "index": 229,
+      "time_s": 7.633,
+      "blur": 197.7,
+      "rank_blur": 707.8,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00020.jpg",
+      "seq": 20,
+      "index": 240,
+      "time_s": 8.0,
+      "blur": 176.3,
+      "rank_blur": 655.2,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00021.jpg",
+      "seq": 21,
+      "index": 258,
+      "time_s": 8.6,
+      "blur": 167.5,
+      "rank_blur": 603.6,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00022.jpg",
+      "seq": 22,
+      "index": 275,
+      "time_s": 9.167,
+      "blur": 132.2,
+      "rank_blur": 516.9,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00023.jpg",
+      "seq": 23,
+      "index": 279,
+      "time_s": 9.3,
+      "blur": 137.4,
+      "rank_blur": 532.5,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00024.jpg",
+      "seq": 24,
+      "index": 290,
+      "time_s": 9.667,
+      "blur": 138.6,
+      "rank_blur": 491.8,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00025.jpg",
+      "seq": 25,
+      "index": 308,
+      "time_s": 10.267,
+      "blur": 97.9,
+      "rank_blur": 324.5,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00026.jpg",
+      "seq": 26,
+      "index": 323,
+      "time_s": 10.767,
+      "blur": 128.2,
+      "rank_blur": 373.9,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00027.jpg",
+      "seq": 27,
+      "index": 327,
+      "time_s": 10.9,
+      "blur": 143.8,
+      "rank_blur": 424.2,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00028.jpg",
+      "seq": 28,
+      "index": 345,
+      "time_s": 11.5,
+      "blur": 188.0,
+      "rank_blur": 460.4,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00029.jpg",
+      "seq": 29,
+      "index": 359,
+      "time_s": 11.967,
+      "blur": 141.0,
+      "rank_blur": 424.7,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00030.jpg",
+      "seq": 30,
+      "index": 362,
+      "time_s": 12.067,
+      "blur": 145.0,
+      "rank_blur": 433.8,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00031.jpg",
+      "seq": 31,
+      "index": 379,
+      "time_s": 12.633,
+      "blur": 187.9,
+      "rank_blur": 492.1,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00032.jpg",
+      "seq": 32,
+      "index": 394,
+      "time_s": 13.133,
+      "blur": 181.6,
+      "rank_blur": 473.3,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00033.jpg",
+      "seq": 33,
+      "index": 396,
+      "time_s": 13.2,
+      "blur": 171.0,
+      "rank_blur": 470.9,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00034.jpg",
+      "seq": 34,
+      "index": 416,
+      "time_s": 13.867,
+      "blur": 187.0,
+      "rank_blur": 474.3,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00035.jpg",
+      "seq": 35,
+      "index": 428,
+      "time_s": 14.267,
+      "blur": 209.9,
+      "rank_blur": 503.7,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00036.jpg",
+      "seq": 36,
+      "index": 443,
+      "time_s": 14.767,
+      "blur": 195.4,
+      "rank_blur": 477.0,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00037.jpg",
+      "seq": 37,
+      "index": 455,
+      "time_s": 15.167,
+      "blur": 251.9,
+      "rank_blur": 576.6,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00038.jpg",
+      "seq": 38,
+      "index": 458,
+      "time_s": 15.267,
+      "blur": 271.4,
+      "rank_blur": 597.3,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00039.jpg",
+      "seq": 39,
+      "index": 474,
+      "time_s": 15.8,
+      "blur": 316.0,
+      "rank_blur": 622.2,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00040.jpg",
+      "seq": 40,
+      "index": 480,
+      "time_s": 16.0,
+      "blur": 309.7,
+      "rank_blur": 587.1,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00041.jpg",
+      "seq": 41,
+      "index": 492,
+      "time_s": 16.4,
+      "blur": 294.0,
+      "rank_blur": 536.2,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00042.jpg",
+      "seq": 42,
+      "index": 505,
+      "time_s": 16.833,
+      "blur": 284.8,
+      "rank_blur": 497.4,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00043.jpg",
+      "seq": 43,
+      "index": 523,
+      "time_s": 17.433,
+      "blur": 324.1,
+      "rank_blur": 567.2,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00044.jpg",
+      "seq": 44,
+      "index": 536,
+      "time_s": 17.867,
+      "blur": 202.2,
+      "rank_blur": 462.3,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00045.jpg",
+      "seq": 45,
+      "index": 542,
+      "time_s": 18.067,
+      "blur": 158.3,
+      "rank_blur": 457.9,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00046.jpg",
+      "seq": 46,
+      "index": 555,
+      "time_s": 18.5,
+      "blur": 170.9,
+      "rank_blur": 508.8,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00047.jpg",
+      "seq": 47,
+      "index": 573,
+      "time_s": 19.1,
+      "blur": 159.1,
+      "rank_blur": 628.3,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00048.jpg",
+      "seq": 48,
+      "index": 586,
+      "time_s": 19.533,
+      "blur": 192.6,
+      "rank_blur": 756.7,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00049.jpg",
+      "seq": 49,
+      "index": 588,
+      "time_s": 19.6,
+      "blur": 189.9,
+      "rank_blur": 772.1,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00050.jpg",
+      "seq": 50,
+      "index": 606,
+      "time_s": 20.2,
+      "blur": 225.2,
+      "rank_blur": 814.7,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00051.jpg",
+      "seq": 51,
+      "index": 612,
+      "time_s": 20.4,
+      "blur": 186.9,
+      "rank_blur": 649.7,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00052.jpg",
+      "seq": 52,
+      "index": 635,
+      "time_s": 21.167,
+      "blur": 240.1,
+      "rank_blur": 661.9,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00053.jpg",
+      "seq": 53,
+      "index": 644,
+      "time_s": 21.467,
+      "blur": 287.3,
+      "rank_blur": 765.5,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00054.jpg",
+      "seq": 54,
+      "index": 658,
+      "time_s": 21.933,
+      "blur": 349.9,
+      "rank_blur": 881.5,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00055.jpg",
+      "seq": 55,
+      "index": 671,
+      "time_s": 22.367,
+      "blur": 382.0,
+      "rank_blur": 992.6,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00056.jpg",
+      "seq": 56,
+      "index": 683,
+      "time_s": 22.767,
+      "blur": 381.8,
+      "rank_blur": 1008.2,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00057.jpg",
+      "seq": 57,
+      "index": 695,
+      "time_s": 23.167,
+      "blur": 412.4,
+      "rank_blur": 1091.4,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00058.jpg",
+      "seq": 58,
+      "index": 696,
+      "time_s": 23.2,
+      "blur": 419.9,
+      "rank_blur": 1102.5,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00059.jpg",
+      "seq": 59,
+      "index": 710,
+      "time_s": 23.667,
+      "blur": 426.1,
+      "rank_blur": 1127.3,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00060.jpg",
+      "seq": 60,
+      "index": 731,
+      "time_s": 24.367,
+      "blur": 405.3,
+      "rank_blur": 1071.8,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00061.jpg",
+      "seq": 61,
+      "index": 732,
+      "time_s": 24.4,
+      "blur": 425.7,
+      "rank_blur": 1086.1,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00062.jpg",
+      "seq": 62,
+      "index": 754,
+      "time_s": 25.133,
+      "blur": 396.6,
+      "rank_blur": 1066.2,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00063.jpg",
+      "seq": 63,
+      "index": 766,
+      "time_s": 25.533,
+      "blur": 414.5,
+      "rank_blur": 1093.8,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00064.jpg",
+      "seq": 64,
+      "index": 768,
+      "time_s": 25.6,
+      "blur": 419.4,
+      "rank_blur": 1104.8,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00065.jpg",
+      "seq": 65,
+      "index": 785,
+      "time_s": 26.167,
+      "blur": 400.1,
+      "rank_blur": 1070.3,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00066.jpg",
+      "seq": 66,
+      "index": 799,
+      "time_s": 26.633,
+      "blur": 384.0,
+      "rank_blur": 1076.4,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00067.jpg",
+      "seq": 67,
+      "index": 812,
+      "time_s": 27.067,
+      "blur": 431.8,
+      "rank_blur": 1134.1,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00068.jpg",
+      "seq": 68,
+      "index": 824,
+      "time_s": 27.467,
+      "blur": 458.2,
+      "rank_blur": 1141.6,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00069.jpg",
+      "seq": 69,
+      "index": 828,
+      "time_s": 27.6,
+      "blur": 397.2,
+      "rank_blur": 1098.6,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00070.jpg",
+      "seq": 70,
+      "index": 850,
+      "time_s": 28.333,
+      "blur": 363.7,
+      "rank_blur": 990.7,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00071.jpg",
+      "seq": 71,
+      "index": 862,
+      "time_s": 28.733,
+      "blur": 381.4,
+      "rank_blur": 1020.7,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00072.jpg",
+      "seq": 72,
+      "index": 864,
+      "time_s": 28.8,
+      "blur": 368.9,
+      "rank_blur": 1016.0,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00073.jpg",
+      "seq": 73,
+      "index": 880,
+      "time_s": 29.333,
+      "blur": 367.8,
+      "rank_blur": 985.8,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00074.jpg",
+      "seq": 74,
+      "index": 890,
+      "time_s": 29.667,
+      "blur": 376.8,
+      "rank_blur": 992.3,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00075.jpg",
+      "seq": 75,
+      "index": 901,
+      "time_s": 30.033,
+      "blur": 330.5,
+      "rank_blur": 912.0,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00076.jpg",
+      "seq": 76,
+      "index": 919,
+      "time_s": 30.633,
+      "blur": 326.9,
+      "rank_blur": 878.5,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00077.jpg",
+      "seq": 77,
+      "index": 928,
+      "time_s": 30.933,
+      "blur": 332.3,
+      "rank_blur": 868.4,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00078.jpg",
+      "seq": 78,
+      "index": 946,
+      "time_s": 31.533,
+      "blur": 344.3,
+      "rank_blur": 857.1,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00079.jpg",
+      "seq": 79,
+      "index": 953,
+      "time_s": 31.767,
+      "blur": 353.6,
+      "rank_blur": 869.2,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00080.jpg",
+      "seq": 80,
+      "index": 969,
+      "time_s": 32.3,
+      "blur": 346.0,
+      "rank_blur": 879.1,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00081.jpg",
+      "seq": 81,
+      "index": 972,
+      "time_s": 32.4,
+      "blur": 346.3,
+      "rank_blur": 859.2,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00082.jpg",
+      "seq": 82,
+      "index": 990,
+      "time_s": 33.0,
+      "blur": 353.9,
+      "rank_blur": 882.7,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00083.jpg",
+      "seq": 83,
+      "index": 1007,
+      "time_s": 33.567,
+      "blur": 340.0,
+      "rank_blur": 962.0,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00084.jpg",
+      "seq": 84,
+      "index": 1018,
+      "time_s": 33.933,
+      "blur": 339.4,
+      "rank_blur": 983.3,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00085.jpg",
+      "seq": 85,
+      "index": 1024,
+      "time_s": 34.133,
+      "blur": 371.4,
+      "rank_blur": 1033.3,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00086.jpg",
+      "seq": 86,
+      "index": 1033,
+      "time_s": 34.433,
+      "blur": 322.5,
+      "rank_blur": 975.8,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00087.jpg",
+      "seq": 87,
+      "index": 1045,
+      "time_s": 34.833,
+      "blur": 373.6,
+      "rank_blur": 1038.6,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00088.jpg",
+      "seq": 88,
+      "index": 1064,
+      "time_s": 35.467,
+      "blur": 388.3,
+      "rank_blur": 1076.4,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00089.jpg",
+      "seq": 89,
+      "index": 1079,
+      "time_s": 35.967,
+      "blur": 410.7,
+      "rank_blur": 1117.7,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00090.jpg",
+      "seq": 90,
+      "index": 1091,
+      "time_s": 36.367,
+      "blur": 373.7,
+      "rank_blur": 1091.1,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00091.jpg",
+      "seq": 91,
+      "index": 1099,
+      "time_s": 36.633,
+      "blur": 390.9,
+      "rank_blur": 1095.4,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00092.jpg",
+      "seq": 92,
+      "index": 1112,
+      "time_s": 37.067,
+      "blur": 373.1,
+      "rank_blur": 1096.9,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00093.jpg",
+      "seq": 93,
+      "index": 1124,
+      "time_s": 37.467,
+      "blur": 362.4,
+      "rank_blur": 1069.9,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00094.jpg",
+      "seq": 94,
+      "index": 1133,
+      "time_s": 37.767,
+      "blur": 391.2,
+      "rank_blur": 1089.8,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00095.jpg",
+      "seq": 95,
+      "index": 1145,
+      "time_s": 38.167,
+      "blur": 390.3,
+      "rank_blur": 1113.1,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00096.jpg",
+      "seq": 96,
+      "index": 1160,
+      "time_s": 38.667,
+      "blur": 398.2,
+      "rank_blur": 1124.4,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00097.jpg",
+      "seq": 97,
+      "index": 1173,
+      "time_s": 39.1,
+      "blur": 410.6,
+      "rank_blur": 1133.9,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00098.jpg",
+      "seq": 98,
+      "index": 1182,
+      "time_s": 39.4,
+      "blur": 398.1,
+      "rank_blur": 1125.8,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00099.jpg",
+      "seq": 99,
+      "index": 1193,
+      "time_s": 39.767,
+      "blur": 402.3,
+      "rank_blur": 1111.9,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00100.jpg",
+      "seq": 100,
+      "index": 1203,
+      "time_s": 40.1,
+      "blur": 388.6,
+      "rank_blur": 1089.3,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00101.jpg",
+      "seq": 101,
+      "index": 1217,
+      "time_s": 40.567,
+      "blur": 413.1,
+      "rank_blur": 1087.4,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00102.jpg",
+      "seq": 102,
+      "index": 1235,
+      "time_s": 41.167,
+      "blur": 390.2,
+      "rank_blur": 1079.1,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00103.jpg",
+      "seq": 103,
+      "index": 1236,
+      "time_s": 41.2,
+      "blur": 412.5,
+      "rank_blur": 1088.0,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00104.jpg",
+      "seq": 104,
+      "index": 1253,
+      "time_s": 41.767,
+      "blur": 387.8,
+      "rank_blur": 1046.7,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00105.jpg",
+      "seq": 105,
+      "index": 1269,
+      "time_s": 42.3,
+      "blur": 389.6,
+      "rank_blur": 1049.3,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00106.jpg",
+      "seq": 106,
+      "index": 1273,
+      "time_s": 42.433,
+      "blur": 385.0,
+      "rank_blur": 1051.1,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00107.jpg",
+      "seq": 107,
+      "index": 1290,
+      "time_s": 43.0,
+      "blur": 421.1,
+      "rank_blur": 1080.2,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00108.jpg",
+      "seq": 108,
+      "index": 1304,
+      "time_s": 43.467,
+      "blur": 410.9,
+      "rank_blur": 1094.5,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00109.jpg",
+      "seq": 109,
+      "index": 1319,
+      "time_s": 43.967,
+      "blur": 381.2,
+      "rank_blur": 1077.8,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00110.jpg",
+      "seq": 110,
+      "index": 1323,
+      "time_s": 44.1,
+      "blur": 392.7,
+      "rank_blur": 1087.1,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00111.jpg",
+      "seq": 111,
+      "index": 1342,
+      "time_s": 44.733,
+      "blur": 389.3,
+      "rank_blur": 1090.0,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00112.jpg",
+      "seq": 112,
+      "index": 1353,
+      "time_s": 45.1,
+      "blur": 386.3,
+      "rank_blur": 1082.4,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00113.jpg",
+      "seq": 113,
+      "index": 1358,
+      "time_s": 45.267,
+      "blur": 402.6,
+      "rank_blur": 1114.4,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00114.jpg",
+      "seq": 114,
+      "index": 1373,
+      "time_s": 45.767,
+      "blur": 408.9,
+      "rank_blur": 1128.8,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00115.jpg",
+      "seq": 115,
+      "index": 1391,
+      "time_s": 46.367,
+      "blur": 373.8,
+      "rank_blur": 1076.7,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00116.jpg",
+      "seq": 116,
+      "index": 1393,
+      "time_s": 46.433,
+      "blur": 403.7,
+      "rank_blur": 1108.8,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00117.jpg",
+      "seq": 117,
+      "index": 1408,
+      "time_s": 46.933,
+      "blur": 402.8,
+      "rank_blur": 1113.6,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00118.jpg",
+      "seq": 118,
+      "index": 1427,
+      "time_s": 47.567,
+      "blur": 378.7,
+      "rank_blur": 1059.1,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00119.jpg",
+      "seq": 119,
+      "index": 1431,
+      "time_s": 47.7,
+      "blur": 364.1,
+      "rank_blur": 1038.8,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00120.jpg",
+      "seq": 120,
+      "index": 1447,
+      "time_s": 48.233,
+      "blur": 382.3,
+      "rank_blur": 1075.5,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00121.jpg",
+      "seq": 121,
+      "index": 1459,
+      "time_s": 48.633,
+      "blur": 401.0,
+      "rank_blur": 1100.0,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00122.jpg",
+      "seq": 122,
+      "index": 1474,
+      "time_s": 49.133,
+      "blur": 328.0,
+      "rank_blur": 1025.1,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00123.jpg",
+      "seq": 123,
+      "index": 1480,
+      "time_s": 49.333,
+      "blur": 372.5,
+      "rank_blur": 1070.8,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00124.jpg",
+      "seq": 124,
+      "index": 1497,
+      "time_s": 49.9,
+      "blur": 351.4,
+      "rank_blur": 1067.7,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00125.jpg",
+      "seq": 125,
+      "index": 1510,
+      "time_s": 50.333,
+      "blur": 392.6,
+      "rank_blur": 1109.1,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00126.jpg",
+      "seq": 126,
+      "index": 1512,
+      "time_s": 50.4,
+      "blur": 399.8,
+      "rank_blur": 1105.7,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00127.jpg",
+      "seq": 127,
+      "index": 1526,
+      "time_s": 50.867,
+      "blur": 394.3,
+      "rank_blur": 1086.6,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00128.jpg",
+      "seq": 128,
+      "index": 1544,
+      "time_s": 51.467,
+      "blur": 370.1,
+      "rank_blur": 1057.2,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00129.jpg",
+      "seq": 129,
+      "index": 1548,
+      "time_s": 51.6,
+      "blur": 365.8,
+      "rank_blur": 1042.9,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00130.jpg",
+      "seq": 130,
+      "index": 1560,
+      "time_s": 52.0,
+      "blur": 357.7,
+      "rank_blur": 1006.0,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00131.jpg",
+      "seq": 131,
+      "index": 1578,
+      "time_s": 52.6,
+      "blur": 375.4,
+      "rank_blur": 998.1,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00132.jpg",
+      "seq": 132,
+      "index": 1594,
+      "time_s": 53.133,
+      "blur": 351.5,
+      "rank_blur": 971.7,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00133.jpg",
+      "seq": 133,
+      "index": 1601,
+      "time_s": 53.367,
+      "blur": 330.8,
+      "rank_blur": 937.6,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00134.jpg",
+      "seq": 134,
+      "index": 1613,
+      "time_s": 53.767,
+      "blur": 329.9,
+      "rank_blur": 907.8,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00135.jpg",
+      "seq": 135,
+      "index": 1623,
+      "time_s": 54.1,
+      "blur": 332.2,
+      "rank_blur": 903.2,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00136.jpg",
+      "seq": 136,
+      "index": 1636,
+      "time_s": 54.533,
+      "blur": 327.6,
+      "rank_blur": 871.3,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00137.jpg",
+      "seq": 137,
+      "index": 1655,
+      "time_s": 55.167,
+      "blur": 316.1,
+      "rank_blur": 862.4,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00138.jpg",
+      "seq": 138,
+      "index": 1660,
+      "time_s": 55.333,
+      "blur": 333.7,
+      "rank_blur": 884.2,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00139.jpg",
+      "seq": 139,
+      "index": 1679,
+      "time_s": 55.967,
+      "blur": 345.5,
+      "rank_blur": 890.2,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00140.jpg",
+      "seq": 140,
+      "index": 1681,
+      "time_s": 56.033,
+      "blur": 321.8,
+      "rank_blur": 876.6,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00141.jpg",
+      "seq": 141,
+      "index": 1696,
+      "time_s": 56.533,
+      "blur": 314.0,
+      "rank_blur": 873.5,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00142.jpg",
+      "seq": 142,
+      "index": 1713,
+      "time_s": 57.1,
+      "blur": 326.2,
+      "rank_blur": 875.8,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00143.jpg",
+      "seq": 143,
+      "index": 1725,
+      "time_s": 57.5,
+      "blur": 323.3,
+      "rank_blur": 888.4,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00144.jpg",
+      "seq": 144,
+      "index": 1731,
+      "time_s": 57.7,
+      "blur": 314.7,
+      "rank_blur": 894.2,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00145.jpg",
+      "seq": 145,
+      "index": 1741,
+      "time_s": 58.033,
+      "blur": 288.5,
+      "rank_blur": 818.7,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00146.jpg",
+      "seq": 146,
+      "index": 1754,
+      "time_s": 58.467,
+      "blur": 289.3,
+      "rank_blur": 793.9,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00147.jpg",
+      "seq": 147,
+      "index": 1774,
+      "time_s": 59.133,
+      "blur": 293.6,
+      "rank_blur": 784.5,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00148.jpg",
+      "seq": 148,
+      "index": 1782,
+      "time_s": 59.4,
+      "blur": 304.4,
+      "rank_blur": 805.0,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00149.jpg",
+      "seq": 149,
+      "index": 1791,
+      "time_s": 59.7,
+      "blur": 291.7,
+      "rank_blur": 786.5,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00150.jpg",
+      "seq": 150,
+      "index": 1801,
+      "time_s": 60.033,
+      "blur": 296.8,
+      "rank_blur": 755.1,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00151.jpg",
+      "seq": 151,
+      "index": 1816,
+      "time_s": 60.533,
+      "blur": 300.4,
+      "rank_blur": 763.3,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00152.jpg",
+      "seq": 152,
+      "index": 1833,
+      "time_s": 61.1,
+      "blur": 294.1,
+      "rank_blur": 772.6,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00153.jpg",
+      "seq": 153,
+      "index": 1847,
+      "time_s": 61.567,
+      "blur": 270.1,
+      "rank_blur": 730.7,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00154.jpg",
+      "seq": 154,
+      "index": 1853,
+      "time_s": 61.767,
+      "blur": 275.1,
+      "rank_blur": 751.8,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00155.jpg",
+      "seq": 155,
+      "index": 1868,
+      "time_s": 62.267,
+      "blur": 294.6,
+      "rank_blur": 781.6,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00156.jpg",
+      "seq": 156,
+      "index": 1883,
+      "time_s": 62.767,
+      "blur": 283.5,
+      "rank_blur": 747.9,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00157.jpg",
+      "seq": 157,
+      "index": 1887,
+      "time_s": 62.9,
+      "blur": 308.4,
+      "rank_blur": 788.3,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00158.jpg",
+      "seq": 158,
+      "index": 1899,
+      "time_s": 63.3,
+      "blur": 307.3,
+      "rank_blur": 803.8,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00159.jpg",
+      "seq": 159,
+      "index": 1914,
+      "time_s": 63.8,
+      "blur": 277.2,
+      "rank_blur": 769.6,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00160.jpg",
+      "seq": 160,
+      "index": 1922,
+      "time_s": 64.067,
+      "blur": 301.1,
+      "rank_blur": 794.2,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00161.jpg",
+      "seq": 161,
+      "index": 1934,
+      "time_s": 64.467,
+      "blur": 304.8,
+      "rank_blur": 799.0,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00162.jpg",
+      "seq": 162,
+      "index": 1955,
+      "time_s": 65.167,
+      "blur": 285.5,
+      "rank_blur": 805.0,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00163.jpg",
+      "seq": 163,
+      "index": 1958,
+      "time_s": 65.267,
+      "blur": 313.3,
+      "rank_blur": 826.8,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00164.jpg",
+      "seq": 164,
+      "index": 1972,
+      "time_s": 65.733,
+      "blur": 322.8,
+      "rank_blur": 859.9,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00165.jpg",
+      "seq": 165,
+      "index": 1987,
+      "time_s": 66.233,
+      "blur": 316.5,
+      "rank_blur": 863.0,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00166.jpg",
+      "seq": 166,
+      "index": 2002,
+      "time_s": 66.733,
+      "blur": 338.2,
+      "rank_blur": 892.5,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00167.jpg",
+      "seq": 167,
+      "index": 2005,
+      "time_s": 66.833,
+      "blur": 330.2,
+      "rank_blur": 893.1,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00168.jpg",
+      "seq": 168,
+      "index": 2025,
+      "time_s": 67.5,
+      "blur": 319.8,
+      "rank_blur": 888.7,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00169.jpg",
+      "seq": 169,
+      "index": 2028,
+      "time_s": 67.6,
+      "blur": 322.6,
+      "rank_blur": 821.4,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00170.jpg",
+      "seq": 170,
+      "index": 2044,
+      "time_s": 68.133,
+      "blur": 331.9,
+      "rank_blur": 817.0,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00171.jpg",
+      "seq": 171,
+      "index": 2063,
+      "time_s": 68.767,
+      "blur": 304.9,
+      "rank_blur": 773.0,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00172.jpg",
+      "seq": 172,
+      "index": 2066,
+      "time_s": 68.867,
+      "blur": 318.0,
+      "rank_blur": 780.4,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00173.jpg",
+      "seq": 173,
+      "index": 2084,
+      "time_s": 69.467,
+      "blur": 360.6,
+      "rank_blur": 829.2,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00174.jpg",
+      "seq": 174,
+      "index": 2099,
+      "time_s": 69.967,
+      "blur": 362.4,
+      "rank_blur": 890.9,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00175.jpg",
+      "seq": 175,
+      "index": 2110,
+      "time_s": 70.333,
+      "blur": 415.3,
+      "rank_blur": 1038.0,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00176.jpg",
+      "seq": 176,
+      "index": 2120,
+      "time_s": 70.667,
+      "blur": 427.7,
+      "rank_blur": 1123.8,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00177.jpg",
+      "seq": 177,
+      "index": 2135,
+      "time_s": 71.167,
+      "blur": 442.2,
+      "rank_blur": 1282.6,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00178.jpg",
+      "seq": 178,
+      "index": 2141,
+      "time_s": 71.367,
+      "blur": 449.2,
+      "rank_blur": 1378.1,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00179.jpg",
+      "seq": 179,
+      "index": 2158,
+      "time_s": 71.933,
+      "blur": 467.5,
+      "rank_blur": 1654.5,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00180.jpg",
+      "seq": 180,
+      "index": 2160,
+      "time_s": 72.0,
+      "blur": 466.1,
+      "rank_blur": 1653.4,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00181.jpg",
+      "seq": 181,
+      "index": 2175,
+      "time_s": 72.5,
+      "blur": 404.3,
+      "rank_blur": 1750.2,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00182.jpg",
+      "seq": 182,
+      "index": 2193,
+      "time_s": 73.1,
+      "blur": 367.8,
+      "rank_blur": 1557.7,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00183.jpg",
+      "seq": 183,
+      "index": 2196,
+      "time_s": 73.2,
+      "blur": 334.2,
+      "rank_blur": 1377.4,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00184.jpg",
+      "seq": 184,
+      "index": 2208,
+      "time_s": 73.6,
+      "blur": 315.3,
+      "rank_blur": 1229.8,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00185.jpg",
+      "seq": 185,
+      "index": 2221,
+      "time_s": 74.033,
+      "blur": 243.1,
+      "rank_blur": 970.4,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00186.jpg",
+      "seq": 186,
+      "index": 2232,
+      "time_s": 74.4,
+      "blur": 265.6,
+      "rank_blur": 714.1,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00187.jpg",
+      "seq": 187,
+      "index": 2253,
+      "time_s": 75.1,
+      "blur": 264.2,
+      "rank_blur": 631.5,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00188.jpg",
+      "seq": 188,
+      "index": 2266,
+      "time_s": 75.533,
+      "blur": 313.3,
+      "rank_blur": 738.9,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00189.jpg",
+      "seq": 189,
+      "index": 2270,
+      "time_s": 75.667,
+      "blur": 343.9,
+      "rank_blur": 768.9,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00190.jpg",
+      "seq": 190,
+      "index": 2291,
+      "time_s": 76.367,
+      "blur": 317.1,
+      "rank_blur": 829.5,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00191.jpg",
+      "seq": 191,
+      "index": 2301,
+      "time_s": 76.7,
+      "blur": 324.5,
+      "rank_blur": 896.9,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00192.jpg",
+      "seq": 192,
+      "index": 2305,
+      "time_s": 76.833,
+      "blur": 290.3,
+      "rank_blur": 845.6,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00193.jpg",
+      "seq": 193,
+      "index": 2322,
+      "time_s": 77.4,
+      "blur": 255.8,
+      "rank_blur": 923.9,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00194.jpg",
+      "seq": 194,
+      "index": 2334,
+      "time_s": 77.8,
+      "blur": 207.7,
+      "rank_blur": 882.4,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00195.jpg",
+      "seq": 195,
+      "index": 2346,
+      "time_s": 78.2,
+      "blur": 269.4,
+      "rank_blur": 1051.3,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00196.jpg",
+      "seq": 196,
+      "index": 2363,
+      "time_s": 78.767,
+      "blur": 190.2,
+      "rank_blur": 951.9,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00197.jpg",
+      "seq": 197,
+      "index": 2369,
+      "time_s": 78.967,
+      "blur": 332.6,
+      "rank_blur": 1516.6,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00198.jpg",
+      "seq": 198,
+      "index": 2378,
+      "time_s": 79.267,
+      "blur": 272.7,
+      "rank_blur": 1314.8,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00199.jpg",
+      "seq": 199,
+      "index": 2399,
+      "time_s": 79.967,
+      "blur": 214.5,
+      "rank_blur": 1089.7,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00200.jpg",
+      "seq": 200,
+      "index": 2402,
+      "time_s": 80.067,
+      "blur": 246.3,
+      "rank_blur": 1116.9,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00201.jpg",
+      "seq": 201,
+      "index": 2413,
+      "time_s": 80.433,
+      "blur": 256.5,
+      "rank_blur": 1058.4,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00202.jpg",
+      "seq": 202,
+      "index": 2435,
+      "time_s": 81.167,
+      "blur": 188.0,
+      "rank_blur": 662.3,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00203.jpg",
+      "seq": 203,
+      "index": 2440,
+      "time_s": 81.333,
+      "blur": 248.4,
+      "rank_blur": 733.6,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00204.jpg",
+      "seq": 204,
+      "index": 2458,
+      "time_s": 81.933,
+      "blur": 297.6,
+      "rank_blur": 823.5,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00205.jpg",
+      "seq": 205,
+      "index": 2460,
+      "time_s": 82.0,
+      "blur": 289.6,
+      "rank_blur": 809.6,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00206.jpg",
+      "seq": 206,
+      "index": 2477,
+      "time_s": 82.567,
+      "blur": 274.4,
+      "rank_blur": 810.1,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00207.jpg",
+      "seq": 207,
+      "index": 2494,
+      "time_s": 83.133,
+      "blur": 307.8,
+      "rank_blur": 805.4,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00208.jpg",
+      "seq": 208,
+      "index": 2496,
+      "time_s": 83.2,
+      "blur": 314.1,
+      "rank_blur": 804.6,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00209.jpg",
+      "seq": 209,
+      "index": 2518,
+      "time_s": 83.933,
+      "blur": 328.9,
+      "rank_blur": 829.6,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00210.jpg",
+      "seq": 210,
+      "index": 2520,
+      "time_s": 84.0,
+      "blur": 342.1,
+      "rank_blur": 845.8,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00211.jpg",
+      "seq": 211,
+      "index": 2533,
+      "time_s": 84.433,
+      "blur": 338.7,
+      "rank_blur": 841.9,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00212.jpg",
+      "seq": 212,
+      "index": 2552,
+      "time_s": 85.067,
+      "blur": 331.3,
+      "rank_blur": 852.5,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00213.jpg",
+      "seq": 213,
+      "index": 2564,
+      "time_s": 85.467,
+      "blur": 342.9,
+      "rank_blur": 864.2,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00214.jpg",
+      "seq": 214,
+      "index": 2568,
+      "time_s": 85.6,
+      "blur": 342.6,
+      "rank_blur": 852.2,
+      "width": 1600,
+      "height": 900
+    },
+    {
+      "name": "00215.jpg",
+      "seq": 215,
+      "index": 2580,
+      "time_s": 86.0,
+      "blur": 277.0,
+      "rank_blur": 775.6,
+      "width": 1600,
+      "height": 900
+    }
+  ]
+}

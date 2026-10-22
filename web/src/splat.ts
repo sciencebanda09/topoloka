@@ -81,7 +81,7 @@ export class SplatLayer {
         this.viewer.addSplatScene(blobUrl, {
           format: GaussianSplats3D.SceneFormat.Splat, // blob URLs carry no extension
           showLoadingUI: false,
-          splatAlphaRemovalThreshold: 10,
+          splatAlphaRemovalThreshold: 40,
           position: position.toArray(),
           rotation: rotation.toArray(), // xyzw
           scale: scale.toArray(),

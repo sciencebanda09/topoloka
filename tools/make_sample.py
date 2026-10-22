@@ -1,9 +1,9 @@
-"""Assemble the committed R1 sample bundle (test/house_v1) from kernel outputs.
+"""Assemble the committed R1 sample bundle (test/<capture>) from kernel outputs.
 
 Takes the fetched outputs of the two Kaggle kernels (kaggle/out/namma_pipeline,
 kaggle/out/namma_splat) and produces a small, redistributable capture:
 
-    test/house_v1/
+    test/<capture>/
         README.md            auto-written summary (sizes, provenance, how-to)
         frames/              N evenly-spaced preview frames (subset)
         frames_meta.json
@@ -16,7 +16,8 @@ kaggle/out/namma_splat) and produces a small, redistributable capture:
 
 Usage (repo root, venv python):
     .venv\\Scripts\\python.exe tools\\make_sample.py
-    .venv\\Scripts\\python.exe tools\\make_sample.py --frames 16 --max-gaussians 400000
+    .venv\\Scripts\\python.exe tools\\make_sample.py --frames 16 --max-gaussians 900000 \\
+        --source-note "Source: ..."
 """
 
 from __future__ import annotations
@@ -97,7 +98,7 @@ def pick_frames(frames_zip: Path, dst: Path, count: int) -> int:
 
 
 def prune_splat_to_box(splat_path: Path, nav: dict, lo: np.ndarray, hi: np.ndarray,
-                       margin: float = 1.0) -> int:
+                       margin: float = 3.0) -> int:
     """Drop gaussians outside the capture volume (training-frame -> nav via align).
 
     Splatfacto keeps a few confident gaussians far outside the room (through
@@ -182,6 +183,7 @@ def build_web(pipe_out: Path, splat_out: Path, dest: Path,
         else:
             splat["present"] = False
         m["sample"] = "decimated copy of the Kaggle pipeline output"
+        m["capture"] = web.parent.name
         meta_path.write_text(json.dumps(m, indent=2), encoding="utf-8")
     return meta
 
@@ -192,7 +194,8 @@ def _fmt_size(n: int) -> str:
     return f"{n / 1e6:.2f} MB" if n >= 1_000_000 else f"{n / 1e3:.0f} KB"
 
 
-def write_readme(dest: Path, meta: dict, n_frames: int) -> None:
+def write_readme(dest: Path, meta: dict, n_frames: int, source_note: str = "") -> None:
+    cap = dest.name
     rows = []
     total = 0
     for p in sorted(dest.rglob("*")):
@@ -208,11 +211,13 @@ def write_readme(dest: Path, meta: dict, n_frames: int) -> None:
     table = "\n".join(f"| `{name}` | {_fmt_size(size)} |" for name, size in rows)
     g = meta.get("splat_gaussians")
     splat_txt = f"splat pruned to {int(g):,} gaussians" if g else "no splat in this build"
-    readme = f"""# house_v1 -- sample capture
+    readme = f"""# {cap} -- sample capture
 
 Everything here was produced by the Topoloka pipeline on Kaggle from a single
-phone walk-through video (no LiDAR, no depth sensor). It is small enough to
+walk-through video (no LiDAR, no depth sensor). It is small enough to
 live in git so anyone can inspect or serve it without a Kaggle account.
+
+{source_note}
 
 | file | size |
 |---|---|
@@ -226,14 +231,14 @@ points, {splat_txt}; preview frames: {n_frames}).
 Stage this folder where the viewer looks for artifacts, then start the app:
 
 ```powershell
-New-Item -ItemType Directory -Force ..\\..\\web\\public\\artifacts\\house_v1 | Out-Null
-Copy-Item -Recurse -Force .\\* ..\\..\\web\\public\\artifacts\\house_v1\\
+New-Item -ItemType Directory -Force ..\\..\\web\\public\\artifacts\\{cap} | Out-Null
+Copy-Item -Recurse -Force .\\* ..\\..\\web\\public\\artifacts\\{cap}\\
 cd ..\\..\\web
 npm ci
-npm run dev   # open http://127.0.0.1:5173/?capture=house_v1
+npm run dev   # open http://127.0.0.1:5173/?capture={cap}
 ```
 
-Hosted twin (same data): <https://sciencebanda09.github.io/topoloka/?capture=house_v1>
+Hosted twin (same data): <https://sciencebanda09.github.io/topoloka/?capture={cap}>
 
 Drag to look, WASD/arrows to walk, M toggles the minimap, P toggles the
 point cloud behind the splat. (Internal refreshes from fresh kernel outputs:
@@ -258,10 +263,12 @@ def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--pipe-out", type=Path, default=ROOT / "kaggle/out/namma_pipeline")
     ap.add_argument("--splat-out", type=Path, default=ROOT / "kaggle/out/namma_splat")
-    ap.add_argument("--dest", type=Path, default=ROOT / "test/house_v1")
+    ap.add_argument("--dest", type=Path, default=ROOT / "test/metro_v1")
     ap.add_argument("--frames", type=int, default=14)
     ap.add_argument("--max-points", type=int, default=250_000)
-    ap.add_argument("--max-gaussians", type=int, default=400_000)
+    ap.add_argument("--max-gaussians", type=int, default=1_000_000)
+    ap.add_argument("--source-note", type=str, default="",
+                    help="one line of provenance/attribution for the README")
     args = ap.parse_args()
 
     if (args.dest / "web" / "nav.json").exists():
@@ -297,7 +304,7 @@ def main() -> None:
             meta_path.write_text(json.dumps(m, indent=2), encoding="utf-8")
     except Exception as exc:  # QA is a report, never a blocker
         print(f"  QA regeneration skipped: {exc}")
-    write_readme(args.dest, meta, n)
+    write_readme(args.dest, meta, n, args.source_note)
 
     total = sum(p.stat().st_size for p in args.dest.rglob("*") if p.is_file())
     print(f"done: {args.dest} ({total/1e6:.1f} MB)")

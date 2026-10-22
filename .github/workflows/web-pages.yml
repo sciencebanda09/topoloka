@@ -1,15 +1,15 @@
 # Builds the web viewer and deploys it to GitHub Pages.
 #
 # Artifacts: web/public/artifacts/* is gitignored (large pipeline outputs).
-# The committed sample capture lives in test/house_v1/web/ and is copied into
-# web/public/artifacts/house_v1/ here before the build, so the deployed viewer
-# can serve ?capture=house_v1 without any duplicate data in git.
+# The committed sample capture lives in test/metro_v1/web/ and is copied into
+# web/public/artifacts/metro_v1/ here before the build, so the deployed viewer
+# can serve ?capture=metro_v1 without any duplicate data in git.
 name: web-pages
 
 on:
   push:
     branches: [main]
-    paths: ['web/**', 'test/house_v1/web/**', '.github/workflows/web-pages.yml']
+    paths: ['web/**', 'test/metro_v1/web/**', '.github/workflows/web-pages.yml']
   workflow_dispatch:
 
 permissions:
@@ -26,11 +26,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Stage committed sample capture
-        if: ${{ hashFiles('test/house_v1/web/nav.json') != '' }}
+        if: ${{ hashFiles('test/metro_v1/web/nav.json') != '' }}
         working-directory: .
         run: |
-          mkdir -p web/public/artifacts/house_v1
-          cp -r test/house_v1/web/. web/public/artifacts/house_v1/
+          mkdir -p web/public/artifacts/metro_v1
+          cp -r test/metro_v1/web/. web/public/artifacts/metro_v1/
       - uses: actions/setup-node@v4
         with:
           node-version: 22

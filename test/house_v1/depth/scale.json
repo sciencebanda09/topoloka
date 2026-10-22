@@ -1,6 +1,0 @@
-{
-  "scale_m_per_unit": 0.43608904783596525,
-  "method": "median(depth_m / sparse_camera_z)",
-  "samples": 75946,
-  "mad_rel": 0.09910146784362717
-}

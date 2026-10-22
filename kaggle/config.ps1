@@ -13,4 +13,4 @@ if (-not $env:KAGGLE_CONFIG_DIR) {
 $script:NammaRoot   = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
 $script:NammaUser   = "shashankdev09"
 $script:CodeDataset = "$script:NammaUser/namma-code"
-$script:VideoDataset = "$script:NammaUser/house-video-v2-input"
+$script:VideoDataset = "$script:NammaUser/metro-walk-video-v1"

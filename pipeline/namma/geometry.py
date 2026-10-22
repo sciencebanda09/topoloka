@@ -193,13 +193,25 @@ def align_scene(points: np.ndarray, cam_centers: np.ndarray, down: np.ndarray,
     down = down / np.linalg.norm(down)
     cam_mean = cam_centers.mean(axis=0)
 
-    # candidate planes: big planes roughly perpendicular to down
-    # keep points at plausible floor heights below the cameras to focus RANSAC
+    # Candidate points. The sparse path has no metric scale, so a fixed band
+    # in scene units can miss the floor entirely (e.g. a reconstruction where
+    # 1 unit ~ 5 m puts the floor only 0.25 units below the cameras). Use every
+    # point below the camera mean there. The metric path keeps the band, where
+    # units are metres.
     rel = points - cam_mean
     h = rel @ down                      # + = below camera mean
-    cand = points[(h > min_cam_z - 0.5) & (h < max_cam_z)] if len(points) else points
+    if len(points) == 0:
+        cand = points
+    elif fixed_scale is None:
+        cand = points[h > 0]
+    else:
+        cand = points[(h >= min_cam_z - 0.5) & (h <= max_cam_z)]
     if len(cand) < 50:
         cand = points
+
+    # a plane closer than this to the camera mean is degenerate (units unknown)
+    extent = float(np.linalg.norm(cam_centers.max(axis=0) - cam_centers.min(axis=0)))
+    min_floor_drop = 1e-3 * max(extent, 1e-9)
 
     best = None
     rng = np.random.default_rng(17)
@@ -216,7 +228,10 @@ def align_scene(points: np.ndarray, cam_centers: np.ndarray, down: np.ndarray,
         # signed distance of the camera mean above the plane (positive, since
         # normal points up and the floor lies below the cameras)
         h_cam = float(normal @ cam_mean + d)
-        if not (0.4 < h_cam < 4.0):
+        if fixed_scale is None:
+            if h_cam <= min_floor_drop:
+                continue
+        elif not (0.4 < h_cam < 4.0):
             continue
         count = int(mask.sum())
         if best is None or count > best[0]:

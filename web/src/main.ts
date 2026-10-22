@@ -15,7 +15,7 @@ import { Costmap } from './nav';
 import { SplatLayer } from './splat';
 import { Viewer } from './viewer';
 
-const CAPTURE = new URLSearchParams(location.search).get('capture') ?? 'house_v1';
+const CAPTURE = new URLSearchParams(location.search).get('capture') ?? 'metro_v1';
 const BASE = `${import.meta.env.BASE_URL}artifacts/${CAPTURE}`;
 
 const titleEl = document.getElementById('title');
@@ -79,7 +79,8 @@ async function boot(): Promise<void> {
     }
   }
 
-  const spawn = viewer.spawnAt(nav);
+  const spawnParam = new URLSearchParams(location.search).get('t');
+  const spawn = viewer.spawnAt(nav, spawnParam ? Number(spawnParam) : undefined);
   const controls = new WalkControls(canvas, viewer.camera, costmap, spawn);
   const minimap = new Minimap(minimapCanvas, nav, grid);
 

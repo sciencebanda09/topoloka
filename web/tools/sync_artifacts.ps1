@@ -1,8 +1,8 @@
 # Sync fetched kernel artifacts into the web app's public folder.
-# Usage: sync_artifacts.ps1 [-Kernel namma_pipeline] [-Capture house_v1]
+# Usage: sync_artifacts.ps1 [-Kernel namma_pipeline] [-Capture metro_v1]
 param(
     [string]$Kernel = 'namma_pipeline',
-    [string]$Capture = 'house_v1'
+    [string]$Capture = 'metro_v1'
 )
 $ErrorActionPreference = 'Stop'
 $root = (Resolve-Path (Join-Path $PSScriptRoot '..\..')).Path

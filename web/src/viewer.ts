@@ -109,13 +109,17 @@ export class Viewer {
     this.scene.add(this.routeLine);
   }
 
-  spawnAt(nav: NavData): { position: [number, number, number]; yaw: number } {
+  spawnAt(nav: NavData, at?: number): { position: [number, number, number]; yaw: number } {
     const traj = nav.trajectory;
     let pos: [number, number, number] = [0, 0, 1.6];
     let yaw = 0;
     if (traj.length >= 2) {
-      pos = [traj[0][0], traj[0][1], 1.6];
-      const ahead = traj[Math.min(10, traj.length - 1)];
+      const last = traj.length - 1;
+      const i = at !== undefined && Number.isFinite(at)
+        ? Math.max(0, Math.min(last - 1, Math.floor(at)))
+        : 0;
+      pos = [traj[i][0], traj[i][1], 1.6];
+      const ahead = traj[Math.min(i + 10, last)];
       const dx = ahead[0] - pos[0], dy = ahead[1] - pos[1];
       // three forward at yaw: f = (-sin(yaw), 0, -cos(yaw)); nav f = (f.x, -f.z)
       yaw = Math.atan2(-dx, dy);

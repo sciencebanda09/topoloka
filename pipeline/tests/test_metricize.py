@@ -2,8 +2,8 @@
 
 The frame contract: nav.json's align maps the splat's TRAINING frame -> nav.
 The GPU path computes a metric scale in the depth stage; if training stays in
-raw SfM units the shipped splat would be placed off by 1/scale (2.29x for the
-house capture). metricize scales transforms.json camera centers + sparse.ply
+raw SfM units the shipped splat would be placed off by 1/scale (6.25x for the
+station capture). metricize scales transforms.json camera centers + sparse.ply
 points to meters, making one align correct for cloud + splat + trajectory.
 
 Run:  .venv\\Scripts\\python.exe pipeline\\tests\\test_metricize.py

@@ -68,8 +68,7 @@ def find_video() -> Path:
         raise SystemExit("no .mp4 under /kaggle/input")
     for v in vids:
         log(f"input video: {v} ({v.stat().st_size / 1e6:.1f} MB)")
-    house = [v for v in vids if v.name.lower().startswith("house")]
-    return (house or sorted(vids, key=lambda p: p.stat().st_size, reverse=True))[0]
+    return sorted(vids, key=lambda p: p.stat().st_size, reverse=True)[0]
 
 
 def run_stage(args: list[str]) -> None:

@@ -1,14 +1,14 @@
 /* Print styling for Topoloka docs (abstract PDF). Inlined by pandoc. */
 @page {
   size: A4;
-  margin: 17mm 16mm 16mm 16mm;
+  margin: 14mm 15mm 14mm 15mm;
 }
 
-html { font-size: 10.2pt; }
+html { font-size: 9.9pt; }
 
 body {
   font-family: "Segoe UI", "Calibri", system-ui, sans-serif;
-  line-height: 1.42;
+  line-height: 1.37;
   color: #1c1c22;
   max-width: 100%;
 }
@@ -85,7 +85,10 @@ hr { border: none; border-top: 1px solid #ccd; margin: 0.9rem 0; }
 
 img {
   max-width: 100%;
+  max-height: 117mm;
   height: auto;
+  display: block;
+  margin: 0.35rem auto;
   page-break-inside: avoid;
   border: 1px solid #dde3ea;
   border-radius: 4px;

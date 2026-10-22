@@ -7,7 +7,7 @@ The splat frame contract:
     splat, however, trains from transforms.json + sparse.ply, which stay in
     raw SfM units (arbitrary scale). nav.json's align maps the SPLAT'S
     TRAINING FRAME -> nav, so training in SfM units while align says "metric"
-    would place the splat off by 1/scale (2.29x for the house capture).
+    would place the splat off by 1/scale (6.25x for the station capture).
 
     This stage multiplies camera centers in transforms.json and points in
     sparse.ply by the depth scale. A uniform world scaling leaves rotations,
