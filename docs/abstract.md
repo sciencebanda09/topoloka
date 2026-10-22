@@ -46,8 +46,8 @@ footage**: *Modern Melbourne Metro Walkway Urban Design* by Joolsmagool
 (Pexels License), trimmed to **86.07 s at 1920×1080 / 30 fps**. It is a single
 continuous walk down a real transit corridor — tiled floor, curved metal
 panels, ad screens, a concourse — with no cuts, no people in the foreground,
-and no privacy exposure. The source clip and the exact 216 picked frames ship
-with the sample.
+and no privacy exposure. The sample ships 14 preview frames plus the SfM,
+depth, nav, and web artifacts, and credits the source in its README.
 
 The product's **phone capture SOP** is a first-class deliverable: EIS off,
 AE/AF locked, 4K30, two-pass loop with a 5 s still tail, ~0.4 m/s pace,
@@ -121,8 +121,9 @@ Three decisions carried most of the weight:
 The GPU stage is a nerfstudio 1.1.5 splatfacto run on one Kaggle T4. The
 exported PLY is converted to the 32-byte web `.splat` format with higher SH
 bands dropped (DC only) and low-alpha gaussians pruned. The hosted bundle is
-the same twin opacity-pruned and cropped to a 3 m volume around the cloud, so
-the page stays at **24.7 MB total** (14.63 MB splat + 3.75 MB cloud + nav).
+the same twin opacity-pruned and cropped to a 3 m volume around the cloud:
+**18.4 MB of web payload** (14.63 MB splat + 3.75 MB cloud + nav), with the
+full sample folder at 24.7 MB including preview frames and reports.
 
 pycolmap also produced a 3-frame secondary reconstruction; the largest model
 (216/216 frames) was used, and the warning is preserved in
@@ -163,9 +164,10 @@ Demo video: **pending upload**
   this redistributable artifact.
 - **Metric depth degrades past ~8–12 m.** Fusion is clipped there; the residual
   is reported in `depth/depth_report.json` rather than hidden.
-- **Web payload and cold load.** 24.7 MB of artifacts (14.63 MB splat) is fine
-  on broadband and marginal on a poor venue network; `.ksplat` compression and
-  a lower gaussian budget are the fallbacks.
+- **Web payload and cold load.** 18.4 MB of web payload (14.63 MB splat; the
+  full sample folder is 24.7 MB) is fine on broadband and marginal on a poor
+  venue network; `.ksplat` compression and a lower gaussian budget are the
+  fallbacks.
 - **No POIs or routing UI yet.** The A* costmap, route rendering, and `?route`
   dev flag are scaffolded; semantic POIs and the search bar are R2.
 - **Software rendering distorts splats.** Headless SwiftShader screenshots
@@ -184,7 +186,7 @@ Demo video: **pending upload**
 
 The repo contains the pipeline (all stages as small, readable modules), the
 Kaggle kernel definitions, the capture SOP, and a `test/metro_v1` capture with
-one-command local viewing and the exact QA report. The source clip is credited
+documented local viewing and the exact QA report. The source clip is credited
 in `test/metro_v1/README.md` (*Modern Melbourne Metro Walkway Urban Design* by
 Joolsmagool, Pexels License, trimmed to 86 s); the sample data is redistributed
 under that licence, the code under MIT.

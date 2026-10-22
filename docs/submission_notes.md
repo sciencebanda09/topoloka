@@ -64,6 +64,11 @@ the portal is the only place that matters, this file is the defense copy.
   Figures in `docs/fig/` are GPU captures. A reviewer with software rendering
   should compare against a GPU-backed browser.
 
+- **2026-10-23 — R1 packaging verified.** Pages deploy run 39863541101
+  succeeded. Cold load of `?capture=metro_v1&t=160` from a fresh profile on
+  ANGLE/D3D11: splat 0.46 M, 315.05 m², QA PASS, 18.4 MB web payload. Abstract
+  rebuilt at 5 pages. Remaining R1 item: the 3–5 min demo video and its link.
+
 ## Engineering decisions worth defending
 
 - **One frame convention, one align block.** Raw SfM → metric nav
@@ -80,7 +85,8 @@ the portal is the only place that matters, this file is the defense copy.
 - **Blob-URL splat loading.** The viewer fetches the `.splat` bytes itself and
   hands the library a blob URL with a timeout; `addSplatScene(httpUrl)` gave no
   error/abort path and could hang the page.
-- **Sample first.** The hosted bundle is 24.7 MB total; the full 139 MB PLY
+- **Sample first.** The hosted web payload is 18.4 MB (14.63 MB splat +
+  3.75 MB cloud + nav); the full sample folder is 24.7 MB. The 139 MB PLY
   never goes to the web.
 
 ## Known limitations (also in the abstract)

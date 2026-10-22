@@ -24,10 +24,11 @@ Round 1 deliverables and their exact state. Numbers below trace to
       verified on a hardware GPU (ANGLE/D3D11): splat, minimap, HUD, collision
 - [x] Pages workflow stages `test/metro_v1/web`; default capture is
       `?capture=metro_v1`
-- [ ] Push and verify the Pages deploy serves the metro sample:
+- [x] Pages deploy verified serving the metro sample (run 39863541101):
       <https://sciencebanda09.github.io/topoloka/?capture=metro_v1>
-- [ ] Cold-load test from a fresh browser profile (24.7 MB bundle: 14.63 MB
-      splat + 3.75 MB cloud); record first-paint time
+- [x] Cold-load test from a fresh browser profile on the live Pages URL:
+      18.4 MB web payload (14.63 MB splat + 3.75 MB cloud + nav), GPU-rendered
+      splat 0.46 M, QA PASS; 24.7 MB sample folder including preview frames
 
 ## 3. Demo video (3–5 min)
 
