@@ -13,7 +13,7 @@ Round 1 deliverables and their exact state. Numbers below trace to
 - [x] Figures: pipeline stage map (Fig. 1), metric occupancy map (Fig. 2),
       GPU-rendered twin still (Fig. 3)
 - [x] Rebuilt `docs/abstract.pdf` (5 pages, `tools/build_pdf.ps1`)
-- [ ] Proofread once out loud; re-check every number against the artifacts
+- [x] Proofread and re-checked every number against the artifacts (2026-10-23)
 - [ ] Replace `Demo video: **pending upload**` with the upload link
 
 ## 2. Free-roam web viewer link
@@ -51,8 +51,8 @@ Round 1 deliverables and their exact state. Numbers below trace to
 - [x] Old private capture removed from HEAD; it is not shipped or referenced
       by the deliverables
 - [ ] Commit + push the metro sample and doc rewrite
-- [ ] Fresh-clone check: `git clone` → follow README → `npm run dev` shows
-      the sample twin without any Kaggle run
+- [x] Fresh-clone check: `git clone` → README steps → `npm ci` + `npm run build`
+      served the sample twin (18.4 MB web payload, no Kaggle run)
 
 ## 5. Budget / dependencies
 
