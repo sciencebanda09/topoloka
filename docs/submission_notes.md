@@ -77,7 +77,9 @@ the portal is the only place that matters, this file is the defense copy.
   (the camera proved it traversable). Default spawn moved from trajectory 0
   (at the reconstruction boundary, sideways view) to 75% of the path. Verified
   `?route` renders 350 waypoints / 20.3 m from the default spawn in 3D and on
-  the minimap. Remaining R1 item: the 3–5 min demo video and its link.
+  the minimap. Pages redeploy 39928019529 verified live: default opens at 75%,
+  route 350 wp / 20.3 m. Remaining R1 item: the 3–5 min demo video and its
+  link.
 
 ## Engineering decisions worth defending
 
