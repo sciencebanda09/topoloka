@@ -167,8 +167,8 @@ Demo video: **pending upload**
   is reported in `depth/depth_report.json` rather than hidden.
 - **Web payload and cold load.** 18.4 MB of web payload (14.63 MB splat; the
   full sample folder is 24.7 MB) is fine on broadband and marginal on a poor
-  venue network; `.ksplat` compression and a lower gaussian budget are the
-  fallbacks.
+  venue network — cold ready in **19.2 s** in a fresh browser profile here;
+  `.ksplat` compression and a lower gaussian budget are the fallbacks.
 - **No POIs or routing UI yet.** The A* costmap, route rendering, and `?route`
   dev flag are scaffolded; semantic POIs and the search bar are R2.
 - **Software rendering distorts splats.** Headless SwiftShader screenshots

@@ -66,7 +66,8 @@ the portal is the only place that matters, this file is the defense copy.
 
 - **2026-10-23 — R1 packaging verified.** Pages deploy run 39863541101
   succeeded. Cold load of `?capture=metro_v1&t=160` from a fresh profile on
-  ANGLE/D3D11: splat 0.46 M, 315.05 m², QA PASS, 18.4 MB web payload. Abstract
+  ANGLE/D3D11: splat 0.46 M, 315.05 m², QA PASS, 18.4 MB web payload; cold
+  ready **19.2 s** (13.96 MB splat + 3.38 MB cloud transferred). Abstract
   rebuilt at 5 pages. Fresh-clone check passed (`git clone` → `npm ci` →
   `npm run build`, 18.4 MB web payload).
 

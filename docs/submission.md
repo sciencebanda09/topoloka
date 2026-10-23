@@ -29,7 +29,8 @@ Round 1 deliverables and their exact state. Numbers below trace to
       <https://sciencebanda09.github.io/topoloka/?capture=metro_v1>
 - [x] Cold-load test from a fresh browser profile on the live Pages URL:
       18.4 MB web payload (14.63 MB splat + 3.75 MB cloud + nav), GPU-rendered
-      splat 0.46 M, QA PASS; 24.7 MB sample folder including preview frames
+      splat 0.46 M, QA PASS; cold ready 19.2 s (13.96 MB splat + 3.38 MB cloud
+      transferred); 24.7 MB sample folder including preview frames
 - [x] Walkable route verified: unknown space blocked, 1 m free carve along the
       walked path, A* = 350 waypoints / 20.3 m from the default spawn (renders
       in 3D and on the minimap)

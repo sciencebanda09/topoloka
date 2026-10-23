@@ -21,6 +21,10 @@ the artifact files, not from a slide.
 - **Hardware acceleration is mandatory.** Headless/software WebGL (SwiftShader)
   stretches anisotropic gaussians and makes the twin look smeared. Check
   `chrome://gpu` shows "Hardware accelerated", then record in normal Chrome.
+- **Exact URLs.** Default walk: <https://sciencebanda09.github.io/topoloka/?capture=metro_v1>
+  (opens inside the corridor, 20.3 m to the far end of the walk; turn around
+  and walk back to show the long leg). Route shot: append `&route&clean`. Use
+  `&t=160` only for a still; `&clean` hides the click prompt and fps.
 - Record at 1080p60; OBS or Win+G. Do a silent run-through first.
 - One continuous screen take for the viewer section — jump cuts in a free-roam
   demo read as faked.
@@ -37,7 +41,8 @@ the artifact files, not from a slide.
 - Depth: 31.2 M raw → 10.28 M voxel points; 216/216 frames fused
 - Nav: 929,436 floor inliers; camera height 1.588 m; 315.05 m² walkable (126,020 free cells); grid 1188 × 1259 @ 5 cm; nav stage 61 s
 - Splat: 25,000 iters at 1600×900; full export 510,336 gaussians / 16.33 MB; hosted sample 457,221 / 14.63 MB after the 3 m crop
-- Sample bundle 24.7 MB total (splat + 250 k-point cloud + nav); stopwatch the cold load on the live URL
+- Web payload 18.4 MB (14.63 MB splat + 3.75 MB cloud + nav); full sample folder 24.7 MB with frames/reports; cold ready **19.2 s** in a fresh profile (13.96 MB splat + 3.38 MB cloud transferred)
+- Viewer default spawn is 75% of the path; A* route is 350 waypoints / 20.3 m (unknown space blocked, 1 m walked-path carve)
 - Pipeline wall time: CPU 59.2 min (SfM) + 61 s (nav); GPU 79.0 min total (depth, gsplat JIT, train, export)
 - Source clip: "Modern Melbourne Metro Walkway Urban Design", Joolsmagool,
   Pexels License; trimmed to 86.07 s, 1920×1080 / 30 fps
