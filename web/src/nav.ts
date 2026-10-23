@@ -5,6 +5,9 @@
 
 import { FREE, type NavData, OBSTACLE } from './artifacts';
 
+/** Half-width of the free corridor carved along the capture path, in metres. */
+const WALKED_PATH_RADIUS_M = 0.5;
+
 export class Costmap {
   readonly w: number;
   readonly h: number;
@@ -17,7 +20,28 @@ export class Costmap {
     this.h = grid.h;
     this.cell = nav.cell_m;
     this.origin = nav.origin;
-    this.data = grid.data;
+    this.data = new Uint8Array(grid.data);
+    this.carveWalkedPath(nav.trajectory);
+  }
+
+  /**
+   * The camera physically traversed this path, so a narrow corridor around it
+   * is known free even where the 5 cm grid fragments (ticket gates, railings,
+   * low-clearance cells) break connectivity. This is a navigation safety
+   * carve, not a replacement for the measured occupancy map.
+   */
+  private carveWalkedPath(trajectory: [number, number, number][]): void {
+    const span = Math.ceil(WALKED_PATH_RADIUS_M / this.cell);
+    for (const [x, y] of trajectory) {
+      const [cx, cy] = this.toCell(x, y);
+      for (let dy = -span; dy <= span; dy++) {
+        for (let dx = -span; dx <= span; dx++) {
+          if (dx * dx + dy * dy > span * span) continue;
+          const nx = cx + dx, ny = cy + dy;
+          if (this.inBounds(nx, ny)) this.data[ny * this.w + nx] = FREE;
+        }
+      }
+    }
   }
 
   valueAtWorld(x: number, y: number): number {
@@ -27,8 +51,9 @@ export class Costmap {
     return this.data[cy * this.w + cx];
   }
 
+  /** Unknown space is not walkable: no collision against a void. */
   isBlocked(x: number, y: number): boolean {
-    return this.valueAtWorld(x, y) === OBSTACLE;
+    return this.valueAtWorld(x, y) !== FREE;
   }
 
   /** blocked test with a small radius (4 samples around the point) */
@@ -125,7 +150,7 @@ export class Costmap {
   }
 
   private blocked(x: number, y: number): boolean {
-    return this.data[y * this.w + x] === OBSTACLE;
+    return this.data[y * this.w + x] !== FREE;
   }
 
   private nearestFree(cx: number, cy: number): [number, number] {

@@ -115,9 +115,12 @@ export class Viewer {
     let yaw = 0;
     if (traj.length >= 2) {
       const last = traj.length - 1;
+      // The first capture frame sits at the reconstruction boundary, where the
+      // splat is thinnest. Default to the middle of the walk (inside the space);
+      // ?t=0 still starts at the true beginning.
       const i = at !== undefined && Number.isFinite(at)
         ? Math.max(0, Math.min(last - 1, Math.floor(at)))
-        : 0;
+        : Math.floor(last * 0.75);
       pos = [traj[i][0], traj[i][1], 1.6];
       const ahead = traj[Math.min(i + 10, last)];
       const dx = ahead[0] - pos[0], dy = ahead[1] - pos[1];

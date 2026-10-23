@@ -68,8 +68,16 @@ the portal is the only place that matters, this file is the defense copy.
   succeeded. Cold load of `?capture=metro_v1&t=160` from a fresh profile on
   ANGLE/D3D11: splat 0.46 M, 315.05 m², QA PASS, 18.4 MB web payload. Abstract
   rebuilt at 5 pages. Fresh-clone check passed (`git clone` → `npm ci` →
-  `npm run build`, 18.4 MB web payload). Remaining R1 item: the 3–5 min demo
-  video and its link.
+  `npm run build`, 18.4 MB web payload).
+
+- **2026-10-23 — Navigation pass.** The raw 5 cm grid fragments at gates and
+  railings, and A* was treating unknown cells as walkable, so the route from
+  the default spawn failed or detoured through unobserved space. The viewer now
+  blocks unknown cells and carves a 1 m free corridor along the camera path
+  (the camera proved it traversable). Default spawn moved from trajectory 0
+  (at the reconstruction boundary, sideways view) to 75% of the path. Verified
+  `?route` renders 350 waypoints / 20.3 m from the default spawn in 3D and on
+  the minimap. Remaining R1 item: the 3–5 min demo video and its link.
 
 ## Engineering decisions worth defending
 
@@ -98,6 +106,9 @@ the portal is the only place that matters, this file is the defense copy.
 - DC-only `.splat` drops view-dependent highlights.
 - No IMU in the public clip; the phone SOP is not exercised by the artifact.
 - Metric depth degrades past ~8–12 m.
+- The raw 5 cm grid fragments at gates/railings; the viewer blocks unknown
+  cells and carves the walked path. The pipeline should emit a connected nav
+  grid in R2 rather than relying on the viewer carve.
 - POIs/search and AR are R2/R3; `?route` is a dev flag, not the shipped UI.
 
 ## Reproduce

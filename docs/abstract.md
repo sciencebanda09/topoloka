@@ -131,7 +131,8 @@ pycolmap also produced a 3-frame secondary reconstruction; the largest model
 
 ![Metro capture: 5 cm occupancy grid with the 216-camera trajectory.](fig/nav.png)
 
-*Figure 2 — the metric costmap the viewer uses for collision and (R2) routing:
+*Figure 2 — the measured metric costmap behind collision and (R2) routing (the
+viewer also blocks unobserved cells and carves the 1 m walked path free):
 white = observed free cells (**315.05 m²** walkable), lavender = obstacle band
 above the floor, gray = unobserved, blue = camera path; 1188 × 1259 cells at
 5 cm.*

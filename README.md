@@ -74,10 +74,14 @@ cd web && npm ci && npm run dev
 ```
 
 Drag to look, **WASD/arrows** to walk, **M** toggles the minimap, **P** toggles
-the point cloud behind the splat. Append `?t=<index>` to spawn at a trajectory
-point (useful for stills and the demo), and `?clean` to hide the click prompt
-and fps readout. `npm run build` produces a static `dist/` that can be served
-from any web host.
+the point cloud behind the splat. The viewer opens at 75% of the capture path,
+inside the reconstructed volume; append `?t=<index>` to spawn at a specific
+trajectory point (`?t=0` is the true start, `?t=160` is the Figure 3 view), and
+`?clean` to hide the click prompt and fps readout. Unobserved space is not
+walkable: collision blocks it and carves a 1 m free corridor along the capture
+path, which the camera proved traversable. `?route` draws the scaffolded A*
+route (20.3 m / 350 waypoints from the default spawn). `npm run build` produces
+a static `dist/` that can be served from any web host.
 
 **Reproduce the pipeline:** the exact kernels that produced this capture are in
 `kaggle/kernels/` and are driven by the scripts in `kaggle/tools/` — see

@@ -82,7 +82,8 @@ async function boot(): Promise<void> {
   const spawnParam = new URLSearchParams(location.search).get('t');
   const spawn = viewer.spawnAt(nav, spawnParam ? Number(spawnParam) : undefined);
   const controls = new WalkControls(canvas, viewer.camera, costmap, spawn);
-  const minimap = new Minimap(minimapCanvas, nav, grid);
+  const minimap = new Minimap(minimapCanvas, nav,
+    { w: costmap.w, h: costmap.h, data: costmap.data });
 
   // dev: ?route draws an A* path from spawn to the capture's final trajectory point
   if (new URLSearchParams(location.search).has('route') && nav.trajectory.length > 2) {

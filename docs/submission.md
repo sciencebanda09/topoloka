@@ -29,6 +29,9 @@ Round 1 deliverables and their exact state. Numbers below trace to
 - [x] Cold-load test from a fresh browser profile on the live Pages URL:
       18.4 MB web payload (14.63 MB splat + 3.75 MB cloud + nav), GPU-rendered
       splat 0.46 M, QA PASS; 24.7 MB sample folder including preview frames
+- [x] Walkable route verified: unknown space blocked, 1 m free carve along the
+      walked path, A* = 350 waypoints / 20.3 m from the default spawn (renders
+      in 3D and on the minimap)
 
 ## 3. Demo video (3–5 min)
 
@@ -50,7 +53,7 @@ Round 1 deliverables and their exact state. Numbers below trace to
       clip credited (Pexels License)
 - [x] Old private capture removed from HEAD; it is not shipped or referenced
       by the deliverables
-- [ ] Commit + push the metro sample and doc rewrite
+- [x] Committed + pushed the metro sample and doc rewrite (`b0e5283`, `b53c431`)
 - [x] Fresh-clone check: `git clone` → README steps → `npm ci` + `npm run build`
       served the sample twin (18.4 MB web payload, no Kaggle run)
 
