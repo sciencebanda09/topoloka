@@ -1,4 +1,4 @@
-# Topoloka — spatial twin engine
+# Topoloka spatial twin engine
 
 **One video in. Google Maps for indoors out — in a link.**
 
