@@ -82,6 +82,34 @@ the portal is the only place that matters, this file is the defense copy.
   route 350 wp / 20.3 m. Remaining R1 item: the 3–5 min demo video and its
   link.
 
+- **2026-10-24 — Viewer fidelity/perf pass.** Root-caused the "smeared walls
+  and black ceiling void" to the viewer using a generic **72° vertical** FOV
+  while the capture lens is **41.6° vertical / 67.98° horizontal**
+  (`fl_x=fl_y=1186.5608`, 1600×900). The viewer now reads `nav.json.camera`,
+  preserves the capture's horizontal FOV in landscape, caps portrait at 50°
+  vertical, and clamps pitch to −0.85..+0.35 rad. The black "needle" lines on
+  the floor were partly the **debug `GridHelper` and floor outline showing
+  through the splat**, not splat geometry: both are now hidden as soon as the
+  splat loads (they remain in point-cloud mode). MSAA was the dominant iGPU
+  cost; `antialias:false` raised the default-spawn reading from 23.3 to
+  **36.8 fps idle / 52.4 walking** at 1600×900 (internal 1155×650). At the
+  worst view `?t=90`: **35.5 / 37.9 fps** (899×506); at 1920×1080: **34.0 /
+  48.2 fps**. Adaptive resolution now targets 32 fps (0.08 steps, 0.4 floor),
+  the HUD reports true frame time (the old loop clamped `dt` before `1/dt`,
+  which imposed a fake 20 fps floor), the route is a 2.2 cm floor tube, and
+  the minimap gained a free/obstacle/unknown/path/route legend plus **M** to
+  hide it. These changes are committed but the Pages deploy had not yet been
+  re-verified when this entry was written.
+
+- **2026-10-24 — Generality run started.** Locked a second public capture:
+  *Narrow Corridor under Lights* by Vincuk (Pexels License, Pexels video
+  10577776), trimmed to **0–41 s** before the end cut to the exterior window.
+  The source is 1920×1080 / ~29.97 fps. Uploaded as
+  `shashankdev09/namma-corridor-video-v1` and started
+  `shashankdev09/namma-pipeline-corridor` on Kaggle CPU with the **unchanged**
+  pipeline code. No generality claim is made until SfM/QA complete and the
+  twin is hosted.
+
 ## Engineering decisions worth defending
 
 - **One frame convention, one align block.** Raw SfM → metric nav
@@ -105,7 +133,9 @@ the portal is the only place that matters, this file is the defense copy.
 ## Known limitations (also in the abstract)
 
 - Reflective, low-texture walls render softer than the floor at ~1.5 K
-  gaussians/m²; the ceiling is under-observed (dark band in Fig. 3).
+  gaussians/m². The ceiling is under-observed, but matching the capture lens
+  and clamping pitch now keeps the normal first-person view inside the
+  observed shell instead of showing a black void above it.
 - DC-only `.splat` drops view-dependent highlights.
 - No IMU in the public clip; the phone SOP is not exercised by the artifact.
 - Metric depth degrades past ~8–12 m.

@@ -52,8 +52,10 @@ It is the same data the hosted link serves.
 
 *The shipped sample twin: 457,221 Gaussian splats, the metric minimap
 (red = obstacles, blue = capture path), and the QA verdict in the HUD. The
-source walls are reflective, so they render softer than the tiled floor; the
-geometry and sightlines are metric.*
+viewer now renders with the capture's own lens (68.0° horizontal / 41.6°
+vertical) instead of a generic wide FOV, and hides the point-cloud debug grid
+once the splat loads. Reflective walls still render softer than the tiled
+floor; the geometry and sightlines are metric.*
 
 **Locally** (Node 20+):
 
@@ -80,8 +82,22 @@ trajectory point (`?t=0` is the true start, `?t=160` is the Figure 3 view), and
 `?clean` to hide the click prompt and fps readout. Unobserved space is not
 walkable: collision blocks it and carves a 1 m free corridor along the capture
 path, which the camera proved traversable. `?route` draws the scaffolded A*
-route (20.3 m / 350 waypoints from the default spawn). `npm run build` produces
-a static `dist/` that can be served from any web host.
+route as a thin green floor tube (20.3 m / 350 waypoints from the default
+spawn), with a matching swatch in the minimap legend. On touch devices the
+left half is a walk stick and the right half looks; **M** hides the map for a
+full-screen view. `npm run build` produces a static `dist/` that can be served
+from any web host.
+
+**Frame budget (measured).** On an AMD Radeon integrated GPU through
+ANGLE/D3D11, at a 1600×900 viewport, the adaptive renderer holds **36.8 fps
+idle / 52.4 fps walking** at the default spawn (internal buffer 1155×650) and
+**35.5 / 37.9 fps** at the worst corridor view `?t=90` (buffer 899×506). At
+1920×1080 it holds **34.0 / 48.2 fps**. The viewer renders with
+`antialias: false` — MSAA was the dominant cost on this iGPU and the splat
+edges do not need it — and drops the internal buffer in 0.08 steps only when
+the true frame rate falls below 32 fps (`?scale=` pins it for measurement).
+The HUD reports true frame time; it previously clamped `dt` before computing
+FPS, which put a fake 20 fps floor on every reading.
 
 **Reproduce the pipeline:** the exact kernels that produced this capture are in
 `kaggle/kernels/` and are driven by the scripts in `kaggle/tools/` — see
@@ -95,6 +111,8 @@ a static `dist/` that can be served from any web host.
 - [x] Geometry: floor plane, gravity align, 2.5D 5 cm costmap, outline
 - [x] Splat training (nerfstudio 1.1.5 splatfacto, 25 k iters) + web `.splat` export
 - [x] Web: first-person viewer, collision, minimap, splat renderer, `?t` spawn
+- [x] Viewer fidelity/perf pass: capture-matched lens, adaptive resolution,
+      true-FPS HUD, minimap legend, debug geometry hidden after splat load
 - [x] End-to-end public run — CPU SfM 59.2 min; GPU 79.0 min total; 510,336
       gaussians exported; 315.05 m² walkable; QA 6/6 PASS
 - [x] Hosted sample twin: <https://sciencebanda09.github.io/topoloka/?capture=metro_v1>

@@ -5,7 +5,8 @@ Serves a capture's artifact bundle (`web/` from the pipeline package stage):
 
 ```
 artifacts/<capture>/
-  nav.json        costmap (png+base64), outline, trajectory, align transform
+  nav.json        costmap (png+base64), outline, trajectory, align transform,
+                  and the capture camera intrinsics (`camera`)
   cloud.ply       point cloud in the nav frame (fallback / debug view, key: P)
   splat.splat     gaussian splat (optional; placed via nav.json.align)
   occupancy.png   debug grid image
@@ -25,7 +26,23 @@ npm run dev            # http://localhost:5173/?capture=synthetic
 
 Query params: `?capture=<name>` picks the artifact folder, `?route` computes
 an A* path from the spawn point to the capture's last trajectory point and
-draws it in the 3D scene and the minimap (pathfinding smoke test).
+draws it in the 3D scene and the minimap (pathfinding smoke test), `?t=<index>`
+spawns at a trajectory sample, `?clean` hides the prompt/FPS for stills, and
+`?scale=<0.4..1>` pins the internal render scale (otherwise the viewer adapts
+to keep the true frame rate near 32 fps).
+
+## Lens and frame budget
+
+`nav.json.camera` carries the pinhole intrinsics of the capture frames. The
+viewer derives the horizontal FOV from `w` and `fl_x` and matches it, instead
+of using a generic wide lens that stretches anisotropic gaussians and reveals
+unobserved ceiling. On portrait screens the vertical FOV is capped at 50° so a
+phone does not stare into the ceiling void. Rendering runs at CSS resolution ×
+the adaptive scale (no device-pixel-ratio multiplier), with
+`antialias: false`; both are deliberate fill-rate choices for integrated GPUs.
+The debug ground grid and floor outline are hidden as soon as the splat loads
+(they otherwise show through holes as black seams); **P** still reveals the
+point cloud, and the minimap keeps the occupancy/path legend.
 
 ## Build + deploy (static hosting)
 
@@ -50,4 +67,6 @@ any host with zero configuration.
 ## Controls
 
 WASD walk · mouse look (click to capture pointer) · Shift faster ·
-P toggle point cloud · touch: left half virtual stick, right half look.
+M toggle minimap · P toggle point cloud · touch: left half virtual stick,
+right half look. The minimap legend is free / obstacle / unknown / path, plus
+route when `?route` is enabled.

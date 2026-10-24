@@ -1,0 +1,16 @@
+{
+  "id": "shashankdev09/namma-splat-corridor",
+  "title": "namma splat corridor",
+  "code_file": "namma_splat.py",
+  "language": "python",
+  "kernel_type": "script",
+  "is_private": true,
+  "enable_gpu": true,
+  "enable_internet": true,
+  "dataset_sources": [
+    "shashankdev09/namma-code",
+    "shashankdev09/namma-capture-corridor-v1"
+  ],
+  "competition_sources": [],
+  "kernel_sources": []
+}

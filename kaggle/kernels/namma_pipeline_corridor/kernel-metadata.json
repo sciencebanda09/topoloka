@@ -1,0 +1,16 @@
+{
+  "id": "shashankdev09/namma-pipeline-corridor",
+  "title": "namma pipeline corridor",
+  "code_file": "namma_pipeline.py",
+  "language": "python",
+  "kernel_type": "script",
+  "is_private": true,
+  "enable_gpu": false,
+  "enable_internet": true,
+  "dataset_sources": [
+    "shashankdev09/namma-code",
+    "shashankdev09/namma-corridor-video-v1"
+  ],
+  "competition_sources": [],
+  "kernel_sources": []
+}
