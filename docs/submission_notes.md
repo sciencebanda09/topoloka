@@ -101,6 +101,16 @@ the portal is the only place that matters, this file is the defense copy.
   hide it. These changes are committed but the Pages deploy had not yet been
   re-verified when this entry was written.
 
+- **2026-10-24 — Live verification of the fidelity/perf pass.** Pages run
+  `40057483066` succeeded. On the live URL with ANGLE/D3D11 on the AMD
+  integrated GPU at 1600×900: **51.0 fps idle / 60.1 walking** at spawn,
+  **43.0 / 40.2** at `?t=90`, and **47.5 / 55.9** with `?route` (350 wp /
+  20.3 m), all at a 1155×650 internal buffer. A 390×844 DPR2 mobile layout
+  with touch emulation reported **59.9 / 60.2 fps**, showed the touch hint,
+  and kept the HUD, map, and legend from overlapping. The workflow now stages
+  every `test/*/web` folder, so a second committed sample deploys without a
+  workflow edit.
+
 - **2026-10-24 — Generality run started.** Locked a second public capture:
   *Narrow Corridor under Lights* by Vincuk (Pexels License, Pexels video
   10577776), trimmed to **0–41 s** before the end cut to the exterior window.

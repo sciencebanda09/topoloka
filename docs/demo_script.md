@@ -45,10 +45,12 @@ the artifact files, not from a slide.
 - Splat: 25,000 iters at 1600×900; full export 510,336 gaussians / 16.33 MB; hosted sample 457,221 / 14.63 MB after the 3 m crop
 - Web payload 18.4 MB (14.63 MB splat + 3.75 MB cloud + nav); full sample folder 24.7 MB with frames/reports; cold ready **19.2 s** in a fresh profile (13.96 MB splat + 3.38 MB cloud transferred)
 - Viewer default spawn is 75% of the path; A* route is 350 waypoints / 20.3 m (unknown space blocked, 1 m walked-path carve)
-- Viewer performance: AMD Radeon integrated GPU via ANGLE/D3D11, 1600×900,
-  adaptive buffer — **36.8 fps idle / 52.4 fps walking** at spawn (1155×650);
-  **35.5 / 37.9 fps** at worst view `?t=90` (899×506); **34.0 / 48.2 fps** at
-  1920×1080. Frame rate is the true RAF rate, not the old clamped-dt reading.
+- Viewer performance (live Pages build): AMD Radeon integrated GPU via
+  ANGLE/D3D11, 1600×900, adaptive buffer — **51.0 fps idle / 60.1 fps walking**
+  at spawn and **43.0 / 40.2 fps** at worst view `?t=90` (1155×650 in both);
+  **59.9 / 60.2 fps** in a 390×844 DPR2 mobile layout with touch emulation
+  (desktop GPU; layout/input validation only). Frame rate is the true RAF
+  rate, not the old clamped-dt reading.
 - Render lens: capture intrinsics 1600×900, `fl_x=fl_y=1186.56` → **67.98°
   horizontal / 41.6° vertical**; debug grid/outline hidden after splat load;
   pitch clamped to −0.85..+0.35 rad.

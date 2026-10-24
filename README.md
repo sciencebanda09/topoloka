@@ -88,16 +88,18 @@ left half is a walk stick and the right half looks; **M** hides the map for a
 full-screen view. `npm run build` produces a static `dist/` that can be served
 from any web host.
 
-**Frame budget (measured).** On an AMD Radeon integrated GPU through
-ANGLE/D3D11, at a 1600×900 viewport, the adaptive renderer holds **36.8 fps
-idle / 52.4 fps walking** at the default spawn (internal buffer 1155×650) and
-**35.5 / 37.9 fps** at the worst corridor view `?t=90` (buffer 899×506). At
-1920×1080 it holds **34.0 / 48.2 fps**. The viewer renders with
-`antialias: false` — MSAA was the dominant cost on this iGPU and the splat
-edges do not need it — and drops the internal buffer in 0.08 steps only when
-the true frame rate falls below 32 fps (`?scale=` pins it for measurement).
-The HUD reports true frame time; it previously clamped `dt` before computing
-FPS, which put a fake 20 fps floor on every reading.
+**Frame budget (measured, live Pages build).** On an AMD Radeon integrated GPU
+through ANGLE/D3D11 at a 1600×900 viewport, the adaptive renderer holds
+**51.0 fps idle / 60.1 fps walking** at the default spawn and **43.0 / 40.2
+fps** at the worst corridor view `?t=90`; both runs kept the internal buffer
+at 1155×650. In a 390×844 DPR2 mobile layout with touch emulation it holds
+**59.9 / 60.2 fps** (desktop GPU, so this validates the layout and input path,
+not phone thermals). The viewer renders with `antialias: false` — MSAA was
+the dominant cost on this iGPU and the splat edges do not need it — and drops
+the internal buffer in 0.08 steps only when the true frame rate falls below
+32 fps (`?scale=` pins it for measurement). The HUD reports true frame time;
+it previously clamped `dt` before computing FPS, which put a fake 20 fps floor
+on every reading.
 
 **Reproduce the pipeline:** the exact kernels that produced this capture are in
 `kaggle/kernels/` and are driven by the scripts in `kaggle/tools/` — see
