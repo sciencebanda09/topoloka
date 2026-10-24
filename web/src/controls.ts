@@ -10,10 +10,14 @@
 import * as THREE from 'three';
 import type { Costmap } from './nav';
 
-const EYE_HEIGHT = 1.6;
 const WALK_SPEED = 1.5;
 const RUN_SPEED = 3.2;
 const LOOK_SENSITIVITY = 0.0022;
+// Keep the lens inside the region the capture actually saw. Looking further
+// up hits unobserved ceiling (black void); further down hits floor splats
+// trained from grazing angles only.
+const PITCH_MIN = -0.85;
+const PITCH_MAX = 0.35;
 
 export class WalkControls {
   position: [number, number, number];
@@ -38,7 +42,6 @@ export class WalkControls {
     this.canvas = canvas;
     this.costmap = costmap;
     this.position = [...spawn.position];
-    this.position[2] = EYE_HEIGHT;
     this.yaw = spawn.yaw;
 
     canvas.addEventListener('click', () => {
@@ -109,7 +112,7 @@ export class WalkControls {
 
   private applyLook(mx: number, my: number): void {
     this.yaw -= mx * LOOK_SENSITIVITY;
-    this.pitch = clamp(this.pitch - my * LOOK_SENSITIVITY, -1.45, 1.45);
+    this.pitch = clamp(this.pitch - my * LOOK_SENSITIVITY, PITCH_MIN, PITCH_MAX);
   }
 
   private syncCamera(): void {

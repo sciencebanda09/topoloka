@@ -18,13 +18,26 @@ import * as GaussianSplats3D from '@mkkellogg/gaussian-splats-3d';
 import * as THREE from 'three';
 import type { NavData } from './artifacts';
 
+export interface SplatOptions {
+  /** Ignore gaussians below this alpha byte (0-255) at load. */
+  alphaThreshold?: number;
+  /** Clamp screen-space splat diameter; huge off-path splats are fill-rate poison. */
+  maxScreenSpaceSplatSize?: number;
+}
+
 export class SplatLayer {
   loaded = false;
   gaussianCount = 0;
 
   private viewer: GaussianSplats3D.Viewer;
+  private options: Required<SplatOptions>;
 
-  constructor(renderer: THREE.WebGLRenderer, scene: THREE.Scene, camera: THREE.Camera) {
+  constructor(renderer: THREE.WebGLRenderer, scene: THREE.Scene, camera: THREE.Camera,
+              options: SplatOptions = {}) {
+    this.options = {
+      alphaThreshold: options.alphaThreshold ?? 40,
+      maxScreenSpaceSplatSize: options.maxScreenSpaceSplatSize ?? 1024,
+    };
     this.viewer = new GaussianSplats3D.Viewer({
       threeScene: scene,
       selfDrivenMode: false,
@@ -39,6 +52,7 @@ export class SplatLayer {
       sceneRevealMode: GaussianSplats3D.SceneRevealMode.Instant,
       logLevel: GaussianSplats3D.LogLevel.None,
       focalAdjustment: 1.0,
+      maxScreenSpaceSplatSize: this.options.maxScreenSpaceSplatSize,
     });
   }
 
@@ -81,7 +95,7 @@ export class SplatLayer {
         this.viewer.addSplatScene(blobUrl, {
           format: GaussianSplats3D.SceneFormat.Splat, // blob URLs carry no extension
           showLoadingUI: false,
-          splatAlphaRemovalThreshold: 40,
+          splatAlphaRemovalThreshold: this.options.alphaThreshold,
           position: position.toArray(),
           rotation: rotation.toArray(), // xyzw
           scale: scale.toArray(),

@@ -10,31 +10,82 @@ import type { NavData } from './artifacts';
 export const navToThree = (x: number, y: number, z: number): THREE.Vector3 =>
   new THREE.Vector3(x, z, -y);
 
+const DEFAULT_HFOV_DEG = 68; // fallback when a capture has no intrinsics
+
 export class Viewer {
   readonly renderer: THREE.WebGLRenderer;
   readonly scene: THREE.Scene;
   readonly camera: THREE.PerspectiveCamera;
   pointsVisible = true;
-  private routeLine: THREE.Line | null = null;
+  private routeLine: THREE.Mesh | null = null;
   private pointsObj: THREE.Points | null = null;
   private trajectory: THREE.Line | null = null;
+  private groundGrid: THREE.GridHelper | null = null;
+  private outline: THREE.LineLoop | null = null;
+  private renderScale: number;
+  private hFovRad = THREE.MathUtils.degToRad(DEFAULT_HFOV_DEG);
 
-  constructor(canvas: HTMLCanvasElement) {
-    this.renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    this.renderer.setSize(window.innerWidth, window.innerHeight);
+  constructor(canvas: HTMLCanvasElement, renderScale = 1) {
+    this.renderScale = Math.min(1, Math.max(0.4, renderScale));
+    this.renderer = new THREE.WebGLRenderer({ canvas, antialias: false, powerPreference: 'high-performance' });
+    // Draw at CSS resolution (x renderScale), not devicePixelRatio: a 2x
+    // retina buffer is 4x the splat fill cost on integrated laptop GPUs.
+    this.renderer.setPixelRatio(1);
+    this.resizeRenderer();
 
     this.scene = new THREE.Scene();
     this.scene.background = new THREE.Color(0x0b0d10);
     this.scene.fog = new THREE.Fog(0x0b0d10, 18, 42);
 
-    this.camera = new THREE.PerspectiveCamera(72, window.innerWidth / window.innerHeight, 0.05, 200);
+    this.camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.05, 200);
+    this.applyFov();
 
     window.addEventListener('resize', () => {
       this.camera.aspect = window.innerWidth / window.innerHeight;
-      this.camera.updateProjectionMatrix();
-      this.renderer.setSize(window.innerWidth, window.innerHeight);
+      this.applyFov();
+      this.resizeRenderer();
     });
+  }
+
+  private resizeRenderer(): void {
+    this.renderer.setSize(
+      Math.round(window.innerWidth * this.renderScale),
+      Math.round(window.innerHeight * this.renderScale),
+      false,
+    );
+  }
+
+  /** Adaptive quality: lower the internal buffer, upscale via CSS. */
+  setRenderScale(scale: number): void {
+    const next = Math.min(1, Math.max(0.4, scale));
+    if (Math.abs(next - this.renderScale) < 0.005) return;
+    this.renderScale = next;
+    this.resizeRenderer();
+  }
+
+  /**
+   * Use the capture's horizontal FOV. A 72° vertical viewer FOV against a
+   * 41.6° vertical capture stretches every anisotropic splat and reveals
+   * unobserved ceiling; the same lens makes the twin look like the video.
+   */
+  setNavCamera(nav: NavData): void {
+    const c = nav.camera;
+    if (c?.w && c?.fl_x) {
+      this.hFovRad = 2 * Math.atan(c.w / (2 * c.fl_x));
+    }
+    this.applyFov();
+  }
+
+  private applyFov(): void {
+    const aspect = Math.max(window.innerWidth / window.innerHeight, 0.05);
+    let v = 2 * Math.atan(Math.tan(this.hFovRad / 2) / aspect);
+    // Preserve the capture's horizontal FOV in landscape. On a portrait
+    // phone that would imply a ~110° vertical FOV and show the unobserved
+    // ceiling; cap the vertical lens instead so the phone stays inside the
+    // captured shell.
+    if (aspect < 1) v = Math.min(v, THREE.MathUtils.degToRad(50));
+    this.camera.fov = THREE.MathUtils.radToDeg(v);
+    this.camera.updateProjectionMatrix();
   }
 
   addPointCloud(positions: Float32Array, colors: Uint8Array): number {
@@ -71,7 +122,8 @@ export class Viewer {
     const pts = points.map(([x, y]) => navToThree(x, y, 0.01));
     const geo = new THREE.BufferGeometry().setFromPoints(pts);
     const mat = new THREE.LineBasicMaterial({ color: 0x7fd4ff, transparent: true, opacity: 0.85 });
-    this.scene.add(new THREE.LineLoop(geo, mat));
+    this.outline = new THREE.LineLoop(geo, mat);
+    this.scene.add(this.outline);
   }
 
   addTrajectory(points: [number, number, number][]): void {
@@ -91,7 +143,14 @@ export class Viewer {
   addGroundGrid(extent = 30): void {
     const grid = new THREE.GridHelper(extent, extent * 2, 0x22303c, 0x161d24);
     grid.position.y = 0;
+    this.groundGrid = grid;
     this.scene.add(grid);
+  }
+
+  /** Hide point-cloud-only debug geometry once a splat supplies the surface. */
+  setDebugVisible(visible: boolean): void {
+    if (this.groundGrid) this.groundGrid.visible = visible;
+    if (this.outline) this.outline.visible = visible;
   }
 
   /** R2-ready: draw a route polyline (world x/y) slightly above the floor. */
@@ -102,10 +161,13 @@ export class Viewer {
       this.routeLine = null;
     }
     if (waypoints.length < 2) return;
+    // A one-pixel WebGL line disappears against the floor splat; a thin tube
+    // reads as a route in the free-roam view and in a 1080p recording.
     const pts = waypoints.map(([x, y]) => navToThree(x, y, 0.06));
-    const geo = new THREE.BufferGeometry().setFromPoints(pts);
-    const mat = new THREE.LineBasicMaterial({ color: 0x40e08a });
-    this.routeLine = new THREE.Line(geo, mat);
+    const curve = new THREE.CatmullRomCurve3(pts);
+    const geo = new THREE.TubeGeometry(curve, Math.min(500, Math.max(16, pts.length * 2)), 0.022, 5, false);
+    const mat = new THREE.MeshBasicMaterial({ color: 0x40ff9a, transparent: true, opacity: 0.95 });
+    this.routeLine = new THREE.Mesh(geo, mat);
     this.scene.add(this.routeLine);
   }
 
@@ -121,7 +183,9 @@ export class Viewer {
       const i = at !== undefined && Number.isFinite(at)
         ? Math.max(0, Math.min(last - 1, Math.floor(at)))
         : Math.floor(last * 0.75);
-      pos = [traj[i][0], traj[i][1], 1.6];
+      // trajectory z is the captured camera height; honour it on ramps and
+      // slopes instead of pinning every spawn to a fixed 1.6 m.
+      pos = [traj[i][0], traj[i][1], traj[i][2]];
       const ahead = traj[Math.min(i + 10, last)];
       const dx = ahead[0] - pos[0], dy = ahead[1] - pos[1];
       // three forward at yaw: f = (-sin(yaw), 0, -cos(yaw)); nav f = (f.x, -f.z)

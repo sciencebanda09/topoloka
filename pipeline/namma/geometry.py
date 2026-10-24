@@ -423,6 +423,21 @@ def run_geometry(capture_dir: Path, cloud_path: Path | None = None) -> NavReport
             "formula": "p_nav_m = scale * R^T @ (p_scene_units - origin)",
         },
     }
+    # Capture lens: the viewer must render with this FOV, not a generic 72°.
+    # Otherwise anisotropic gaussians stretch and the top of the frame shows
+    # unobserved ceiling that the camera never captured.
+    tf_path = capture_dir / "transforms.json"
+    if tf_path.exists():
+        tf = json.loads(tf_path.read_text(encoding="utf-8"))
+        if tf.get("fl_x") and tf.get("w") and tf.get("h"):
+            nav["camera"] = {
+                "camera_model": tf.get("camera_model", "PINHOLE"),
+                "w": int(tf["w"]), "h": int(tf["h"]),
+                "fl_x": round(float(tf["fl_x"]), 6),
+                "fl_y": round(float(tf.get("fl_y", tf["fl_x"])), 6),
+                "cx": round(float(tf.get("cx", tf["w"] / 2)), 3),
+                "cy": round(float(tf.get("cy", tf["h"] / 2)), 3),
+            }
     (out_dir / "nav.json").write_text(json.dumps(nav), encoding="utf-8")
 
     # debug png: colorize

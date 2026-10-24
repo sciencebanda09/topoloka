@@ -15,8 +15,20 @@ import { Costmap } from './nav';
 import { SplatLayer } from './splat';
 import { Viewer } from './viewer';
 
-const CAPTURE = new URLSearchParams(location.search).get('capture') ?? 'metro_v1';
+const params = new URLSearchParams(location.search);
+const CAPTURE = params.get('capture') ?? 'metro_v1';
 const BASE = `${import.meta.env.BASE_URL}artifacts/${CAPTURE}`;
+// Keep the internal splat buffer near 0.75 MP: integrated laptop GPUs are
+// fill-rate bound, and upscaling a soft splat is far cheaper than rendering
+// 3x the pixels. ?scale=0.5 can override this for a very slow machine.
+const RENDER_PIXELS = 750_000;
+const requestedScale = Number(params.get('scale'));
+const MANUAL_SCALE = Number.isFinite(requestedScale) && requestedScale > 0;
+const INITIAL_SCALE = MANUAL_SCALE
+  ? Math.min(1, Math.max(0.35, requestedScale))
+  : Math.min(1, Math.max(0.35, Math.sqrt(RENDER_PIXELS / (window.innerWidth * window.innerHeight))));
+const SPLAT_ALPHA = Math.min(255, Math.max(1, Number(params.get('alpha')) || 40));
+const SPLAT_MAX_PX = Math.min(2048, Math.max(32, Number(params.get('splatpx')) || 512));
 
 const titleEl = document.getElementById('title');
 if (titleEl) titleEl.textContent = PRODUCT_NAME.toUpperCase();
@@ -26,11 +38,20 @@ const subtitle = document.getElementById('subtitle') as HTMLDivElement;
 const hint = document.getElementById('center-hint') as HTMLDivElement;
 const canvas = document.getElementById('view') as HTMLCanvasElement;
 const minimapCanvas = document.getElementById('minimap') as HTMLCanvasElement;
+const mapWrap = document.getElementById('map-wrap') as HTMLDivElement;
+const help = document.getElementById('help') as HTMLDivElement;
 
 // ?clean hides the click-to-enter prompt and the fps readout
 // (stills, README, demo recording); the fps counter is meaningless off-vsync
-const CLEAN = new URLSearchParams(location.search).has('clean');
+const CLEAN = params.has('clean');
 if (CLEAN) hint.classList.add('hidden');
+
+const TOUCH = window.matchMedia('(pointer: coarse)').matches || navigator.maxTouchPoints > 0;
+if (TOUCH) {
+  hint.textContent = 'drag to look · left thumb to walk';
+  help.innerHTML = '<b>drag</b> look · <b>left thumb</b> walk · rotate for the full view';
+  canvas.addEventListener('touchstart', () => hint.classList.add('hidden'), { passive: true, once: true });
+}
 
 interface Meta {
   capture?: string;
@@ -56,7 +77,8 @@ async function boot(): Promise<void> {
   const grid = await decodeGrid(nav.grid);
   const costmap = new Costmap(nav, grid);
 
-  const viewer = new Viewer(canvas);
+  const viewer = new Viewer(canvas, INITIAL_SCALE);
+  viewer.setNavCamera(nav);
   viewer.addGroundGrid(40);
   viewer.addOutline(nav.outline);
   viewer.addTrajectory(nav.trajectory);
@@ -69,10 +91,14 @@ async function boot(): Promise<void> {
   if (meta.splat?.present) {
     try {
       subtitle.textContent = `${CAPTURE} · loading splat…`;
-      splat = new SplatLayer(viewer.renderer, viewer.scene, viewer.camera);
+      splat = new SplatLayer(viewer.renderer, viewer.scene, viewer.camera, {
+        alphaThreshold: SPLAT_ALPHA,
+        maxScreenSpaceSplatSize: SPLAT_MAX_PX,
+      });
       await splat.load(`${BASE}/splat.splat`, nav);
       viewer.setPointsVisible(false); // splat carries the visuals; P re-shows points
       viewer.setTrajectoryVisible(false); // minimap keeps the path; the 3D wire is clutter
+      viewer.setDebugVisible(false); // grid/outline show through holes as black seams
     } catch (err) {
       console.warn('splat load failed, falling back to points:', err);
       splat = null;
@@ -86,7 +112,8 @@ async function boot(): Promise<void> {
     { w: costmap.w, h: costmap.h, data: costmap.data });
 
   // dev: ?route draws an A* path from spawn to the capture's final trajectory point
-  if (new URLSearchParams(location.search).has('route') && nav.trajectory.length > 2) {
+  let routeLabel = '';
+  if (params.has('route') && nav.trajectory.length > 2) {
     const last = nav.trajectory[nav.trajectory.length - 1];
     const path = costmap.findPath([spawn.position[0], spawn.position[1]], [last[0], last[1]]);
     if (path) {
@@ -96,9 +123,11 @@ async function boot(): Promise<void> {
       for (let i = 1; i < path.length; i++) {
         meters += Math.hypot(path[i][0] - path[i - 1][0], path[i][1] - path[i - 1][1]);
       }
-      subtitle.textContent = `${CAPTURE} · route ${path.length} wp · ${meters.toFixed(1)} m`;
+      routeLabel = `route ${path.length} wp · ${meters.toFixed(1)} m`;
+      const legend = document.getElementById('legend-route');
+      if (legend) legend.style.display = 'inline-flex';
     } else {
-      subtitle.textContent = `${CAPTURE} · route: no path found`;
+      routeLabel = 'route: no path found';
     }
   }
 
@@ -108,11 +137,14 @@ async function boot(): Promise<void> {
   });
   window.addEventListener('keydown', (e) => {
     if (e.code === 'KeyP') viewer.setPointsVisible(!viewer.pointsVisible);
+    if (e.code === 'KeyM') mapWrap.classList.toggle('hidden');
   });
 
   let last = performance.now();
   let fps = 0;
   let statTimer = 0;
+  let adaptTimer = -3; // let the first frames/sorting settle before judging
+  let renderScale = INITIAL_SCALE;
   const free = grid.data.reduce((s, v) => s + (v === 0 ? 1 : 0), 0);
   const walkable = meta.walkable_area_m2 ?? (free * nav.cell_m * nav.cell_m);
 
@@ -124,15 +156,19 @@ async function boot(): Promise<void> {
       parts.push(`${nPoints.toLocaleString()} pts${viewer.pointsVisible ? '' : ' (hidden)'}`);
     }
     parts.push(`${walkable} m² walkable`);
+    if (routeLabel) parts.push(routeLabel);
     if (!CLEAN) parts.push(`${fps.toFixed(0)} fps`);
     if (meta.qa_overall) parts.push(`QA ${meta.qa_overall}`);
     return parts.join(' · ');
   }
 
   function loop(now: number): void {
-    const dt = Math.min((now - last) / 1000, 0.05);
+    const rawDt = Math.max((now - last) / 1000, 1e-4);
+    const dt = Math.min(rawDt, 0.05);
     last = now;
-    fps = fps ? fps * 0.92 + (1 / Math.max(dt, 1e-4)) * 0.08 : 1 / Math.max(dt, 1e-4);
+    // Report the true frame rate; clamp only the simulation step. (Clamping
+    // dt before 1/dt puts a fake 20 fps floor on the HUD.)
+    fps = fps ? fps * 0.92 + Math.min(240, 1 / rawDt) * 0.08 : 60;
 
     controls.update(dt);
     if (splat?.loaded) {
@@ -142,6 +178,23 @@ async function boot(): Promise<void> {
       viewer.render();
     }
     minimap.draw(controls.position, controls.heading);
+
+    // Dynamic resolution: the splat is fill-rate bound. Keep the walk near
+    // 30 fps on integrated laptop GPUs by dropping the internal buffer in
+    // steps, then recover when the view gets cheaper. A manual ?scale wins.
+    if (!MANUAL_SCALE && splat?.loaded) {
+      adaptTimer += rawDt;
+      if (adaptTimer > 1.0) {
+        if (fps < 32 && renderScale > 0.4) {
+          renderScale = Math.max(0.4, renderScale - 0.08);
+          viewer.setRenderScale(renderScale);
+        } else if (fps > 52 && renderScale < INITIAL_SCALE) {
+          renderScale = Math.min(INITIAL_SCALE, renderScale + 0.05);
+          viewer.setRenderScale(renderScale);
+        }
+        adaptTimer = 0;
+      }
+    }
 
     statTimer += dt;
     if (statTimer > 0.5) {

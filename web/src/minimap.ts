@@ -5,9 +5,11 @@
 
 import { FREE, OBSTACLE, type NavData } from './artifacts';
 
-const COLOR_UNKNOWN = [38, 43, 49, 255] as const;
-const COLOR_FREE = [56, 66, 78, 255] as const;
-const COLOR_OBSTACLE = [214, 69, 69, 255] as const;
+const COLOR_UNKNOWN = [24, 28, 33, 255] as const;
+const COLOR_FREE = [70, 82, 96, 255] as const;
+// Muted brick, not alarm red: obstacles ring a narrow walked corridor, so a
+// saturated fill makes the whole map read as "blocked".
+const COLOR_OBSTACLE = [116, 52, 56, 255] as const;
 
 export class Minimap {
   private ctx: CanvasRenderingContext2D;
@@ -88,8 +90,8 @@ export class Minimap {
       ctx.moveTo(this.mx(nav.outline[0][0]), this.my(nav.outline[0][1]));
       for (const [x, y] of nav.outline.slice(1)) ctx.lineTo(this.mx(x), this.my(y));
       ctx.closePath();
-      ctx.strokeStyle = 'rgba(127, 212, 255, 0.85)';
-      ctx.lineWidth = 1.5;
+      ctx.strokeStyle = 'rgba(127, 212, 255, 0.55)';
+      ctx.lineWidth = 1.2;
       ctx.stroke();
     }
 
@@ -98,8 +100,8 @@ export class Minimap {
       const [x0, y0] = nav.trajectory[0];
       ctx.moveTo(this.mx(x0), this.my(y0));
       for (const [x, y] of nav.trajectory.slice(1)) ctx.lineTo(this.mx(x), this.my(y));
-      ctx.strokeStyle = 'rgba(127, 212, 255, 0.35)';
-      ctx.lineWidth = 1;
+      ctx.strokeStyle = 'rgba(127, 212, 255, 0.95)';
+      ctx.lineWidth = 1.8;
       ctx.stroke();
     }
 
@@ -108,7 +110,7 @@ export class Minimap {
       ctx.moveTo(this.mx(this.route[0][0]), this.my(this.route[0][1]));
       for (const [x, y] of this.route.slice(1)) ctx.lineTo(this.mx(x), this.my(y));
       ctx.strokeStyle = 'rgba(64, 224, 138, 0.95)';
-      ctx.lineWidth = 2;
+      ctx.lineWidth = 2.5;
       ctx.stroke();
     }
 

@@ -15,6 +15,17 @@ export interface NavAlign {
   formula: string;
 }
 
+/** Pinhole intrinsics of the capture frames (pixels, resized frame size). */
+export interface NavCamera {
+  w: number;
+  h: number;
+  fl_x: number;
+  fl_y: number;
+  cx?: number;
+  cy?: number;
+  camera_model?: string;
+}
+
 export interface NavData {
   version: number;
   units: string;
@@ -29,6 +40,8 @@ export interface NavData {
   down_axis_source: string;
   /** raw reconstruction frame -> metric nav frame (places the splat) */
   align?: NavAlign;
+  /** capture intrinsics: render with the same lens, not a generic wide FOV */
+  camera?: NavCamera;
 }
 
 export const FREE = 0, OBSTACLE = 1, UNKNOWN = 2;

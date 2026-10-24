@@ -120,6 +120,31 @@ def prune_splat_to_box(splat_path: Path, nav: dict, lo: np.ndarray, hi: np.ndarr
     return int(keep.sum())
 
 
+def _inject_camera(pipe_out: Path, dest: Path) -> None:
+    """Ensure the bundled nav.json carries the capture lens for the viewer."""
+    tf_path = pipe_out / "transforms.json"
+    if not tf_path.exists():
+        return
+    tf = json.loads(tf_path.read_text(encoding="utf-8"))
+    if not (tf.get("fl_x") and tf.get("w") and tf.get("h")):
+        return
+    cam = {
+        "camera_model": tf.get("camera_model", "PINHOLE"),
+        "w": int(tf["w"]), "h": int(tf["h"]),
+        "fl_x": float(tf["fl_x"]),
+        "fl_y": float(tf.get("fl_y", tf["fl_x"])),
+        "cx": float(tf.get("cx", tf["w"] / 2)),
+        "cy": float(tf.get("cy", tf["h"] / 2)),
+    }
+    for rel in ("nav/nav.json", "web/nav.json"):
+        p = dest / rel
+        if not p.exists():
+            continue
+        n = json.loads(p.read_text(encoding="utf-8"))
+        n["camera"] = cam
+        p.write_text(json.dumps(n), encoding="utf-8")
+
+
 def build_web(pipe_out: Path, splat_out: Path, dest: Path,
               max_points: int, max_gaussians: int) -> dict:
     web_src = splat_out / "web" if (splat_out / "web").is_dir() else pipe_out / "web"
@@ -287,6 +312,7 @@ def main() -> None:
 
     meta = build_web(pipe_out, splat_out, args.dest,
                      args.max_points, args.max_gaussians)
+    _inject_camera(pipe_out, args.dest)
     # Regenerate QA where the sample carries the inputs: the GPU kernel ships a
     # SKIP report because frames_meta.json / sfm_report.json never reach it.
     try:
