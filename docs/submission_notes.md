@@ -120,6 +120,18 @@ the portal is the only place that matters, this file is the defense copy.
   pipeline code. No generality claim is made until SfM/QA complete and the
   twin is hosted.
 
+- **2026-10-25 — Second capture: two attempts, both SfM failures; claim
+  dropped.** The corridor run registered **56/103 frames (54%)** as 7
+  disconnected models with a ~16 m pose jump at frames 34/35 (~14 s) and
+  therefore failed the geometry gate. A second candidate, *A Moving Walkway
+  Inside An Airport* by Melvin (Pexels 4919617), trimmed to 0–42 s, registered
+  only **2/106 frames (2%)** — the repeated ceiling/window bands defeat SIFT
+  matching. Per the Oct 26 timeline guard, R1 does **not** claim a second
+  capture or a second hosted twin; the metro capture remains the only
+  claimed artifact. The failed kernels and reports are kept under
+  `kaggle/kernels/namma_*_airport` and `kaggle/out/namma_pipeline_*` for the
+  paper trail, not as deliverables.
+
 ## Engineering decisions worth defending
 
 - **One frame convention, one align block.** Raw SfM → metric nav

@@ -81,6 +81,13 @@ Three decisions carried most of the weight:
 - **Everything runs on Kaggle, including the CPU stages.** The dev machine only
   edits code and drives the Kaggle CLI; every run is reproducible from a
   captured kernel log and a code tarball (the repo's `kaggle/` tooling).
+- **The viewer renders with the capture's lens, not a generic camera.** The
+  pinhole intrinsics travel in `nav.json.camera` (1600×900,
+  `fl_x=fl_y=1186.56`); the viewer derives **67.98° horizontal / 41.6°
+  vertical** and keeps that horizontal field of view in landscape. A generic
+  72° vertical FOV was the root cause of stretched wall gaussians and the black
+  ceiling void reviewers saw; matching the source lens and clamping pitch to
+  the observed shell removed both without deleting scene geometry.
 
 ## 5. Novelty, stated precisely
 
@@ -116,6 +123,7 @@ Three decisions carried most of the weight:
 | Splat | 25,000 iters, full-res 1600×900; 510,336 web gaussians / 16.33 MB export |
 | Hosted sample | 457,221 gaussians / 14.63 MB (3 m volume crop), 250,000-point cloud |
 | Pipeline time | CPU 59.2 min (SfM) + 61 s (nav); GPU 79.0 min total (depth, JIT, train, export) |
+| Viewer (live) | capture lens 67.98° × 41.6°; 51.0 fps idle / 60.1 walking at 1600×900 on an AMD integrated GPU; A* route 350 wp / 20.3 m |
 | Sample QA | 6/6 PASS (see Section 5) |
 
 The GPU stage is a nerfstudio 1.1.5 splatfacto run on one Kaggle T4. The
@@ -153,10 +161,12 @@ Demo video: **pending upload**
 
 - **Reflective, low-texture panels.** The station's glass/metal walls are the
   hardest part of this capture: at 457 K gaussians over 315 m² (~1.5 K/m²) the
-  walls are visibly softer than the tiled floor, and the ceiling is
-  under-observed (the dark band in Figure 3). A room-scale capture at the same
-  gaussian budget is far crisper. Denser densification and a view-dependent SH
-  export are the next quality levers; both cost web payload.
+  walls are visibly softer than the tiled floor. The ceiling is under-observed,
+  but the black band reviewers saw was largely a **viewer-FOV bug**: a generic
+  72° vertical camera looked outside the captured shell. Rendering with the
+  capture lens and clamping pitch keeps the normal view inside it. Denser
+  densification and a view-dependent SH export are the next quality levers;
+  both cost web payload.
 - **DC-only web splat.** The web format drops SH bands 1–3, so view-dependent
   highlights on metal are flattened into their average colour. The export is a
   deliberate size/quality tradeoff, not an accident.
