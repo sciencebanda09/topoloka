@@ -10,7 +10,7 @@ the portal is the only place that matters, this file is the defense copy.
 | Repo | https://github.com/sciencebanda09/topoloka | public (MIT), created 2026-10-18 |
 | Viewer (hosted) | https://sciencebanda09.github.io/topoloka/?capture=metro_v1 | metro sample live; QA/perf verified 2026-10-24 |
 | Demo video | https://github.com/sciencebanda09/topoloka/releases/download/r1-demo/topoloka_demo.mp4 | 3:33, 1080p30, 41.0 MB; hosted 2026-10-26 |
-| Abstract PDF | `docs/abstract.pdf` in repo | metro, 5 pages, 2.36 MB; rebuilt 2026-10-26 with demo link |
+| Abstract PDF | `docs/abstract.pdf` in repo | metro, 5 pages, 2.42 MB; rebuilt 2026-10-26 with demo link |
 
 ## Log
 
@@ -143,7 +143,7 @@ the portal is the only place that matters, this file is the defense copy.
   remaining chapters are cards/figures generated from the shipped JSONs and
   Edge TTS narration; there is no terminal footage and no invented number.
   The abstract now links the release asset; the PDF was rebuilt at 5 pages /
-  2.36 MB with the 25 k pipeline figure. Build scripts and narration are in
+  2.42 MB with the 25 k pipeline figure. Build scripts and narration are in
   `docs/demo/`; `docs/demo/build/` and the MP4 are gitignored.
 
 ## Engineering decisions worth defending
