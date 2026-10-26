@@ -221,6 +221,7 @@ def main() -> None:
     args = [
         FFMPEG, "-hide_banner", "-y", "-i", str(silent), "-i", str(narration),
         "-map", "0:v:0", "-map", "1:a:0", "-c:v", "copy",
+        "-af", "volume=4.0dB",
         "-c:a", "aac", "-b:a", "192k", "-ar", "48000", "-ac", "2",
         "-t", f"{total_dur:.6f}", "-movflags", "+faststart", str(final),
     ]

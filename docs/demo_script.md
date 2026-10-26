@@ -83,6 +83,9 @@ The final MP4 is gitignored and uploaded as the `r1-demo` release asset.
 - **The release asset is the canonical link.** It is a direct MP4, not a
   YouTube upload; no YouTube credentials were available in the build
   environment. The abstract and repo both point at it.
+- **Loudness:** the narration is normalized to **−16.3 LUFS integrated /
+  −1.5 dBTP** (+4 dB from the TTS master) so it is audible on laptop and
+  projector playback without clipping.
 
 ## Numbers on hand (from `test/metro_v1/capture_qa.md`, `nav_report.json`, `train_report.json`)
 
