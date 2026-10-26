@@ -149,7 +149,7 @@ def render_pipeline(out_path: Path) -> None:
         ("metric depth\nDepth Anything V2", "gpu"),
         ("geometry\nfloor + 5 cm costmap", "gpu"),
         ("metricize\n(SfM -> metres)", "gpu"),
-        ("splatfacto\n20k it, 1.5 M caps", "gpu"),
+        ("splatfacto\n25k it, 1.5 M caps", "gpu"),
         ("package\ntwin + nav.json", "local"),
         ("web viewer\nstatic link", "web"),
     ]

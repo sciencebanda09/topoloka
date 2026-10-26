@@ -12,9 +12,11 @@ Round 1 deliverables and their exact state. Numbers below trace to
       510,336 full / 457,221 sample gaussians, 79.0 min GPU wall time
 - [x] Figures: pipeline stage map (Fig. 1), metric occupancy map (Fig. 2),
       GPU-rendered twin still (Fig. 3)
-- [x] Rebuilt `docs/abstract.pdf` (5 pages, `tools/build_pdf.ps1`)
+- [x] Rebuilt `docs/abstract.pdf` (5 pages, 2.36 MB, `tools/build_pdf.ps1`) on
+      2026-10-26 with the 25 k pipeline figure and the demo link
 - [x] Proofread and re-checked every number against the artifacts (2026-10-23)
-- [ ] Replace `Demo video: **pending upload**` with the upload link
+- [x] Replaced `Demo video: **pending upload**` with the release link and
+      rebuilt the PDF
 
 ## 2. Free-roam web viewer link
 
@@ -37,11 +39,16 @@ Round 1 deliverables and their exact state. Numbers below trace to
 
 ## 3. Demo video (3–5 min)
 
-- [x] `docs/demo_script.md` shot list with the measured numbers on hand
-- [ ] Record with the **hosted** twin in a hardware-accelerated browser
-      (software WebGL stretches the splats)
-- [ ] Show the QA file + occupancy grid on screen (trust layer is a judging edge)
-- [ ] Upload unlisted (YouTube), put the link in `docs/abstract.md` and rebuild the PDF
+- [x] `docs/demo_script.md` shot list and the shipped 3:33 cut
+- [x] Record the **hosted** twin in a hardware-accelerated browser
+      (ANGLE/D3D11); software WebGL stretches the splats
+- [x] QA numbers and the metric occupancy figure on screen (cards built from
+      the shipped reports; no invented values)
+- [x] Hosted as a GitHub release asset (41.0 MB), linked from
+      `docs/abstract.md` and the rebuilt PDF:
+      <https://github.com/sciencebanda09/topoloka/releases/download/r1-demo/topoloka_demo.mp4>
+- [x] 3:33 · 1920×1080 / 30 fps · H.264 + AAC; captions and source credit on
+      screen
 
 ## 4. Code repo (setup + sample data)
 

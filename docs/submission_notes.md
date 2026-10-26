@@ -8,9 +8,9 @@ the portal is the only place that matters, this file is the defense copy.
 | Item | Link | Status |
 |------|------|--------|
 | Repo | https://github.com/sciencebanda09/topoloka | public (MIT), created 2026-10-18 |
-| Viewer (hosted) | https://sciencebanda09.github.io/topoloka/?capture=metro_v1 | metro sample committed; Pages verify pending |
-| Demo video | (unlisted YouTube, filled after recording) | pending |
-| Abstract PDF | `docs/abstract.pdf` in repo | metro, 5 pages, rebuilt 2026-10-23 |
+| Viewer (hosted) | https://sciencebanda09.github.io/topoloka/?capture=metro_v1 | metro sample live; QA/perf verified 2026-10-24 |
+| Demo video | https://github.com/sciencebanda09/topoloka/releases/download/r1-demo/topoloka_demo.mp4 | 3:33, 1080p30, 41.0 MB; hosted 2026-10-26 |
+| Abstract PDF | `docs/abstract.pdf` in repo | metro, 5 pages, 2.36 MB; rebuilt 2026-10-26 with demo link |
 
 ## Log
 
@@ -80,7 +80,7 @@ the portal is the only place that matters, this file is the defense copy.
   `?route` renders 350 waypoints / 20.3 m from the default spawn in 3D and on
   the minimap. Pages redeploy 39928019529 verified live: default opens at 75%,
   route 350 wp / 20.3 m. Remaining R1 item: the 3–5 min demo video and its
-  link.
+  link (closed 2026-10-26).
 
 - **2026-10-24 — Viewer fidelity/perf pass.** Root-caused the "smeared walls
   and black ceiling void" to the viewer using a generic **72° vertical** FOV
@@ -131,6 +131,20 @@ the portal is the only place that matters, this file is the defense copy.
   claimed artifact. The failed kernels and reports are kept under
   `kaggle/kernels/namma_*_airport` and `kaggle/out/namma_pipeline_*` for the
   paper trail, not as deliverables.
+
+- **2026-10-26 — R1 demo video shipped.** The 3:33, 1920×1080/30 cut is a
+  release asset (`r1-demo`, 41.0 MB). It uses a **17.9 s real-time take** of
+  the hosted Pages build (normal Chrome, ANGLE/D3D11, AMD iGPU) recorded with
+  ffmpeg `gdigrab` at 30 fps while the viewer was driven via CDP. The CDP
+  screencast path was too slow at 1080p (~4 fps), so it was not used. The
+  recorder stopped at 17.9 s; the viewer chapter pads with the measured
+  default-spawn still (`51.0 / 60.1 fps`) and the `?t=90` still
+  (`43.0 / 40.2 fps`) rather than freezing or looping the last frame. The
+  remaining chapters are cards/figures generated from the shipped JSONs and
+  Edge TTS narration; there is no terminal footage and no invented number.
+  The abstract now links the release asset; the PDF was rebuilt at 5 pages /
+  2.36 MB with the 25 k pipeline figure. Build scripts and narration are in
+  `docs/demo/`; `docs/demo/build/` and the MP4 are gitignored.
 
 ## Engineering decisions worth defending
 

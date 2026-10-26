@@ -1,0 +1,34 @@
+[
+  {
+    "id": "01_title",
+    "text": "One walk-through video. No LiDAR, no depth sensor, no floor plan. This is the Melbourne metro walkway, a public clip from Pexels. In the next three and a half minutes I'll show how Topoloka turns it into a metric 3D twin you can walk through in a browser, and how every number is auditable."
+  },
+  {
+    "id": "02_problem",
+    "text": "Google Maps gives up at the door. Floor-plan kiosks are static. LiDAR twins need hardware nobody has. Topoloka asks a narrower question: what is the shortest path from one ordinary indoor video to a stranger navigating that space as if they were there? The answer is a static link: a Gaussian splat twin, a metric navigation layer, and a quality report."
+  },
+  {
+    "id": "03_pipeline",
+    "text": "The pipeline runs on Kaggle's free tier. Frames are picked at two point five hertz. PyCOLMAP recovers camera poses. Depth Anything V2 supplies metric depth, which is fused into a dense cloud and used to solve scale: six point two five zero five metres per SfM unit. A five centimetre costmap gives collision and routing. Nerfstudio's Splatfacto trains twenty five thousand iterations on one T4. The result is a folder of static files: no server, no database, no account."
+  },
+  {
+    "id": "04_qa",
+    "text": "Trust is a deliverable. On the metro capture, all two hundred and sixteen frames register; median reprojection error is zero point four zero three pixels. Depth fusion measures scale with a seven point five four percent median absolute deviation over thirty seven thousand eight hundred and forty four samples. The navigation layer reports three hundred and fifteen square metres of walkable floor. The capture QA gate passes six of six. These numbers are not projected; they ship in the sample folder."
+  },
+  {
+    "id": "05_viewer",
+    "text": "Here is the live twin. The viewer uses the capture's own lens: sixty seven point nine eight degrees horizontal, not a generic wide angle. W A S D walks, the mouse looks, and collision comes from the metric costmap, so you cannot walk through a wall. The minimap shows free space, obstacles, the capture path, and the current position. This build runs at about fifty one frames per second idle, and sixty while walking, on an integrated GPU."
+  },
+  {
+    "id": "06_route",
+    "text": "Routing is already scaffolded. Here the A star path is drawn as a green tube on the floor and on the minimap: three hundred and fifty waypoints, twenty point three metres from the default spawn to the far end of the capture. The route respects observed free space; unknown cells are blocked. Semantic search and points of interest land in Round Two."
+  },
+  {
+    "id": "07_limits",
+    "text": "Where it is weak: reflective panels are soft at this gaussian budget. The web format drops view-dependent colour. Depth degrades past eight to twelve metres. The grid fragments at gates, so the viewer blocks unknown cells and carves the walked path. These limitations are in the abstract, next to the numbers, not hidden."
+  },
+  {
+    "id": "08_close",
+    "text": "Round Two adds open vocabulary points of interest, search, and end to end routing. Round Three captures the IIT Bombay campus and adds QR anchored augmented reality. The code is MIT, the sample and setup are in the repository, and all three links are below. One video in; a navigable place out."
+  }
+]

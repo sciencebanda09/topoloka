@@ -23,6 +23,9 @@ kaggle/config.local.ps1
 *.mov
 !test/**/*.mp4
 
+# demo video intermediates; the final MP4 is a GitHub release asset
+docs/demo/build/
+
 # local secrets (never commit)
 kaggle.json
 .env

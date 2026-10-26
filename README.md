@@ -22,7 +22,7 @@ walk-through video ──► Kaggle pipeline ──► artifact bundle ──►
 | `pipeline/`   | Reconstruction pipeline (frames → SfM → geometry → depth → splat → POIs → export) |
 | `web/`        | The viewer web app (roaming, minimap, navigation, splat renderer) |
 | `kaggle/`     | Kaggle tooling: code dataset, kernels, push/fetch scripts |
-| `docs/`       | Technical abstract, submission links, figures, demo storyboard |
+| `docs/`       | Technical abstract, submission links, figures, demo build |
 | `test/`       | Redistributable sample capture + reproduction instructions |
 | `tools/`      | Sample builder and figure helpers |
 
@@ -119,7 +119,9 @@ on every reading.
       gaussians exported; 315.05 m² walkable; QA 6/6 PASS
 - [x] Hosted sample twin: <https://sciencebanda09.github.io/topoloka/?capture=metro_v1>
       (457,221 gaussians / 14.63 MB, 3 m volume crop, 250 k-point cloud)
-- [ ] Demo video (3–5 min) — recorded after the hosted build; link goes in the abstract
+- [x] Demo video (3:33, 1920×1080/30) — hosted twin walk-through, QA/metric
+      cards, A* route, limitations and roadmap:
+      <https://github.com/sciencebanda09/topoloka/releases/download/r1-demo/topoloka_demo.mp4>
 - [ ] Web: POI search + user-facing pathfinding (R2; A* / route rendering already scaffolded)
 - [ ] AR mode (QR-anchored relocalization, R3)
 

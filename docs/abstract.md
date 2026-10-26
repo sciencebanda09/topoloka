@@ -155,7 +155,8 @@ metric.*
 
 Viewer: <https://sciencebanda09.github.io/topoloka/?capture=metro_v1> ·
 Code: <https://github.com/sciencebanda09/topoloka> ·
-Demo video: **pending upload**
+Demo video (3:33, 1080p):
+<https://github.com/sciencebanda09/topoloka/releases/download/r1-demo/topoloka_demo.mp4>
 
 ## 7. Where the system is weak (and what we do about it)
 
