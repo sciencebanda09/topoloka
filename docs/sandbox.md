@@ -28,6 +28,10 @@ footprint is on free nav space, clear of the player and other props; red means
 the map blocks it, it is too close, or there is no floor hit. On touch, use
 the panel's **Place**, **Rotate**, and **Cancel** buttons.
 
+On desktop the pointer is locked while walking, so press **Esc** to release
+the mouse before clicking panel-only actions (**Clear**, **Copy link**); the
+rest have keyboard shortcuts. Re-pick a carried prop after cancelling.
+
 Placed props persist in `localStorage` per capture. **Copy link** encodes the
 layout into `?props=`, so a layout can be opened on another machine.
 
@@ -78,8 +82,13 @@ primitives and canvas textures.
 - `cd web && npm run build` — TypeScript strict + Vite production build.
 - Dynamic costmap test (headless): barrier severs a corridor, clearing it
   restores the route, and a blocked A* start escapes to a free cell.
-- R1 regression: with no `?sandbox`/`?props`, the viewer creates no props,
-  no lights, and no dynamic obstacles; the default HUD and route are unchanged.
+- R1 regression by construction: with no `?sandbox`/`?props`, the sandbox
+  group stays invisible (props/lights inert), the panel and reticle stay
+  hidden, and the dynamic obstacle layer is empty, so the default HUD, route,
+  and rendering path are unchanged. The extra hidden DOM is inert.
+- Deployed Pages build checked over HTTPS: the viewer HTML contains the hidden
+  sandbox panel, the JS bundle contains the sandbox and splat-raycast code, and
+  `nav.json` / `splat.splat` return 200 for `metro_v1`.
 
 ## Not in this pass
 

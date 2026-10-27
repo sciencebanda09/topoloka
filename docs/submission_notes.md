@@ -9,6 +9,7 @@ the portal is the only place that matters, this file is the defense copy.
 |------|------|--------|
 | Repo | https://github.com/sciencebanda09/topoloka | public (MIT), created 2026-10-18 |
 | Viewer (hosted) | https://sciencebanda09.github.io/topoloka/?capture=metro_v1 | metro sample live; QA/perf verified 2026-10-24 |
+| Sandbox preview (R2) | https://sciencebanda09.github.io/topoloka/?capture=metro_v1&sandbox=1 | deployed 2026-10-27 (`5fe785d`); interactive QA pending |
 | Demo video | https://github.com/sciencebanda09/topoloka/releases/download/r1-demo/topoloka_demo.mp4 | 3:33, 1080p30, 41.0 MB; hosted 2026-10-26 |
 | Abstract PDF | `docs/abstract.pdf` in repo | metro, 5 pages, 2.42 MB; rebuilt 2026-10-26 with demo link |
 
@@ -155,7 +156,10 @@ the portal is the only place that matters, this file is the defense copy.
   5 cm costmap's dynamic layer, so collision and A* reroute around them. The
   props are synthetic meshes layered over the read-only splat; moving scanned
   geometry remains out of scope (segmentation + inpainting + missing backsides).
-  Build + headless dynamic-costmap tests pass. Details: `docs/sandbox.md`.
+  Build + headless dynamic-costmap tests pass. Deployed in `5fe785d`; Pages
+  workflow `40489156020` succeeded and the sandbox bundle + sample artifacts
+  were verified over HTTPS. Interactive click-through QA on the deployed
+  preview is still pending (no local browser run). Details: `docs/sandbox.md`.
 
 ## Engineering decisions worth defending
 
