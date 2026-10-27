@@ -146,6 +146,17 @@ the portal is the only place that matters, this file is the defense copy.
   2.42 MB with the 25 k pipeline figure. Build scripts and narration are in
   `docs/demo/`; `docs/demo/build/` and the MP4 are gitignored.
 
+- **2026-10-27 — R2 preview: sandbox pick-and-place.** Added an additive prop
+  layer behind `?sandbox=1` / `G`; the R1 default view, demo, abstract, and
+  hosted artifacts are unchanged. Four procedural props (cone, barrier, crate,
+  wet-floor sign) can be picked up, rotated, placed, removed, persisted in
+  `localStorage`, and shared via a `?props=` link. Placement raycasts the
+  splat's BVH for the real floor; placed footprints are rasterized into the
+  5 cm costmap's dynamic layer, so collision and A* reroute around them. The
+  props are synthetic meshes layered over the read-only splat; moving scanned
+  geometry remains out of scope (segmentation + inpainting + missing backsides).
+  Build + headless dynamic-costmap tests pass. Details: `docs/sandbox.md`.
+
 ## Engineering decisions worth defending
 
 - **One frame convention, one align block.** Raw SfM → metric nav

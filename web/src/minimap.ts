@@ -4,6 +4,7 @@
  */
 
 import { FREE, OBSTACLE, type NavData } from './artifacts';
+import type { PropTransform } from './props';
 
 const COLOR_UNKNOWN = [24, 28, 33, 255] as const;
 const COLOR_FREE = [70, 82, 96, 255] as const;
@@ -19,6 +20,7 @@ export class Minimap {
   private minX = 0;
   private minY = 0;
   private route: [number, number][] = [];
+  private props: PropTransform[] = [];
 
   constructor(canvas: HTMLCanvasElement, nav: NavData, grid: { w: number; h: number; data: Uint8Array }) {
     const dpr = Math.min(window.devicePixelRatio, 2);
@@ -71,6 +73,10 @@ export class Minimap {
     this.route = route ?? [];
   }
 
+  setProps(props: PropTransform[]): void {
+    this.props = props;
+  }
+
   draw(pos: [number, number, number], headingRad: number): void {
     const { ctx, nav } = this;
     ctx.clearRect(0, 0, 240, 240);
@@ -112,6 +118,23 @@ export class Minimap {
       ctx.strokeStyle = 'rgba(64, 224, 138, 0.95)';
       ctx.lineWidth = 2.5;
       ctx.stroke();
+    }
+
+    // placed sandbox props
+    for (const p of this.props) {
+      const x = this.mx(p.x), y = this.my(p.y);
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.rotate(p.rot);
+      ctx.fillStyle = '#ffb347';
+      if (p.type === 'barrier') {
+        ctx.fillRect(-5, -1.6, 10, 3.2);
+      } else {
+        ctx.beginPath();
+        ctx.arc(0, 0, 3, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.restore();
     }
 
     // walker arrow

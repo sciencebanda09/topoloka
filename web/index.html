@@ -27,6 +27,7 @@
           <span><i class="sw-unknown"></i>unknown</span>
           <span><i class="sw-path"></i>path</span>
           <span id="legend-route" style="display:none"><i class="sw-route"></i>route</span>
+          <span id="legend-prop" style="display:none"><i class="sw-prop"></i>prop</span>
         </div>
       </div>
 
@@ -35,6 +36,37 @@
       </div>
 
       <div id="center-hint">click to enter walkthrough</div>
+
+      <div id="reticle" class="hidden"></div>
+      <div id="reticle-label" class="hidden"></div>
+      <div id="carry-hint" class="hidden"></div>
+      <div id="toast"></div>
+
+      <div id="sandbox" class="hidden">
+        <div class="sb-head">
+          <span>SANDBOX <em id="sandbox-count">0 placed</em></span>
+          <button id="sandbox-close" title="Exit (G)" aria-label="Exit sandbox">×</button>
+        </div>
+        <div id="prop-palette">
+          <button data-prop="cone"><kbd>1</kbd> Cone</button>
+          <button data-prop="barrier"><kbd>2</kbd> Barrier</button>
+          <button data-prop="crate"><kbd>3</kbd> Crate</button>
+          <button data-prop="sign"><kbd>4</kbd> Sign</button>
+        </div>
+        <div id="sandbox-carry-actions" class="hidden">
+          <button id="sandbox-place">Place</button>
+          <button id="sandbox-rotate">Rotate</button>
+          <button id="sandbox-cancel">Cancel</button>
+        </div>
+        <div id="sandbox-actions">
+          <button id="sandbox-route">Route to end</button>
+          <button id="sandbox-clear">Clear</button>
+          <button id="sandbox-share">Copy link</button>
+        </div>
+        <div id="sandbox-hint">
+          <b>1–4</b> add · <b>click</b> pick/place · <b>R</b> rotate · <b>Del</b> remove · <b>T</b> route · <b>G</b> exit
+        </div>
+      </div>
     </div>
     <script type="module" src="./src/main.ts"></script>
   </body>

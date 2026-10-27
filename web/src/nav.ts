@@ -8,12 +8,23 @@ import { FREE, type NavData, OBSTACLE } from './artifacts';
 /** Half-width of the free corridor carved along the capture path, in metres. */
 const WALKED_PATH_RADIUS_M = 0.5;
 
+/** Oriented footprint in the nav frame (x/y horizontal, radians). */
+export interface Footprint {
+  x: number;
+  y: number;
+  hw: number;
+  hh: number;
+  rot: number;
+}
+
 export class Costmap {
   readonly w: number;
   readonly h: number;
   readonly cell: number;
   readonly origin: [number, number];
   readonly data: Uint8Array;
+  /** Sandbox props: editable obstacles layered over the measured grid. */
+  private dynamic: Uint8Array;
 
   constructor(nav: NavData, grid: { w: number; h: number; data: Uint8Array }) {
     this.w = grid.w;
@@ -21,7 +32,36 @@ export class Costmap {
     this.cell = nav.cell_m;
     this.origin = nav.origin;
     this.data = new Uint8Array(grid.data);
+    this.dynamic = new Uint8Array(this.w * this.h);
     this.carveWalkedPath(nav.trajectory);
+  }
+
+  /**
+   * Replace the sandbox obstacle layer. Rasterizes oriented rectangles at the
+   * 5 cm grid, slightly inflated so A* does not thread a corner through a foot.
+   */
+  setDynamicObstacles(obstacles: Footprint[]): void {
+    this.dynamic.fill(0);
+    for (const f of obstacles) {
+      const hw = f.hw + 0.04;
+      const hh = f.hh + 0.04;
+      const ext = Math.hypot(hw, hh);
+      const minX = Math.max(0, Math.floor((f.x - ext - this.origin[0]) / this.cell));
+      const maxX = Math.min(this.w - 1, Math.ceil((f.x + ext - this.origin[0]) / this.cell));
+      const minY = Math.max(0, Math.floor((f.y - ext - this.origin[1]) / this.cell));
+      const maxY = Math.min(this.h - 1, Math.ceil((f.y + ext - this.origin[1]) / this.cell));
+      const c = Math.cos(f.rot), s = Math.sin(f.rot);
+      for (let cy = minY; cy <= maxY; cy++) {
+        const wy = this.origin[1] + (cy + 0.5) * this.cell;
+        for (let cx = minX; cx <= maxX; cx++) {
+          const wx = this.origin[0] + (cx + 0.5) * this.cell;
+          const dx = wx - f.x, dy = wy - f.y;
+          const lx = dx * c + dy * s;
+          const ly = -dx * s + dy * c;
+          if (Math.abs(lx) <= hw && Math.abs(ly) <= hh) this.dynamic[cy * this.w + cx] = 1;
+        }
+      }
+    }
   }
 
   /**
@@ -53,7 +93,10 @@ export class Costmap {
 
   /** Unknown space is not walkable: no collision against a void. */
   isBlocked(x: number, y: number): boolean {
-    return this.valueAtWorld(x, y) !== FREE;
+    if (this.valueAtWorld(x, y) !== FREE) return true;
+    const cx = Math.floor((x - this.origin[0]) / this.cell);
+    const cy = Math.floor((y - this.origin[1]) / this.cell);
+    return this.dynamic[cy * this.w + cx] === 1;
   }
 
   /** blocked test with a small radius (4 samples around the point) */
@@ -150,7 +193,8 @@ export class Costmap {
   }
 
   private blocked(x: number, y: number): boolean {
-    return this.data[y * this.w + x] !== FREE;
+    if (x < 0 || y < 0 || x >= this.w || y >= this.h) return true;
+    return this.data[y * this.w + x] !== FREE || this.dynamic[y * this.w + x] === 1;
   }
 
   private nearestFree(cx: number, cy: number): [number, number] {
@@ -159,7 +203,7 @@ export class Costmap {
         for (let dx = -r; dx <= r; dx++) {
           if (Math.abs(dx) !== r && Math.abs(dy) !== r) continue;
           const nx = cx + dx, ny = cy + dy;
-          if (this.inBounds(nx, ny) && this.data[ny * this.w + nx] === FREE) return [nx, ny];
+          if (this.inBounds(nx, ny) && !this.blocked(nx, ny)) return [nx, ny];
         }
       }
     }

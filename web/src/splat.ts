@@ -25,6 +25,23 @@ export interface SplatOptions {
   maxScreenSpaceSplatSize?: number;
 }
 
+export interface SplatHit {
+  point: THREE.Vector3;
+  normal: THREE.Vector3;
+  distance: number;
+}
+
+interface RawSplatHit {
+  origin: THREE.Vector3;
+  normal: THREE.Vector3;
+  distance: number;
+}
+
+interface ViewerRaycaster {
+  ray: { origin: THREE.Vector3; direction: THREE.Vector3 };
+  intersectSplatMesh(mesh: unknown, out?: RawSplatHit[]): void;
+}
+
 export class SplatLayer {
   loaded = false;
   gaussianCount = 0;
@@ -107,6 +124,36 @@ export class SplatLayer {
       URL.revokeObjectURL(blobUrl);
     }
     this.loaded = true;
+  }
+
+  /**
+   * Cast an arbitrary world ray against the splat BVH. The library builds the
+   * tree for its own focal-point picker; we reuse it so sandbox props land on
+   * the real floor instead of an assumed flat plane.
+   */
+  raycastRay(origin: THREE.Vector3, direction: THREE.Vector3): SplatHit | null {
+    if (!this.loaded) return null;
+    const view = this.viewer as unknown as { raycaster?: ViewerRaycaster; splatMesh?: unknown };
+    if (!view.raycaster || !view.splatMesh) return null;
+    try {
+      view.raycaster.ray.origin.copy(origin);
+      view.raycaster.ray.direction.copy(direction).normalize();
+      const hits: RawSplatHit[] = [];
+      view.raycaster.intersectSplatMesh(view.splatMesh, hits);
+      let hit: RawSplatHit | null = null;
+      for (const h of hits) {
+        if (h.distance < 0) continue;
+        if (!hit || h.distance < hit.distance) hit = h;
+      }
+      if (!hit) return null;
+      return {
+        point: hit.origin.clone(),
+        normal: hit.normal.clone(),
+        distance: hit.distance,
+      };
+    } catch {
+      return null;
+    }
   }
 
   update(): void {

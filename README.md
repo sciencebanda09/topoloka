@@ -88,6 +88,15 @@ left half is a walk stick and the right half looks; **M** hides the map for a
 full-screen view. `npm run build` produces a static `dist/` that can be served
 from any web host.
 
+**R2 preview — sandbox pick-and-place.** Append `&sandbox=1` to the viewer URL
+(or press **G**): keys **1–4** add a cone, barrier, crate, or wet-floor sign;
+click to pick up/place; **R** rotates; **Del** removes; **T** toggles the route.
+Placed props are real meshes layered over the read-only splat and become
+dynamic costmap obstacles, so A* and collision reroute around them. They are
+not scanned furniture — see [`docs/sandbox.md`](docs/sandbox.md) for the honest
+boundary, controls, and implementation. Example:
+<https://sciencebanda09.github.io/topoloka/?capture=metro_v1&sandbox=1>
+
 **Frame budget (measured, live Pages build).** On an AMD Radeon integrated GPU
 through ANGLE/D3D11 at a 1600×900 viewport, the adaptive renderer holds
 **51.0 fps idle / 60.1 fps walking** at the default spawn and **43.0 / 40.2
@@ -122,6 +131,8 @@ on every reading.
 - [x] Demo video (3:33, 1920×1080/30) — hosted twin walk-through, QA/metric
       cards, A* route, limitations and roadmap:
       <https://github.com/sciencebanda09/topoloka/releases/download/r1-demo/topoloka_demo.mp4>
+- [x] R2 preview: sandbox pick-and-place with dynamic obstacles + rerouting
+      (`?sandbox=1`; see `docs/sandbox.md`)
 - [ ] Web: POI search + user-facing pathfinding (R2; A* / route rendering already scaffolded)
 - [ ] AR mode (QR-anchored relocalization, R3)
 

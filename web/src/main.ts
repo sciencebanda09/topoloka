@@ -12,6 +12,7 @@ import { PRODUCT_NAME, PRODUCT_TAGLINE } from './brand';
 import { WalkControls } from './controls';
 import { Minimap } from './minimap';
 import { Costmap } from './nav';
+import { Sandbox } from './sandbox';
 import { SplatLayer } from './splat';
 import { Viewer } from './viewer';
 
@@ -111,25 +112,87 @@ async function boot(): Promise<void> {
   const minimap = new Minimap(minimapCanvas, nav,
     { w: costmap.w, h: costmap.h, data: costmap.data });
 
-  // dev: ?route draws an A* path from spawn to the capture's final trajectory point
+  // Routing is shared by ?route and the sandbox's "Route to end" button.
+  // A placed prop changes the dynamic costmap, so refresh from the current
+  // player position rather than the original spawn.
+  const routeBtn = document.getElementById('sandbox-route') as HTMLButtonElement | null;
+  const legendRoute = document.getElementById('legend-route');
+  const legendProp = document.getElementById('legend-prop');
+  const routeEnd: [number, number] | null = nav.trajectory.length > 2
+    ? [nav.trajectory[nav.trajectory.length - 1][0], nav.trajectory[nav.trajectory.length - 1][1]]
+    : null;
+  let routeGoal: [number, number] | null = null;
   let routeLabel = '';
-  if (params.has('route') && nav.trajectory.length > 2) {
-    const last = nav.trajectory[nav.trajectory.length - 1];
-    const path = costmap.findPath([spawn.position[0], spawn.position[1]], [last[0], last[1]]);
-    if (path) {
-      viewer.setRoute(path);
-      minimap.setRoute(path);
-      let meters = 0;
-      for (let i = 1; i < path.length; i++) {
-        meters += Math.hypot(path[i][0] - path[i - 1][0], path[i][1] - path[i - 1][1]);
-      }
-      routeLabel = `route ${path.length} wp · ${meters.toFixed(1)} m`;
-      const legend = document.getElementById('legend-route');
-      if (legend) legend.style.display = 'inline-flex';
-    } else {
-      routeLabel = 'route: no path found';
+
+  function clearRoute(): void {
+    viewer.setRoute([]);
+    minimap.setRoute(null);
+    routeLabel = '';
+    if (legendRoute) legendRoute.style.display = 'none';
+    if (routeBtn) {
+      routeBtn.textContent = 'Route to end';
+      routeBtn.classList.remove('active');
     }
   }
+
+  function refreshRoute(): void {
+    if (!routeGoal) {
+      clearRoute();
+      return;
+    }
+    const path = costmap.findPath([controls.position[0], controls.position[1]], routeGoal);
+    if (!path || path.length < 2) {
+      viewer.setRoute([]);
+      minimap.setRoute(null);
+      routeLabel = 'route: no path';
+      if (legendRoute) legendRoute.style.display = 'none';
+      if (routeBtn) {
+        routeBtn.textContent = 'Clear route';
+        routeBtn.classList.add('active');
+      }
+      return;
+    }
+    viewer.setRoute(path);
+    minimap.setRoute(path);
+    let meters = 0;
+    for (let i = 1; i < path.length; i++) {
+      meters += Math.hypot(path[i][0] - path[i - 1][0], path[i][1] - path[i - 1][1]);
+    }
+    routeLabel = `route ${path.length} wp · ${meters.toFixed(1)} m`;
+    if (legendRoute) legendRoute.style.display = 'inline-flex';
+    if (routeBtn) {
+      routeBtn.textContent = 'Clear route';
+      routeBtn.classList.add('active');
+    }
+  }
+
+  function setRouteGoal(goal: [number, number] | null): void {
+    routeGoal = goal;
+    refreshRoute();
+  }
+
+  const sandbox = new Sandbox({
+    scene: viewer.scene,
+    camera: viewer.camera,
+    canvas,
+    costmap,
+    nav,
+    splat,
+    capture: CAPTURE,
+    getPlayer: () => controls.position,
+    onChange: () => {
+      minimap.setProps(sandbox.transforms());
+      if (legendProp) legendProp.style.display = sandbox.isEnabled ? 'inline-flex' : 'none';
+      refreshRoute();
+    },
+  });
+
+  routeBtn?.addEventListener('click', () => {
+    if (routeGoal) setRouteGoal(null);
+    else if (routeEnd) setRouteGoal(routeEnd);
+  });
+  if (params.has('route') && routeEnd) setRouteGoal(routeEnd);
+  if (sandbox.autoEnable) sandbox.setEnabled(true);
 
   document.addEventListener('pointerlockchange', () => {
     const locked = document.pointerLockElement === canvas;
@@ -138,6 +201,10 @@ async function boot(): Promise<void> {
   window.addEventListener('keydown', (e) => {
     if (e.code === 'KeyP') viewer.setPointsVisible(!viewer.pointsVisible);
     if (e.code === 'KeyM') mapWrap.classList.toggle('hidden');
+    if (e.code === 'KeyT' && sandbox.isEnabled) {
+      if (routeGoal) setRouteGoal(null);
+      else if (routeEnd) setRouteGoal(routeEnd);
+    }
   });
 
   let last = performance.now();
@@ -156,6 +223,7 @@ async function boot(): Promise<void> {
       parts.push(`${nPoints.toLocaleString()} pts${viewer.pointsVisible ? '' : ' (hidden)'}`);
     }
     parts.push(`${walkable} m² walkable`);
+    if (sandbox.isEnabled) parts.push(`sandbox ${sandbox.propCount}`);
     if (routeLabel) parts.push(routeLabel);
     if (!CLEAN) parts.push(`${fps.toFixed(0)} fps`);
     if (meta.qa_overall) parts.push(`QA ${meta.qa_overall}`);
@@ -171,6 +239,7 @@ async function boot(): Promise<void> {
     fps = fps ? fps * 0.92 + Math.min(240, 1 / rawDt) * 0.08 : 60;
 
     controls.update(dt);
+    sandbox.update(dt);
     if (splat?.loaded) {
       splat.update();
       splat.render();

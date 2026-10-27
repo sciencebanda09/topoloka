@@ -40,6 +40,7 @@ html, body, #app { width: 100%; height: 100%; overflow: hidden; background: #0b0
 .sw-unknown { background: #181c21; }
 .sw-path { background: #7fd4ff; }
 .sw-route { background: #40e08a; }
+.sw-prop { background: #ffb347; }
 
 #help {
   position: fixed; bottom: 14px; left: 50%; transform: translateX(-50%);
@@ -58,6 +59,110 @@ html, body, #app { width: 100%; height: 100%; overflow: hidden; background: #0b0
 }
 #center-hint.hidden { opacity: 0; pointer-events: none; }
 
+/* ---- sandbox / pick-and-place ---------------------------------------- */
+
+#sandbox {
+  position: fixed; bottom: 16px; left: 16px; z-index: 20;
+  width: 286px; padding: 10px 11px 9px;
+  background: rgba(10, 14, 18, 0.92);
+  border: 1px solid rgba(64, 255, 154, 0.28);
+  border-radius: 10px;
+  font-family: ui-monospace, 'Cascadia Code', Consolas, monospace;
+  color: #e8eef5;
+  box-shadow: 0 8px 26px rgba(0, 0, 0, 0.5);
+}
+#sandbox.hidden { display: none; }
+#sandbox .sb-head {
+  display: flex; align-items: center; justify-content: space-between;
+  font-size: 11px; letter-spacing: 0.18em; color: #40ff9a; margin-bottom: 8px;
+}
+#sandbox .sb-head em {
+  font-style: normal; letter-spacing: 0; color: #8fa0b0; margin-left: 6px;
+}
+#sandbox button {
+  font: inherit; font-size: 11px; color: #e8eef5;
+  background: rgba(127, 212, 255, 0.08);
+  border: 1px solid rgba(127, 212, 255, 0.22);
+  border-radius: 6px; padding: 5px 8px; cursor: pointer;
+}
+#sandbox button:hover { background: rgba(127, 212, 255, 0.16); }
+#sandbox button.active {
+  color: #07120c; background: #40ff9a; border-color: #40ff9a;
+}
+#sandbox button kbd {
+  font: inherit; color: #7fd4ff; margin-right: 3px;
+}
+#sandbox button.active kbd { color: #07120c; }
+#sandbox .sb-head button {
+  padding: 0 6px; font-size: 16px; line-height: 18px;
+  color: #9fb0c0; background: transparent; border-color: transparent;
+}
+#prop-palette, #sandbox-carry-actions, #sandbox-actions {
+  display: flex; flex-wrap: wrap; gap: 5px;
+}
+#prop-palette button { flex: 1 1 46%; text-align: left; }
+#sandbox-carry-actions, #sandbox-actions { margin-top: 6px; }
+#sandbox-carry-actions.hidden { display: none; }
+#sandbox-carry-actions button { flex: 1 1 auto; }
+#sandbox-carry-actions #sandbox-place {
+  color: #07120c; background: #40ff9a; border-color: #40ff9a; font-weight: 600;
+}
+#sandbox-actions button { flex: 1 1 auto; }
+#sandbox-route.active {
+  color: #07120c; background: #40ff9a; border-color: #40ff9a;
+}
+#sandbox-hint {
+  margin-top: 8px; padding-top: 7px;
+  border-top: 1px solid rgba(127, 212, 255, 0.12);
+  font-size: 10px; line-height: 1.5; color: #8fa0b0;
+}
+#sandbox-hint b { color: #cfdae5; }
+
+#reticle {
+  position: fixed; top: 50%; left: 50%; z-index: 9;
+  width: 12px; height: 12px; margin: -6px 0 0 -6px;
+  border: 1.5px solid rgba(127, 212, 255, 0.8); border-radius: 50%;
+  pointer-events: none; transition: border-color 0.15s, box-shadow 0.15s;
+}
+#reticle.hidden { display: none; }
+#reticle.active {
+  border-color: #40ff9a;
+  box-shadow: 0 0 0 4px rgba(64, 255, 154, 0.15);
+}
+#reticle-label {
+  position: fixed; top: calc(50% + 16px); left: 50%; transform: translateX(-50%);
+  z-index: 9; pointer-events: none; white-space: nowrap;
+  font-family: ui-monospace, monospace; font-size: 11px; color: #cfdae5;
+  background: rgba(10, 14, 18, 0.88); border: 1px solid rgba(64, 255, 154, 0.24);
+  border-radius: 6px; padding: 4px 8px;
+}
+#reticle-label.hidden { display: none; }
+
+#carry-hint {
+  position: fixed; top: 14px; left: 50%; transform: translateX(-50%);
+  z-index: 15; pointer-events: none; white-space: nowrap;
+  font-family: ui-monospace, monospace; font-size: 12px; color: #e8eef5;
+  background: rgba(10, 14, 18, 0.92);
+  border: 1px solid rgba(64, 255, 154, 0.35);
+  border-radius: 8px; padding: 8px 13px;
+}
+#carry-hint.hidden { display: none; }
+#carry-hint b { color: #40ff9a; }
+#carry-hint span { color: #9fb0c0; margin-left: 10px; }
+
+#toast {
+  position: fixed; top: 74px; left: 50%; transform: translateX(-50%);
+  z-index: 25; pointer-events: none; white-space: nowrap;
+  font-family: ui-monospace, monospace; font-size: 12px; color: #e8eef5;
+  background: rgba(10, 14, 18, 0.94);
+  border: 1px solid rgba(127, 212, 255, 0.28);
+  border-radius: 8px; padding: 7px 12px;
+  opacity: 0; transition: opacity 0.2s;
+}
+#toast.show { opacity: 1; }
+
+body.sandbox-on #help { display: none; }
+
 @media (max-width: 760px) {
   #hud { max-width: calc(100vw - 24px); }
   /* leave room for a three-line HUD before the map starts */
@@ -65,6 +170,17 @@ html, body, #app { width: 100%; height: 100%; overflow: hidden; background: #0b0
   #minimap { width: 180px; height: 180px; }
   #map-legend { font-size: 9px; gap: 3px 6px; padding: 5px 6px; }
   #help { font-size: 11px; white-space: normal; max-width: calc(100vw - 20px); text-align: center; }
+  #sandbox {
+    left: 8px; right: 8px; bottom: 8px; width: auto;
+    max-height: 44vh; overflow-y: auto;
+  }
+  #carry-hint {
+    top: auto; bottom: 48vh; white-space: normal; text-align: center;
+    max-width: calc(100vw - 20px);
+  }
+  #carry-hint span { display: block; margin: 3px 0 0; }
+  #toast { top: 120px; white-space: normal; text-align: center; max-width: calc(100vw - 30px); }
+  #reticle-label { font-size: 10px; max-width: calc(100vw - 30px); white-space: normal; text-align: center; }
 }
 @media (max-width: 760px) and (orientation: landscape) {
   #map-wrap { top: 10px; width: 140px; }
