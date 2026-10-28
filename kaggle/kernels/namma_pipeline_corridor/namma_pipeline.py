@@ -62,10 +62,19 @@ def ensure_pycolmap() -> str:
         return pycolmap.__version__
 
 
+# Phone cameras do not agree on a container: Android usually writes .mp4,
+# iPhones write .mov, and browser MediaRecorder can write .webm. OpenCV/ffmpeg
+# decodes all of them; the old .mp4-only glob silently rejected real phone
+# footage.
+VIDEO_EXTS = {".mp4", ".mov", ".m4v", ".webm", ".mkv", ".avi"}
+
+
 def find_video() -> Path:
-    vids = sorted(INPUT.glob("**/*.mp4"))
+    vids = sorted(p for p in INPUT.glob("**/*")
+                  if p.is_file() and p.suffix.lower() in VIDEO_EXTS)
     if not vids:
-        raise SystemExit("no .mp4 under /kaggle/input")
+        raise SystemExit("no phone video under /kaggle/input "
+                         f"(looked for {', '.join(sorted(VIDEO_EXTS))})")
     for v in vids:
         log(f"input video: {v} ({v.stat().st_size / 1e6:.1f} MB)")
     return sorted(vids, key=lambda p: p.stat().st_size, reverse=True)[0]

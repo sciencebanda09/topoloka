@@ -3,6 +3,9 @@
 Version: **0.1 (draft)** · Applies to: smartphone video captures of indoor spaces
 Owner: Namma Space team · Status: to be validated against captures, then frozen for R1
 
+Phone file → hosted twin: see `capture/phone-to-twin.md` for the one-command
+Kaggle path and the live-vs-offline boundary.
+
 The SOP exists because reconstruction quality is decided **at capture time**.
 Every rule below traces to a failure mode of the pipeline; every capture ends
 with a QA report that says pass/fail per check — with the compensation applied.

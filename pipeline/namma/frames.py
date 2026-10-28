@@ -112,6 +112,7 @@ def extract_frames(
     all_rank_blur: list[float] = []
     i = start_index
     window_best: tuple[float, int, np.ndarray] | None = None
+    display_shape: tuple[int, int] | None = None
     t0 = time.time()
 
     while True:
@@ -120,6 +121,10 @@ def extract_frames(
             break
         if limit_index is not None and i >= limit_index:
             break
+        if display_shape is None:
+            # Post-auto-rotation shape, so portrait phone clips are visible in
+            # the report even when the container metadata said otherwise.
+            display_shape = (bgr.shape[1], bgr.shape[0])
 
         score = _rank_blur(bgr)
         if window_best is None or score > window_best[0]:
@@ -153,6 +158,9 @@ def extract_frames(
         "video": str(video),
         "video_fps": fps,
         "video_frames": total,
+        "video_width": display_shape[0] if display_shape else None,
+        "video_height": display_shape[1] if display_shape else None,
+        "video_landscape": (display_shape[0] >= display_shape[1]) if display_shape else None,
         "stride": stride,
         "target_rate_hz": target_rate_hz,
         "max_width": max_width,
@@ -163,6 +171,10 @@ def extract_frames(
     }
     (out_dir / "frames_meta.json").write_text(json.dumps(meta, indent=2), encoding="utf-8")
 
+    if display_shape and display_shape[0] < display_shape[1]:
+        print("[frames] WARNING: portrait video "
+              f"({display_shape[0]}x{display_shape[1]}); the SOP requires landscape. "
+              "Gravity/scale alignment may be unreliable.")
     print(f"[frames] {video.name}: kept {len(records)} frames "
           f"(stride {stride}, {stats['extract_seconds']}s, "
           f"blur p10 {stats['rank_blur_p10']:.1f} / p90 {stats['rank_blur_p90']:.1f})")

@@ -10,7 +10,8 @@ kaggle/
   kernels/namma_pipeline/        kernel: frames -> sfm -> geometry -> qa -> package (CPU)
   kernels/namma_splat/           kernel: depth + 3DGS + package                (GPU)
   tools/push_code.ps1            stage pipeline/ -> code.tar -> dataset version
-  tools/push_capture.ps1         stage fetched pipeline outputs -> namma-capture-v1
+  tools/push_video.ps1           raw phone video -> dataset -> CPU pipeline kernel
+  tools/push_capture.ps1         stage fetched pipeline outputs -> namma-capture-*
   tools/push_kernel.ps1          push a kernel by name
   tools/fetch_output.ps1         download a kernel's outputs to kaggle/out/<kernel>
   out/                           fetched kernel outputs (gitignored)
@@ -28,7 +29,16 @@ powershell -File kaggle\tools\fetch_output.ps1 namma_pipeline -Watch -TimeoutMin
 powershell -File kaggle\tools\push_capture.ps1        # then wait for dataset ready
 powershell -File kaggle\tools\push_kernel.ps1 namma_splat
 powershell -File kaggle\tools\fetch_output.ps1 namma_splat -Watch -TimeoutMinutes 240
+
+# One command for a new live phone capture (CPU + GPU + fetch):
+powershell -File kaggle\tools\push_video.ps1 `
+  -Video "C:\capture\room.mov" -Name room-v1 -Splat
 ```
+
+`push_video.ps1` accepts `.mp4`, `.mov`, `.m4v`, `.webm`, `.mkv`, `.avi` — the
+phone container is not the constraint. It also refuses to chain the GPU stage
+when the CPU summary is not `ok`, so a failed capture does not waste GPU quota.
+The full capture → twin runbook is `capture/phone-to-twin.md`.
 
 Kernel status:
 
