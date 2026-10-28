@@ -17,12 +17,27 @@ param(
     [switch]$Watch,
     [switch]$Splat,
     [switch]$DryRun,
+    [switch]$AllowPortrait,
     [int]$TimeoutMinutes = 180
 )
 $ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot '..\config.ps1')
 $env:PYTHONIOENCODING = 'utf-8'
 $env:PYTHONUTF8 = '1'
+
+function Wait-DatasetReady([string]$Dataset, [int]$Minutes = 20) {
+    Write-Host "waiting for $Dataset to be ready..."
+    $deadline = (Get-Date).AddMinutes($Minutes)
+    $last = ''
+    while ((Get-Date) -lt $deadline) {
+        $ErrorActionPreference = 'Continue'
+        $last = (kaggle datasets status $Dataset 2>&1 | Out-String).Trim()
+        $ErrorActionPreference = 'Stop'
+        if ($last -match '\bready\b') { Write-Host "dataset ready: $Dataset"; return }
+        Start-Sleep -Seconds 15
+    }
+    throw "$Dataset did not become ready in $Minutes min (last: $last)"
+}
 
 $Video = (Resolve-Path $Video).Path
 if (-not (Test-Path $Video -PathType Leaf)) { throw "video not found: $Video" }
@@ -36,8 +51,8 @@ if ($sizeMb -lt 5) { Write-Host "WARNING: only $sizeMb MB; a 90 s capture should
 
 if (-not $Name) { $Name = [IO.Path]::GetFileNameWithoutExtension($Video) }
 $slug = ($Name.ToLowerInvariant() -replace '[^a-z0-9]+', '-').Trim('-')
-if ($slug.Length -lt 3 -or $slug.Length -gt 40) {
-    throw "capture name must produce a 3-40 char slug (got '$slug')"
+if ($slug.Length -lt 3 -or $slug.Length -gt 30) {
+    throw "capture name must produce a 3-30 char slug (got '$slug'); prefixes like namma-capture- count against Kaggle's slug limit"
 }
 if (-not $Title) { $Title = "Namma $slug video" }
 
@@ -47,6 +62,45 @@ $kernelName = 'namma_pipeline_' + ($slug -replace '-', '_')
 $kernelRef = "$NammaUser/namma-pipeline-$slug"
 $splatName = 'namma_splat_' + ($slug -replace '-', '_')
 $splatRef = "$NammaUser/namma-splat-$slug"
+
+# ---- 0. preflight: fail before a 2.5 h Kaggle round-trip -------------------
+$ffprobe = "$env:LOCALAPPDATA\Microsoft\WinGet\Packages\Gyan.FFmpeg_Microsoft.Winget.Source_8wekyb3d8bbwe\ffmpeg-8.1.2-full_build\bin\ffprobe.exe"
+if (-not (Test-Path $ffprobe)) {
+    $cmd = Get-Command ffprobe -ErrorAction SilentlyContinue
+    if ($cmd) { $ffprobe = $cmd.Source }
+}
+if ($ffprobe -and (Test-Path $ffprobe)) {
+    $ErrorActionPreference = 'Continue'
+    $raw = (& $ffprobe -v error -select_streams v:0 `
+        -show_entries stream=width,height,avg_frame_rate,codec_name:format=duration `
+        -of json $Video 2>$null | Out-String)
+    $ErrorActionPreference = 'Stop'
+    try {
+        $info = $raw | ConvertFrom-Json
+        $st = $info.streams[0]
+        $w = [int]$st.width
+        $h = [int]$st.height
+        $dur = 0.0
+        [void][double]::TryParse([string]$info.format.duration, [ref]$dur)
+        $fps = 0.0
+        if ($st.avg_frame_rate -match '^(\d+)/(\d+)$' -and [int]$Matches[2] -gt 0) {
+            $fps = [double]$Matches[1] / [double]$Matches[2]
+        }
+        Write-Host ("probe    {0}x{1}, {2:N1} fps, {3:N1} s, {4}" -f $w, $h, $fps, $dur, $st.codec_name)
+        if ($h -gt $w -and -not $AllowPortrait) {
+            throw "portrait video ($w x $h); the SOP requires landscape. Re-record landscape, or pass -AllowPortrait to override."
+        }
+        if ($dur -gt 0 -and $dur -lt 45) { Write-Host "WARNING: $([math]::Round($dur,1)) s is short; a single room needs ~90 s" }
+        if ($dur -gt 300) { Write-Host "WARNING: $([math]::Round($dur,1)) s is long; upload and CPU time grow" }
+        if ($w -gt 0 -and $w -lt 1280) { Write-Host "WARNING: width $w; 1080p is the floor, 4K preferred" }
+        if ($fps -gt 0 -and $fps -lt 24) { Write-Host "WARNING: $([math]::Round($fps,1)) fps; use 30 fps" }
+    } catch {
+        if ($_.Exception.Message -like '*portrait video*') { throw }
+        Write-Host "probe failed; continuing without preflight details"
+    }
+} else {
+    Write-Host "probe skipped (ffprobe not found)"
+}
 
 Write-Host "video    $Video ($sizeMb MB)"
 Write-Host "dataset  $videoDataset"
@@ -90,18 +144,9 @@ if ($LASTEXITCODE -ne 0) { throw "video dataset upload failed ($LASTEXITCODE)" }
 
 # A kernel pushed before the dataset is ready mounts an empty /kaggle/input and
 # dies in seconds. Poll the status endpoint instead of guessing.
-Write-Host "waiting for $videoDataset to be ready..."
-$deadline = (Get-Date).AddMinutes(20)
-$ready = $false
-while ((Get-Date) -lt $deadline) {
-    $ErrorActionPreference = 'Continue'
-    $status = (kaggle datasets status $videoDataset 2>&1 | Out-String).Trim()
-    $ErrorActionPreference = 'Stop'
-    if ($status -match '\bready\b') { $ready = $true; break }
-    Start-Sleep -Seconds 15
-}
-if (-not $ready) { throw "dataset did not become ready in 20 min (last: $status)" }
-Write-Host "dataset ready"
+Wait-DatasetReady $videoDataset 20
+# push_code.ps1 may have just versioned the source dataset too.
+Wait-DatasetReady $CodeDataset 10
 
 # ---- 2. generate + push the CPU pipeline kernel ---------------------------
 $kernelStage = Join-Path $NammaRoot "kaggle\staging\kernel_$($slug -replace '-', '_')"
@@ -168,17 +213,7 @@ if (-not $Splat) {
     -DatasetName "namma-capture-$slug" -Title "Namma capture $slug"
 if ($LASTEXITCODE -ne 0) { throw "capture dataset upload failed" }
 
-Write-Host "waiting for $captureDataset to be ready..."
-$deadline = (Get-Date).AddMinutes(20)
-$ready = $false
-while ((Get-Date) -lt $deadline) {
-    $ErrorActionPreference = 'Continue'
-    $status = (kaggle datasets status $captureDataset 2>&1 | Out-String).Trim()
-    $ErrorActionPreference = 'Stop'
-    if ($status -match '\bready\b') { $ready = $true; break }
-    Start-Sleep -Seconds 15
-}
-if (-not $ready) { throw "capture dataset did not become ready (last: $status)" }
+Wait-DatasetReady $captureDataset 20
 
 $splatStage = Join-Path $NammaRoot "kaggle\staging\splat_$($slug -replace '-', '_')"
 Remove-Item -Recurse -Force $splatStage -ErrorAction SilentlyContinue
