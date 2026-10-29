@@ -32,21 +32,22 @@ walk-through video ──► Kaggle pipeline ──► artifact bundle ──►
 The local machine only edits code, commits, and talks to the Kaggle CLI.
 See `kaggle/README.md`.
 
-## The public sample
+## Public samples
 
-The committed sample is a real, continuous walk through a Melbourne metro
-walkway, built from public footage:
+Two committed samples, both built from public footage by the same pipeline:
 
-- **Source:** *Modern Melbourne Metro Walkway Urban Design* by Joolsmagool
-  (Pexels License), trimmed to 86.07 s, 1920×1080 / 30 fps.
-- **Bundle:** `test/metro_v1/` — 24.7 MB, 14 preview frames, SfM cloud + poses,
-  depth scale, metric nav, 457,221-gaussian web splat, QA report.
-- **Measured:** 216/216 frames registered, 0.403 px median reprojection,
-  6.2505 m/unit (7.54% MAD), 315.05 m² walkable, QA **6/6 PASS**.
+| Sample | Source | Size | Measured |
+|---|---|---|---|
+| `test/metro_v1/` | *Modern Melbourne Metro Walkway Urban Design* by Joolsmagool (Pexels License), 86.07 s | 24.7 MB | 216/216 registered, 0.403 px median, 315.05 m² walkable |
+| `test/guildhall-v1/` | *Guildhall City of London England interior walkaround video* by Acabashi (CC BY-SA 4.0), 90.0 s trim | 31.0 MB | 218/218 registered, 0.515 px median, 458.81 m² walkable |
 
-It is the same data the hosted link serves.
+`guildhall-v1` is the **R1 public stand-in** — a real indoor venue walk-through,
+but not the team's own venue. The metro capture remains a separate sample and
+the same data both hosted links serve.
 
-**Hosted twin:** <https://sciencebanda09.github.io/topoloka/?capture=metro_v1>
+**Hosted twins:**
+<https://sciencebanda09.github.io/topoloka/?capture=guildhall-v1> ·
+<https://sciencebanda09.github.io/topoloka/?capture=metro_v1>
 
 ![The metro twin in a browser: splat, minimap, QA status](docs/fig/twin.png)
 
@@ -66,6 +67,7 @@ Copy-Item -Recurse -Force test\metro_v1\web\* web\public\artifacts\metro_v1\
 cd web
 npm ci
 npm run dev        # open http://127.0.0.1:5173/?capture=metro_v1
+# or stage test\guildhall-v1\web into artifacts\guildhall-v1 and use ?capture=guildhall-v1
 ```
 
 ```bash
@@ -128,6 +130,9 @@ on every reading.
       gaussians exported; 315.05 m² walkable; QA 6/6 PASS
 - [x] Hosted sample twin: <https://sciencebanda09.github.io/topoloka/?capture=metro_v1>
       (457,221 gaussians / 14.63 MB, 3 m volume crop, 250 k-point cloud)
+- [x] R1 public stand-in twin: `test/guildhall-v1` (90.0 s CC BY-SA 4.0 crypt
+      walk; 218/218 registered, 0.515 px median, 458.81 m², 632,993 gaussians,
+      QA 6/6 PASS) — <https://sciencebanda09.github.io/topoloka/?capture=guildhall-v1>
 - [x] Demo video (3:33, 1920×1080/30) — hosted twin walk-through, QA/metric
       cards, A* route, limitations and roadmap:
       <https://github.com/sciencebanda09/topoloka/releases/download/r1-demo/topoloka_demo.mp4>
@@ -138,11 +143,17 @@ on every reading.
 
 ## Credit and licences
 
-Sample footage: *Modern Melbourne Metro Walkway Urban Design* by **Joolsmagool**
-on Pexels, used under the [Pexels License](https://www.pexels.com/license/) and
-trimmed to 86 s. The derived sample artifacts in `test/metro_v1` are
-redistributed under that licence; the code is MIT. No personal capture is
-shipped.
+- *Modern Melbourne Metro Walkway Urban Design* by **Joolsmagool** on Pexels,
+  used under the [Pexels License](https://www.pexels.com/license/) and trimmed
+  to 86 s. The derived artifacts in `test/metro_v1` are redistributed under
+  that licence.
+- *Guildhall City of London England interior walkaround video* by **Acabashi**,
+  Wikimedia Commons, used under
+  [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/) and trimmed
+  to 305–395 s. The derived artifacts in `test/guildhall-v1` are distributed
+  under CC BY-SA 4.0; see `test/guildhall-v1/LICENSE`.
+
+The pipeline code is MIT. No personal capture is shipped.
 
 ## Deadlines
 

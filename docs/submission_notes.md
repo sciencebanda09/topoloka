@@ -9,6 +9,7 @@ the portal is the only place that matters, this file is the defense copy.
 |------|------|--------|
 | Repo | https://github.com/sciencebanda09/topoloka | public (MIT), created 2026-10-18 |
 | Viewer (hosted) | https://sciencebanda09.github.io/topoloka/?capture=metro_v1 | metro sample live; QA/perf verified 2026-10-24 |
+| Viewer (R1 stand-in) | https://sciencebanda09.github.io/topoloka/?capture=guildhall-v1 | Guildhall sample; QA 6/6 PASS, deploy pending |
 | Sandbox preview (R2) | https://sciencebanda09.github.io/topoloka/?capture=metro_v1&sandbox=1 | deployed 2026-10-27 (`5fe785d`); interactive QA pending |
 | Demo video | https://github.com/sciencebanda09/topoloka/releases/download/r1-demo/topoloka_demo.mp4 | 3:33, 1080p30, 41.0 MB; hosted 2026-10-26 |
 | Abstract PDF | `docs/abstract.pdf` in repo | metro, 5 pages, 2.42 MB; rebuilt 2026-10-26 with demo link |
@@ -160,6 +161,28 @@ the portal is the only place that matters, this file is the defense copy.
   workflow `40489156020` succeeded and the sandbox bundle + sample artifacts
   were verified over HTTPS. Interactive click-through QA on the deployed
   preview is still pending (no local browser run). Details: `docs/sandbox.md`.
+
+- **2026-10-29 — R1 public stand-in rebuilt and hosted.** No personal venue
+  capture was available; the team approved using a licensed public interior as
+  the R1 stand-in. Source: *Guildhall City of London England interior
+  walkaround video* by **Acabashi** (Wikimedia Commons, **CC BY-SA 4.0**,
+  <https://commons.wikimedia.org/wiki/File:Guildhall_City_of_London_England_interior_walkaround_video.webm>),
+  original 3840×2160/29. The shipped input is a **90.0 s** trim of
+  **305–395 s** — a continuous, cut-free walk through the crypt with no
+  foreground people — re-encoded to 1920×1080/29 H.264 (69.3 MB,
+  SHA-256 `832FFEFCF3D0F39532FB2330753C6670B7EE149CFC467E50665639ADFC2C548A`).
+  It was ingested through the same `push_video.ps1` path a phone capture uses
+  (`namma-guildhall-v1-video`), which also exercises the phone-container fix
+  end to end. The CPU stage registered **218/218** frames (median **0.515 px**)
+  in 96.9 min; the GPU stage fused depth from all 218 frames (25.97 M raw →
+  14.46 M voxel points, scale **3.8204 m/unit**, MAD **8.29%**) and trained
+  25 k iters in 76.2 min. The assembled sample is `test/guildhall-v1`:
+  **31.0 MB**, 14 preview frames, 250 k-point cloud, **632,993** gaussians,
+  **458.81 m²** walkable, QA **6/6 PASS**. This is a **public stand-in, not the
+  team's venue**; every twin and README label says so. The metro capture
+  remains a separate sample. The derived sample data carries the source's
+  CC BY-SA 4.0 attribution (`test/guildhall-v1/LICENSE`).
+  Hosted: <https://sciencebanda09.github.io/topoloka/?capture=guildhall-v1>.
 
 ## Engineering decisions worth defending
 

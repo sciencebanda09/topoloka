@@ -1,11 +1,19 @@
-# test — sample capture for reviewers and fresh clones
+# test — sample captures for reviewers and fresh clones
 
-`metro_v1/` is the committed, redistributable sample: a complete end-to-end
-run of the pipeline on a **public** walk-through clip, small enough to live in
-git so anyone can serve the twin and inspect every artifact without a Kaggle
-account or a GPU.
+Two committed, redistributable samples. Both are complete end-to-end runs of
+the pipeline on **public** walk-through clips, small enough to live in git so
+anyone can serve the twin and inspect every artifact without a Kaggle account
+or a GPU.
 
-Size: **24.7 MB** (14.63 MB splat + 3.75 MB cloud + nav/QA/frames).
+| Sample | Source | Size | QA |
+|---|---|---|---|
+| `metro_v1/` | *Modern Melbourne Metro Walkway Urban Design* by Joolsmagool (Pexels License), 86.07 s | 24.7 MB | 6/6 PASS |
+| `guildhall-v1/` | *Guildhall City of London England interior walkaround video* by Acabashi (CC BY-SA 4.0), 90.0 s trim | 31.0 MB | 6/6 PASS |
+
+`guildhall-v1` is the R1 public stand-in: a real indoor venue capture, but
+**not the team's own venue**. The source is credited in
+`guildhall-v1/README.md` and `guildhall-v1/LICENSE`; the derived sample data
+inherits CC BY-SA 4.0.
 
 ## Layout
 
@@ -22,9 +30,23 @@ test/metro_v1/
   web/                  the exact bundle the viewer serves
                         nav.json, cloud.ply (250 k pts), splat.splat
                         (457,221 gaussians), occupancy.png, meta.json
+
+test/guildhall-v1/
+  README.md              generated file list + exact commands
+  LICENSE                CC BY-SA 4.0 attribution and change notice
+  frames/               14 preview frames (full run used 218)
+  frames_meta.json      source timing, picked frames, sharpness
+  sfm/                  poses.json, sparse.ply, sfm_report.json
+  depth/                scale.json, depth_report.json
+  nav/                  nav.json, occupancy.png, nav_report.json
+  metricize.json        training-frame -> metric transform record
+  capture_qa.json/.md   the honesty surface: 6/6 PASS
+  web/                  the exact bundle the viewer serves
+                        nav.json, cloud.ply (250 k pts), splat.splat
+                        (632,993 gaussians), occupancy.png, meta.json
 ```
 
-## Run the twin locally
+## Run a twin locally
 
 From the repo root (Node 20+):
 
@@ -36,18 +58,22 @@ npm ci
 npm run dev
 ```
 
-Open <http://127.0.0.1:5173/?capture=metro_v1>. Drag to look, WASD/arrows to
+Open <http://127.0.0.1:5173/?capture=metro_v1>. For Guildhall, substitute
+`guildhall-v1` in both paths and open
+<http://127.0.0.1:5173/?capture=guildhall-v1>. Drag to look, WASD/arrows to
 walk, M for the minimap, P to toggle the point cloud, `?t=<index>` to spawn at
 a trajectory point, `?clean` to hide the prompt/fps.
 
 ```bash
 # POSIX equivalent
-mkdir -p web/public/artifacts/metro_v1
-cp -r test/metro_v1/web/. web/public/artifacts/metro_v1/
+mkdir -p web/public/artifacts/guildhall-v1
+cp -r test/guildhall-v1/web/. web/public/artifacts/guildhall-v1/
 cd web && npm ci && npm run dev
 ```
 
-## What it proves (measured)
+## What each sample proves (measured)
+
+### metro_v1
 
 | Check | Value |
 |---|---|
@@ -61,16 +87,37 @@ cd web && npm ci && npm run dev
 | Bundle | 24.7 MB total; 14.63 MB `.splat` |
 | QA | 6/6 PASS (`capture_qa.md`) |
 
+### guildhall-v1
+
+| Check | Value |
+|---|---|
+| Input | 90.0 s public clip, 1920×1080/29 (CC BY-SA 4.0) |
+| Frames used | 218 at 1600×900, 2.5 Hz |
+| SfM | 218/218 registered, 126,890 pts, 0.515 px median |
+| Metric scale | 3.8204 m/unit, MAD 8.29% (112,479 samples) |
+| Depth fusion | 25.97 M raw → 14.46 M voxel points |
+| Walkable | 458.81 m² free, grid 1048 × 530 @ 5 cm |
+| Capture path | 218 poses, 86.33 m walked, camera 1.83–2.67 m above the fitted floor |
+| Splat | 688,558 full export; 632,993 sample after 3 m crop |
+| Bundle | 31.0 MB total; 20.26 MB `.splat` |
+| QA | 6/6 PASS (`capture_qa.md`) |
+
 ## Reproduce the whole pipeline
 
-The capture is assembled from the Kaggle kernels in `kaggle/kernels/`, driven
+The captures are assembled from the Kaggle kernels in `kaggle/kernels/`, driven
 by the scripts in `kaggle/tools/`; see `kaggle/README.md` and
 `docs/submission_notes.md` for the exact sequence. `tools/make_sample.py`
-rebuilds this folder from fetched kernel outputs.
+rebuilds either folder from fetched kernel outputs.
 
 ## Credit
 
-Source: *Modern Melbourne Metro Walkway Urban Design* by **Joolsmagool** on
-Pexels, used under the [Pexels License](https://www.pexels.com/license/) and
-trimmed to 86.07 s. The derived artifacts in this folder are redistributed
-under that licence; the pipeline code is MIT. No personal capture is shipped.
+- **metro_v1** — *Modern Melbourne Metro Walkway Urban Design* by
+  **Joolsmagool** on Pexels, used under the
+  [Pexels License](https://www.pexels.com/license/) and trimmed to 86.07 s.
+- **guildhall-v1** — *Guildhall City of London England interior walkaround
+  video* by **Acabashi**, Wikimedia Commons, used under
+  [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/) and trimmed
+  to 305–395 s. See `guildhall-v1/LICENSE`.
+
+The derived artifacts in each folder are redistributed under the source
+licence; the pipeline code is MIT. No personal capture is shipped.

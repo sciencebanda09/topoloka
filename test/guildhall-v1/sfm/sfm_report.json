@@ -1,0 +1,25 @@
+{
+  "stage": "sfm",
+  "status": "ok",
+  "backend": "pycolmap",
+  "pycolmap_version": "4.2.1",
+  "matcher": "exhaustive",
+  "extract_strategy": "camera_mode=SINGLE",
+  "match_strategy": "positional",
+  "map_strategy": "positional",
+  "frames_in": 218,
+  "models_found": 1,
+  "frames_registered": 218,
+  "registered_fraction": 1.0,
+  "points3d": 126890,
+  "mean_reprojection_error_px": 0.6,
+  "median_reprojection_error_px": 0.515,
+  "timing_seconds": 5756.3,
+  "outputs": {
+    "sparse": "/tmp/namma/runs/capture_v1/sfm/sparse/model",
+    "sparse_ply": "/tmp/namma/runs/capture_v1/sfm/sparse.ply",
+    "poses": "/tmp/namma/runs/capture_v1/sfm/poses.json",
+    "transforms": "/tmp/namma/runs/capture_v1/sfm/transforms.json"
+  },
+  "warnings": []
+}

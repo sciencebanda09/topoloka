@@ -1,0 +1,23 @@
+# Guildhall sample — source and licence
+
+The derived artifacts in this folder (preview frames, SfM and depth data, metric
+nav layer, point cloud, Gaussian splat, and reports) reconstruct:
+
+> **Guildhall City of London England interior walkaround video** — Acabashi
+> <https://commons.wikimedia.org/wiki/File:Guildhall_City_of_London_England_interior_walkaround_video.webm>
+
+The source video is licensed under the **Creative Commons
+Attribution-ShareAlike 4.0 International** licence (CC BY-SA 4.0):
+<https://creativecommons.org/licenses/by-sa/4.0/>.
+
+## Changes made
+
+- Trimmed the original 3840×2160 / 29 fps video to **305–395 s (90.0 s)**.
+- Scaled that segment to 1920×1080 and re-encoded it to H.264 with no audio.
+- Processed it with the Topoloka pipeline (SfM, metric depth fusion,
+  navigation grid, Gaussian-splat training) to produce the data here.
+
+This folder is a public **stand-in** capture, not the team's own venue. The
+derived sample data in this folder is distributed under **CC BY-SA 4.0**, the
+same licence as the source. The Topoloka pipeline code is MIT; see the
+repository root `LICENSE`.
