@@ -94,7 +94,7 @@ Three decisions carried most of the weight:
 - **The viewer renders with the capture's lens, not a generic camera.** The
   pinhole intrinsics travel in `nav.json.camera`; the viewer derives the field
   of view from the capture itself. Guildhall ships `fl_x=fl_y=922.79` at
-  1600×900 — **81.7° horizontal / 52.1° vertical** from the Osmo Pocket 3 —
+  1600×900 — **81.8° horizontal / 52.1° vertical** from the Osmo Pocket 3 —
   while metro ships `fl_x=fl_y=1186.56`, **67.98° × 41.6°**. A generic 72°
   vertical FOV was the root cause of stretched wall gaussians and the black
   ceiling void reviewers saw; matching each source lens and clamping pitch to
@@ -136,7 +136,7 @@ Three decisions carried most of the weight:
 | Hosted sample | 632,993 gaussians / 20.26 MB (3 m crop), 250,000-point cloud | 457,221 gaussians / 14.63 MB (3 m crop), 250,000-point cloud |
 | Sample folder | 31.0 MB | 24.7 MB |
 | Pipeline time | CPU 96.9 min (SfM) + 117 s (nav); GPU 76.2 min | CPU 59.2 min (SfM) + 61 s (nav); GPU 79.0 min |
-| Viewer | lens 81.7° × 52.1°; hosted, FPS not yet measured | lens 67.98° × 41.6°; 51.0 fps idle / 60.1 walking on an AMD iGPU; A* 350 wp / 20.3 m |
+| Viewer | lens 81.8° × 52.1°; hosted, FPS not yet measured | lens 67.98° × 41.6°; 51.0 fps idle / 60.1 walking on an AMD iGPU; A* 350 wp / 20.3 m |
 | Sample QA | 6/6 PASS | 6/6 PASS |
 
 Both GPU stages are nerfstudio 1.1.5 splatfacto runs on one Kaggle T4. Each
