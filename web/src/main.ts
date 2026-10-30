@@ -19,15 +19,18 @@ import { Viewer } from './viewer';
 const params = new URLSearchParams(location.search);
 const CAPTURE = params.get('capture') ?? 'metro_v1';
 const BASE = `${import.meta.env.BASE_URL}artifacts/${CAPTURE}`;
-// Keep the internal splat buffer near 0.75 MP: integrated laptop GPUs are
-// fill-rate bound, and upscaling a soft splat is far cheaper than rendering
-// 3x the pixels. ?scale=0.5 can override this for a very slow machine.
-const RENDER_PIXELS = 750_000;
+// Render close to CSS resolution (1.9 MP) instead of upscaling a 0.75 MP
+// buffer: at 1080p the old budget drew 0.60x and stretched it 1.66x, which
+// reads as "blurry" on every display. Adaptive quality may still drop, but
+// never below 0.6x. ?scale=1 pins full resolution; ?scale=0.5 is the escape
+// hatch for a very slow machine.
+const RENDER_PIXELS = 1_900_000;
+const MIN_ADAPTIVE_SCALE = 0.6;
 const requestedScale = Number(params.get('scale'));
 const MANUAL_SCALE = Number.isFinite(requestedScale) && requestedScale > 0;
 const INITIAL_SCALE = MANUAL_SCALE
   ? Math.min(1, Math.max(0.35, requestedScale))
-  : Math.min(1, Math.max(0.35, Math.sqrt(RENDER_PIXELS / (window.innerWidth * window.innerHeight))));
+  : Math.min(1, Math.max(0.5, Math.sqrt(RENDER_PIXELS / (window.innerWidth * window.innerHeight))));
 const SPLAT_ALPHA = Math.min(255, Math.max(1, Number(params.get('alpha')) || 40));
 const SPLAT_MAX_PX = Math.min(2048, Math.max(32, Number(params.get('splatpx')) || 512));
 
@@ -248,16 +251,16 @@ async function boot(): Promise<void> {
     }
     minimap.draw(controls.position, controls.heading);
 
-    // Dynamic resolution: the splat is fill-rate bound. Keep the walk near
-    // 30 fps on integrated laptop GPUs by dropping the internal buffer in
-    // steps, then recover when the view gets cheaper. A manual ?scale wins.
+    // Dynamic resolution: the splat is fill-rate bound. Only step down when we
+    // are clearly below 24 fps (a 30 Hz panel must not trigger it), and stop at
+    // 0.6x so the twin never turns into an upscaled blur. A manual ?scale wins.
     if (!MANUAL_SCALE && splat?.loaded) {
       adaptTimer += rawDt;
       if (adaptTimer > 1.0) {
-        if (fps < 32 && renderScale > 0.4) {
-          renderScale = Math.max(0.4, renderScale - 0.08);
+        if (fps < 24 && renderScale > MIN_ADAPTIVE_SCALE) {
+          renderScale = Math.max(MIN_ADAPTIVE_SCALE, renderScale - 0.08);
           viewer.setRenderScale(renderScale);
-        } else if (fps > 52 && renderScale < INITIAL_SCALE) {
+        } else if (fps > 50 && renderScale < INITIAL_SCALE) {
           renderScale = Math.min(INITIAL_SCALE, renderScale + 0.05);
           viewer.setRenderScale(renderScale);
         }
