@@ -9,10 +9,10 @@ the portal is the only place that matters, this file is the defense copy.
 |------|------|--------|
 | Repo | https://github.com/sciencebanda09/topoloka | public (MIT), created 2026-10-18 |
 | Viewer (hosted) | https://sciencebanda09.github.io/topoloka/?capture=metro_v1 | metro sample live; QA/perf verified 2026-10-24 |
-| Viewer (R1 stand-in) | https://sciencebanda09.github.io/topoloka/?capture=guildhall-v1 | Guildhall sample; QA 6/6 PASS, deploy pending |
+| Viewer (R1 stand-in) | https://sciencebanda09.github.io/topoloka/?capture=guildhall-v1 | Guildhall sample; QA 6/6 PASS; deployed 2026-10-29 (run 40925088865); interactive QA pending |
 | Sandbox preview (R2) | https://sciencebanda09.github.io/topoloka/?capture=metro_v1&sandbox=1 | deployed 2026-10-27 (`5fe785d`); interactive QA pending |
 | Demo video | https://github.com/sciencebanda09/topoloka/releases/download/r1-demo/topoloka_demo.mp4 | 3:33, 1080p30, 41.0 MB; hosted 2026-10-26 |
-| Abstract PDF | `docs/abstract.pdf` in repo | metro, 5 pages, 2.42 MB; rebuilt 2026-10-26 with demo link |
+| Abstract PDF | `docs/abstract.pdf` in repo | two captures, 5 pages, 2.48 MB; rebuilt 2026-10-29 |
 
 ## Log
 

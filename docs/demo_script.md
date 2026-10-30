@@ -11,6 +11,13 @@ in `test/metro_v1/` and the Kaggle outputs. It is a narrated build, not a live
 voice-over: the viewer take is real-time screen capture, and the cards are
 generated from the report JSONs.
 
+**Cut status (2026-10-29).** This 3:33 cut was recorded before the Guildhall
+sample existed; it remains the metro demo. The repo and hosted site now also
+ship `test/guildhall-v1` as the R1 public stand-in, so the on-screen line that
+metro is the "only hosted artifact" reflects the state at recording time, not
+the current site. Re-cutting with Guildhall requires a browser recording of the
+hosted twin (user action; no local browser run).
+
 ## What the cut actually contains
 
 - **One continuous live take, 17.9 s.** Chrome on the hosted Pages build,
@@ -25,8 +32,10 @@ generated from the report JSONs.
 - **No terminal footage.** The pipeline is shown as the repo's stage diagram,
   the artifact tree, and the QA table. Every number is copied from the shipped
   reports, not from a shell transcript.
-- **No second capture is claimed.** Two public candidates failed SfM (54% and
-  2% registered), so the metro twin is the only hosted artifact.
+- **The cut claims no second capture.** It was recorded when metro was the
+  only hosted twin; two earlier public candidates had failed SfM (54% and 2%
+  registered). The live site now ships the separate Guildhall stand-in, which
+  this cut does not show.
 
 ## Chapters
 
@@ -87,7 +96,23 @@ The final MP4 is gitignored and uploaded as the `r1-demo` release asset.
   −1.5 dBTP** (+4 dB from the TTS master) so it is audible on laptop and
   projector playback without clipping.
 
-## Numbers on hand (from `test/metro_v1/capture_qa.md`, `nav_report.json`, `train_report.json`)
+## Numbers on hand
+
+### Guildhall R1 stand-in (`test/guildhall-v1/`)
+
+- 218 frames at 2.5 Hz; 218/218 registered; median reprojection 0.515 px
+  (mean 0.600); p10 sharpness 333
+- SfM: 126,890 points, 96.9 min on Kaggle CPU
+- Metric scale 3.8204 m/unit; MAD 8.29% over 112,479 depth samples
+- Depth: 25.97 M raw → 14.46 M voxel points; 218/218 frames fused
+- Nav: 1,318,738 floor inliers; camera 2.177 m; 458.81 m² walkable
+  (183,525 free cells); grid 1048 × 530 @ 5 cm
+- Splat: 25,000 iters; full export 688,558 gaussians; hosted sample 632,993 /
+  20.26 MB after the 3 m crop
+- Web payload 24.1 MB; full sample folder 31.0 MB; 86.33 m walked
+- GPU wall: 76.2 min
+
+### Metro second sample (`test/metro_v1/`)
 
 - 216 frames at 2.5 Hz; 216/216 registered; median reprojection 0.403 px
   (mean 0.613)

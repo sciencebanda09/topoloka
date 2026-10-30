@@ -97,7 +97,7 @@ cd web && npm ci && npm run dev
 | Metric scale | 3.8204 m/unit, MAD 8.29% (112,479 samples) |
 | Depth fusion | 25.97 M raw → 14.46 M voxel points |
 | Walkable | 458.81 m² free, grid 1048 × 530 @ 5 cm |
-| Capture path | 218 poses, 86.33 m walked, camera 1.83–2.67 m above the fitted floor |
+| Capture path | 218 poses, 86.33 m walked, trajectory height 1.83–2.67 m |
 | Splat | 688,558 full export; 632,993 sample after 3 m crop |
 | Bundle | 31.0 MB total; 20.26 MB `.splat` |
 | QA | 6/6 PASS (`capture_qa.md`) |
