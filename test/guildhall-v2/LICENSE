@@ -1,0 +1,15 @@
+# Guildhall v2 sample — source and licence
+
+The derived artifacts in this folder reconstruct **Guildhall City of London
+England interior walkaround video** by Acabashi:
+<https://commons.wikimedia.org/wiki/File:Guildhall_City_of_London_England_interior_walkaround_video.webm>
+
+The source video is licensed under **Creative Commons Attribution-ShareAlike
+4.0 International (CC BY-SA 4.0)**:
+<https://creativecommons.org/licenses/by-sa/4.0/>.
+
+This sample uses a stream-copied segment beginning at approximately 94 seconds
+and lasting 91.925 seconds. No source frames were re-encoded before Kaggle
+frame selection. Derived sample data is distributed under CC BY-SA 4.0.
+This is a public stand-in capture, not the team's own venue. Topoloka pipeline
+code is MIT licensed; see the repository root LICENSE.

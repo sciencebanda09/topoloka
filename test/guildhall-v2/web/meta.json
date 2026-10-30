@@ -1,0 +1,16 @@
+{
+  "capture": "guildhall-v2",
+  "created": "2026-10-30 21:31:21",
+  "cloud_source": "depth/map.npz",
+  "cloud_points": 250000,
+  "splat": {
+    "present": true,
+    "bytes": 19648512,
+    "gaussians": 614016
+  },
+  "scale_source": "metric-input",
+  "walkable_area_m2": 23.4,
+  "qa_overall": "PASS",
+  "packaging_seconds": 1.4,
+  "sample": "Kaggle output, decimated to 250k cloud points and capture volume"
+}

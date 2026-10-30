@@ -1,0 +1,14 @@
+{
+  "stage": "depth",
+  "status": "ok",
+  "model": "depth-anything/Depth-Anything-V2-Metric-Indoor-Large-hf",
+  "frames": 204,
+  "frames_fused": 204,
+  "points_raw": 31850440,
+  "points_voxel": 7779348,
+  "scale_m_per_unit": 1.82931,
+  "scale_samples": 305169,
+  "scale_mad_rel": 0.087,
+  "timing_seconds": 119.5,
+  "warnings": []
+}

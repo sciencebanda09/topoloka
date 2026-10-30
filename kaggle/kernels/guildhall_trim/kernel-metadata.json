@@ -1,0 +1,15 @@
+{
+  "id": "shashankdev09/guildhall-trim-sharp-window",
+  "title": "guildhall trim sharp window",
+  "code_file": "trim.py",
+  "language": "python",
+  "kernel_type": "script",
+  "is_private": true,
+  "enable_gpu": false,
+  "enable_internet": false,
+  "dataset_sources": [
+    "shashankdev09/namma-guildhall-full-source"
+  ],
+  "competition_sources": [],
+  "kernel_sources": []
+}

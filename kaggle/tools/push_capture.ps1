@@ -18,9 +18,13 @@ $stage = Join-Path $NammaRoot "kaggle\staging\$stageName"
 Remove-Item -Recurse -Force $stage -ErrorAction SilentlyContinue
 New-Item -ItemType Directory -Force -Path $stage | Out-Null
 
-foreach ($f in @('frames.zip', 'transforms.json', 'sparse.ply', 'poses.json', 'sparse_txt.zip')) {
+foreach ($f in @('frames.zip', 'transforms.json', 'sparse.ply', 'poses.json', 'sparse_txt.zip',
+                 'frames_meta.json', 'sfm_report.json')) {
     $p = Join-Path $src $f
-    if (-not (Test-Path $p)) { throw "missing $f in $src (run the pipeline kernel + fetch first)" }
+    if (-not (Test-Path $p)) {
+        if ($f -in @('frames_meta.json', 'sfm_report.json')) { continue }
+        throw "missing $f in $src (run the pipeline kernel + fetch first)"
+    }
     Copy-Item $p $stage -Force
 }
 

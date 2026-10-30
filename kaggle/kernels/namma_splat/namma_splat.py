@@ -110,6 +110,13 @@ def stage_capture() -> None:
     sfm = RUN / "sfm"
     sfm.mkdir(exist_ok=True)
     shutil.copy2(root / "poses.json", sfm / "poses.json")
+    # Keep the CPU-stage metadata for end-to-end QA. Older capture datasets
+    # omit these optional files, so preserve compatibility with existing runs.
+    for name, destination in (("frames_meta.json", RUN / "frames_meta.json"),
+                              ("sfm_report.json", sfm / "sfm_report.json")):
+        source = root / name
+        if source.exists():
+            shutil.copy2(source, destination)
     stage_archive("sparse_txt", sfm / "sparse_txt")
     shutil.copy2(root / "sparse.ply", sfm / "sparse.ply")
     log(f"capture staged: {len(list((RUN / 'frames').glob('*.jpg')))} frames")

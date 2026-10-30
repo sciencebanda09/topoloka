@@ -34,20 +34,29 @@ See `kaggle/README.md`.
 
 ## Public samples
 
-Two committed samples, both built from public footage by the same pipeline:
+Three committed samples, all built from public footage by the same pipeline:
 
 | Sample | Source | Size | Measured |
 |---|---|---|---|
 | `test/metro_v1/` | *Modern Melbourne Metro Walkway Urban Design* by Joolsmagool (Pexels License), 86.07 s | 24.7 MB | 216/216 registered, 0.403 px median, 315.05 m² walkable |
 | `test/guildhall-v1/` | *Guildhall City of London England interior walkaround video* by Acabashi (CC BY-SA 4.0), 90.0 s trim | 31.0 MB | 218/218 registered, 0.515 px median, 458.81 m² walkable |
+| `test/guildhall-v2/` | Same public source, sharper 91.925 s trim beginning near 94 s | 32.86 MB | 204/230 registered, 0.554 px median, 23.4 m² walkable; QA 6/6 PASS |
 
 `guildhall-v1` is the **R1 public stand-in** — a real indoor venue walk-through,
-but not the team's own venue. The metro capture remains a separate sample and
-the same data both hosted links serve.
+but not the team's own venue. The metro capture remains a separate sample.
+Each hosted link below serves its corresponding sample.
+
+`guildhall-v2` is a sharper alternate trim of the same public video, selected
+after the first sample looked soft. Its sharpness scan's p10 score is 1582.84
+versus 418.56 for the earlier 305-395 s window, measured with the same source
+scan method. Its SfM report records two disconnected models and 204/230 frames
+registered; the smaller model is excluded from the shipped map. See
+[`test/guildhall-v2/README.md`](test/guildhall-v2/README.md) for full metrics.
 
 **Hosted twins:**
 <https://sciencebanda09.github.io/topoloka/?capture=guildhall-v1> ·
-<https://sciencebanda09.github.io/topoloka/?capture=metro_v1>
+<https://sciencebanda09.github.io/topoloka/?capture=metro_v1> |
+<https://sciencebanda09.github.io/topoloka/?capture=guildhall-v2>
 
 ![The metro twin in a browser: splat, minimap, QA status](docs/fig/twin.png)
 
@@ -152,6 +161,9 @@ on every reading.
   [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/) and trimmed
   to 305–395 s. The derived artifacts in `test/guildhall-v1` are distributed
   under CC BY-SA 4.0; see `test/guildhall-v1/LICENSE`.
+- The same Guildhall source is used for `test/guildhall-v2`, with a stream-copied
+  91.925 s segment beginning near 94 s. It is also distributed under CC BY-SA
+  4.0; see `test/guildhall-v2/LICENSE`.
 
 The pipeline code is MIT. No personal capture is shipped.
 
