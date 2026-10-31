@@ -17,6 +17,24 @@ html, body, #app { width: 100%; height: 100%; overflow: hidden; background: #0b0
 #title { font-size: 15px; letter-spacing: 0.35em; font-weight: 600; color: #7fd4ff; }
 #subtitle { font-size: 12px; margin-top: 4px; color: #9fb0c0; line-height: 1.45; overflow-wrap: anywhere; }
 
+#scene-picker {
+  display: flex; align-items: center; gap: 9px; margin-top: 8px;
+  width: fit-content; pointer-events: auto;
+  font-family: ui-monospace, 'Cascadia Code', Consolas, monospace;
+}
+#scene-picker span {
+  color: #70879a; font-size: 9px; letter-spacing: 0.16em; white-space: nowrap;
+}
+#capture-select {
+  max-width: min(250px, calc(100vw - 170px));
+  padding: 6px 28px 6px 9px; border-radius: 6px;
+  border: 1px solid rgba(127, 212, 255, 0.24);
+  color: #e8eef5; background: rgba(10, 14, 18, 0.96);
+  font: 11px ui-monospace, 'Cascadia Code', Consolas, monospace;
+  cursor: pointer; outline: none;
+}
+#capture-select:focus-visible { border-color: #7fd4ff; box-shadow: 0 0 0 2px rgba(127, 212, 255, 0.16); }
+
 #map-wrap {
   position: fixed; top: 14px; right: 14px; z-index: 10; width: 240px;
   border-radius: 10px; overflow: hidden;
@@ -165,8 +183,10 @@ body.sandbox-on #help { display: none; }
 
 @media (max-width: 760px) {
   #hud { max-width: calc(100vw - 24px); }
+  #scene-picker { max-width: 100%; }
+  #capture-select { max-width: calc(100vw - 150px); }
   /* leave room for a three-line HUD before the map starts */
-  #map-wrap { top: 118px; right: 10px; width: 180px; }
+  #map-wrap { top: 132px; right: 10px; width: 180px; }
   #minimap { width: 180px; height: 180px; }
   #map-legend { font-size: 9px; gap: 3px 6px; padding: 5px 6px; }
   #help { font-size: 11px; white-space: normal; max-width: calc(100vw - 20px); text-align: center; }

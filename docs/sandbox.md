@@ -1,10 +1,13 @@
 # Sandbox: pick-and-place props (R2 preview)
 
-The sandbox is an **additive** layer on the R1 viewer. It is off by default;
-the R1 link, demo, and abstract are unchanged.
+The sandbox is an **additive** layer on the hosted viewer. It is off by
+default; the sample picker chooses the capture independently.
 
 **Preview link:**
-<https://sciencebanda09.github.io/topoloka/?capture=metro_v1&sandbox=1>
+<https://sciencebanda09.github.io/topoloka/>
+
+Choose **Melbourne Metro** in the sample menu, then press **G** to enter the
+sandbox (or add `?sandbox=1` to the same viewer URL).
 
 ## What it does
 

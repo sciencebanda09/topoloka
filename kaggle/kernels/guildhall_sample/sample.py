@@ -15,7 +15,7 @@ OUT = WORK / "out"
 SAMPLE = WORK / "guildhall-v2"
 PREVIEW_FRAMES = 14
 MAX_CLOUD_POINTS = 250_000
-MAX_GAUSSIANS = 632_993
+MAX_GAUSSIANS = 900_000
 
 
 def find_file(name: str, *, root: Path = INPUT) -> Path:
@@ -93,6 +93,48 @@ def write_cloud(path: Path, xyz: np.ndarray, rgb: np.ndarray) -> None:
     with path.open("wb") as handle:
         handle.write(header)
         handle.write(data.tobytes())
+
+
+def add_camera_headings(nav_path: Path, capture: Path) -> int:
+    """Carry registered camera look directions into the viewer navigation file.
+
+    A walking tangent is not a reliable camera heading for a walk-through:
+    people often look at a wall or monument while moving sideways. Use COLMAP's
+    saved camera-to-world direction, rotate it into the metric nav frame, and
+    let the browser start at the captured view instead of pointing into empty
+    space.
+    """
+    poses_path = capture / "poses.json"
+    if not poses_path.exists():
+        return 0
+    nav = json.loads(nav_path.read_text(encoding="utf-8"))
+    poses = json.loads(poses_path.read_text(encoding="utf-8"))
+    frames = poses.get("frames", [])
+    trajectory = nav.get("trajectory", [])
+    align = nav.get("align", {})
+    if len(frames) != len(trajectory) or not align.get("R_row_major"):
+        return 0
+
+    rotation = np.asarray(align["R_row_major"], dtype=np.float64).reshape(3, 3)
+    yaws, pitches = [], []
+    for frame in frames:
+        w2c = np.asarray(frame["w2c"], dtype=np.float64)
+        # COLMAP camera coordinates look along +Z. Its world-space camera
+        # forward is the third column of R_camera_to_world.
+        forward_scene = w2c[:3, :3].T[:, 2]
+        forward_nav = rotation.T @ forward_scene
+        horizontal = float(np.hypot(forward_nav[0], forward_nav[1]))
+        yaws.append(float(np.arctan2(-forward_nav[0], forward_nav[1])))
+        pitch = float(np.arctan2(forward_nav[2], horizontal))
+        pitches.append(float(np.clip(pitch, -0.85, 0.35)))
+
+    nav["trajectory_yaws"] = yaws
+    nav["trajectory_pitches"] = pitches
+    # This preview frame shows the full, well-lit monument and nave instead
+    # of starting too close to a wall or pointed into the disconnected area.
+    nav["default_spawn"] = min(106, len(yaws) - 1)
+    nav_path.write_text(json.dumps(nav, separators=(",", ":")), encoding="utf-8")
+    return len(yaws)
 
 
 def convert_splat(ply_path: Path, out_path: Path) -> int:
@@ -307,6 +349,7 @@ def main() -> None:
     web.mkdir(parents=True)
     for name in ("nav.json", "occupancy.png", "meta.json"):
         shutil.copy2(web_src / name, web / name)
+    camera_headings = add_camera_headings(web / "nav.json", capture)
 
     xyz, rgb = read_cloud(web_src / "cloud.ply")
     bounds_lo, bounds_hi = xyz.min(axis=0), xyz.max(axis=0)
@@ -350,6 +393,7 @@ def main() -> None:
         "sample_zip": str(archive_path),
         "qa_overall": qa_doc["overall"],
         "qa_checks": [c["status"] for c in qa_doc["checks"]],
+        "camera_headings": camera_headings,
         "preview_frames": len(list((SAMPLE / "frames").glob("*.jpg"))),
         "cloud_points": len(xyz),
         "splat_after_alpha_budget": splat_count,

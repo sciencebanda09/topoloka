@@ -1,4 +1,4 @@
-# guildhall-v2 -- sharper sample capture
+# guildhall-v2 -- improved Hall sample
 
 This sample is an end-to-end Topoloka reconstruction produced on Kaggle from
 public walk-through footage. It contains no personal capture or LiDAR data.
@@ -18,7 +18,8 @@ sharpness measure, not a promise that every part of the video is in focus.
 
 ## View it
 
-Hosted twin: <https://sciencebanda09.github.io/topoloka/?capture=guildhall-v2>
+Open the single hosted viewer; **Guildhall · improved** is selected by default.
+The **View sample** menu lets you choose another saved capture.
 
 Drag to look, use WASD or the arrow keys to walk, M to toggle the minimap, and P
 to toggle the point cloud behind the splat. The sample bundle below is the data
@@ -36,10 +37,11 @@ served by that viewer route.
 | Depth fusion | 31.85 M raw points -> 7.78 M voxel points across 204 frames |
 | Metric scale | 1.82931 m/unit, 8.7% relative MAD |
 | Walkable area | 23.4 m2; 248 x 633 grid at 5 cm; 169 outline points |
-| Web splat | 614,016 gaussians, 19.65 MB after capture-volume crop |
+| Web splat | 878,891 gaussians, 28.12 MB after capture-volume crop |
+| Starting view | captured camera heading at trajectory point 106 |
 | Web cloud | 250,000 points |
 | QA | 6/6 PASS (`capture_qa.md`); the frame-registration check allows partial registration |
-| Bundle | 35 files including this README, 32.86 MB |
+| Bundle | 35 files including this README, 41.34 MB |
 
 QA passed its configured thresholds. In particular, 6/6 PASS does not mean
 every input frame registered: the bundle reports the 204/230 result and the

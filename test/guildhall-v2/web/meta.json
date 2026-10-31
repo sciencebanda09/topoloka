@@ -5,8 +5,8 @@
   "cloud_points": 250000,
   "splat": {
     "present": true,
-    "bytes": 19648512,
-    "gaussians": 614016
+    "bytes": 28124512,
+    "gaussians": 878891
   },
   "scale_source": "metric-input",
   "walkable_area_m2": 23.4,

@@ -52,7 +52,7 @@ export class SplatLayer {
   constructor(renderer: THREE.WebGLRenderer, scene: THREE.Scene, camera: THREE.Camera,
               options: SplatOptions = {}) {
     this.options = {
-      alphaThreshold: options.alphaThreshold ?? 40,
+      alphaThreshold: options.alphaThreshold ?? 5,
       maxScreenSpaceSplatSize: options.maxScreenSpaceSplatSize ?? 1024,
     };
     this.viewer = new GaussianSplats3D.Viewer({

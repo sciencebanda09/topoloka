@@ -1,6 +1,6 @@
 # Capture QA -- guildhall-v2
 
-**Overall: PASS** (2026-10-30 21:55:45)
+**Overall: PASS** (2026-10-30 23:36:41)
 
 | Check | Status | Detail | Compensation |
 |---|---|---|---|

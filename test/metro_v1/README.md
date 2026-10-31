@@ -56,7 +56,8 @@ npm ci
 npm run dev   # open http://127.0.0.1:5173/?capture=metro_v1
 ```
 
-Hosted twin (same data): <https://sciencebanda09.github.io/topoloka/?capture=metro_v1>
+Open the single hosted viewer and choose **Melbourne Metro** in the
+**View sample** menu.
 
 Drag to look, WASD/arrows to walk, M toggles the minimap, P toggles the
 point cloud behind the splat. (Internal refreshes from fresh kernel outputs:

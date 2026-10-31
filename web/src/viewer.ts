@@ -171,31 +171,41 @@ export class Viewer {
     this.scene.add(this.routeLine);
   }
 
-  spawnAt(nav: NavData, at?: number): { position: [number, number, number]; yaw: number } {
+  spawnAt(nav: NavData, at?: number): { position: [number, number, number]; yaw: number; pitch: number } {
     const traj = nav.trajectory;
     let pos: [number, number, number] = [0, 0, 1.6];
     let yaw = 0;
+    let pitch = 0;
     if (traj.length >= 2) {
       const last = traj.length - 1;
       // The first capture frame sits at the reconstruction boundary, where the
       // splat is thinnest. Default to the middle of the walk (inside the space);
       // ?t=0 still starts at the true beginning.
-      const i = at !== undefined && Number.isFinite(at)
-        ? Math.max(0, Math.min(last - 1, Math.floor(at)))
+      const defaultIndex = Number.isFinite(nav.default_spawn)
+        ? nav.default_spawn!
         : Math.floor(last * 0.75);
+      const requestedIndex = at !== undefined && Number.isFinite(at) ? at : defaultIndex;
+      const i = Math.max(0, Math.min(last - 1, Math.floor(requestedIndex)));
       // trajectory z is the captured camera height; honour it on ramps and
       // slopes instead of pinning every spawn to a fixed 1.6 m.
       pos = [traj[i][0], traj[i][1], traj[i][2]];
-      const ahead = traj[Math.min(i + 10, last)];
-      const dx = ahead[0] - pos[0], dy = ahead[1] - pos[1];
-      // three forward at yaw: f = (-sin(yaw), 0, -cos(yaw)); nav f = (f.x, -f.z)
-      yaw = Math.atan2(-dx, dy);
+      const capturedYaw = nav.trajectory_yaws?.[i];
+      if (Number.isFinite(capturedYaw)) {
+        yaw = capturedYaw!;
+        pitch = nav.trajectory_pitches?.[i] ?? 0;
+      } else {
+        // Older captures lack recorded look directions; approximate them by
+        // the path tangent while retaining their original behavior.
+        const ahead = traj[Math.min(i + 10, last)];
+        const dx = ahead[0] - pos[0], dy = ahead[1] - pos[1];
+        yaw = Math.atan2(-dx, dy);
+      }
     } else if (nav.outline.length) {
       const cx = nav.outline.reduce((s, p) => s + p[0], 0) / nav.outline.length;
       const cy = nav.outline.reduce((s, p) => s + p[1], 0) / nav.outline.length;
       pos = [cx, cy, 1.6];
     }
-    return { position: pos, yaw };
+    return { position: pos, yaw, pitch };
   }
 
   render(): void {

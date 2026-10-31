@@ -9,7 +9,8 @@ or a GPU.
 |---|---|---|---|
 | `metro_v1/` | *Modern Melbourne Metro Walkway Urban Design* by Joolsmagool (Pexels License), 86.07 s | 24.7 MB | 6/6 PASS |
 | `guildhall-v1/` | *Guildhall City of London England interior walkaround video* by Acabashi (CC BY-SA 4.0), 90.0 s trim | 31.0 MB | 6/6 PASS |
-| `guildhall-v2/` | Same public source, sharper 91.925 s trim beginning near 94 s (CC BY-SA 4.0) | 32.86 MB | 6/6 PASS; 204/230 SfM frames registered |
+| `guildhall-v2/` | Same public source, sharper 91.925 s trim beginning near 94 s (CC BY-SA 4.0) | 41.34 MB | 6/6 PASS; 204/230 registered; 878,891 splats |
+| `guildhall-v3` (pending) | Same Guildhall source with a higher quality Splatfacto Big training pass | training on Kaggle | not published yet |
 
 `guildhall-v1` is the R1 public stand-in: a real indoor venue capture, but
 **not the team's own venue**. The source is credited in
@@ -19,6 +20,9 @@ inherits CC BY-SA 4.0.
 `guildhall-v2` is a sharper alternate trim of the same public source. Its SfM
 report records partial registration (204/230 frames) and two disconnected
 models; see its `README.md` and `capture_qa.md` for the measurements and limits.
+The improved Guildhall v2 web bundle retains 878,891 splats and uses recorded
+camera headings for its default starting view. The larger Splatfacto Big v3
+run is still in training and will be added after packaging and QA.
 
 ## Layout
 
@@ -51,7 +55,7 @@ test/guildhall-v1/
                         (632,993 gaussians), occupancy.png, meta.json
 
 test/guildhall-v2/
-  README.md              source, measured results, limitation, hosted link
+  README.md              source, measured results, SfM limitation, menu name
   LICENSE                CC BY-SA 4.0 attribution and change notice
   frames/                14 preview frames (full run used 230)
   frames_meta.json      source timing, selected frames, sharpness
@@ -62,7 +66,8 @@ test/guildhall-v2/
   depth/                scale and depth-fusion reports
   nav/                  metric grid, occupancy image, navigation report
   capture_qa.json/.md   the six quality checks and compensation notes
-  web/                  viewer bundle: 250 k-point cloud and 614,016 splats
+  web/                  viewer bundle: 250 k-point cloud, 878,891 splats,
+                        204 captured camera headings, meta.json
 ```
 
 ## Run a twin locally
@@ -70,27 +75,34 @@ test/guildhall-v2/
 From the repo root (Node 20+):
 
 ```powershell
-New-Item -ItemType Directory -Force web\public\artifacts\metro_v1 | Out-Null
-Copy-Item -Recurse -Force test\metro_v1\web\* web\public\artifacts\metro_v1\
+foreach ($sampleDir in Get-ChildItem test -Directory) {
+  $bundlePath = Join-Path $sampleDir.FullName 'web'
+  if (Test-Path $bundlePath) {
+    $artifactPath = Join-Path 'web\public\artifacts' $sampleDir.Name
+    New-Item -ItemType Directory -Force $artifactPath | Out-Null
+    Copy-Item -Recurse -Force (Join-Path $bundlePath '*') $artifactPath
+  }
+}
 cd web
 npm ci
 npm run dev
 ```
 
-Open <http://127.0.0.1:5173/?capture=metro_v1>. For Guildhall, substitute
-`guildhall-v1` in both paths and open
-<http://127.0.0.1:5173/?capture=guildhall-v1>. Drag to look, WASD/arrows to
-walk, M for the minimap, P to toggle the point cloud, `?t=<index>` to spawn at
-a trajectory point, `?clean` to hide the prompt/fps.
+Open <http://127.0.0.1:5173/>. Improved Guildhall v2 is the default; use **View
+sample** to switch among the three committed captures. Drag to look, WASD/arrows
+to walk, M for the minimap, P to toggle the point cloud, and `?t=<index>` to
+choose a spawn point.
 
-The newer Guildhall sample is named `guildhall-v2`; substitute that directory
-and capture name to serve it. The hosted route is
-<https://sciencebanda09.github.io/topoloka/?capture=guildhall-v2>.
+The hosted viewer opens improved Guildhall v2 by default. Use the **View
+sample** menu to switch among the three committed samples.
 
 ```bash
 # POSIX equivalent
-mkdir -p web/public/artifacts/guildhall-v1
-cp -r test/guildhall-v1/web/. web/public/artifacts/guildhall-v1/
+for web_bundle in test/*/web; do
+  sample_name="$(basename "$(dirname "$web_bundle")")"
+  mkdir -p "web/public/artifacts/$sample_name"
+  cp -r "$web_bundle"/. "web/public/artifacts/$sample_name"/
+done
 cd web && npm ci && npm run dev
 ```
 
@@ -136,8 +148,9 @@ cd web && npm ci && npm run dev
 | Metric scale | 1.82931 m/unit, MAD 8.7% |
 | Depth fusion | 31.85 M raw -> 7.78 M voxel points |
 | Walkable | 23.4 m2 free, grid 248 x 633 at 5 cm, 169 outline points |
-| Splat | 614,016 gaussians in the shipped sample after capture-volume crop |
-| Bundle | 32.85 MB total; 19.65 MB `.splat`; 250,000-point web cloud |
+| Splat | 878,891 gaussians in the shipped sample after capture-volume crop |
+| Camera | 204 captured headings; default spawn at trajectory point 106 |
+| Bundle | 41.34 MB total; 28.12 MB `.splat`; 250,000-point web cloud |
 | QA | 6/6 PASS (`capture_qa.md`); this includes a thresholded partial-registration check |
 
 ## Reproduce the whole pipeline
@@ -159,6 +172,9 @@ rebuilds either folder from fetched kernel outputs.
 - **guildhall-v2** — the same source with a stream-copied 91.925 s segment
   beginning near 94 s. It is also distributed under CC BY-SA 4.0; see
   `guildhall-v2/LICENSE`.
+- **guildhall-v3** — the same source and licensed segment, currently in a
+  higher quality Kaggle training run. It will retain the same CC BY-SA 4.0
+  terms when its bundle is packaged.
 
 The derived artifacts in each folder are redistributed under the source
 licence; the pipeline code is MIT. No personal capture is shipped.

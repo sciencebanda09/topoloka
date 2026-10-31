@@ -29,16 +29,12 @@ sample), and the Kaggle outputs they were assembled from.
       `?capture=guildhall-v1` → splat 0.63 M, 458.81 m², QA PASS
 - [x] Real bundles synced into `web/public/artifacts/` and visually verified on
       a hardware GPU (ANGLE/D3D11) for metro: splat, minimap, HUD, collision
-- [x] Pages workflow stages every `test/*/web`; metro remains the default
-      capture (`?capture=metro_v1`)
-- [x] Pages deploy verified serving the metro sample (run 39928019529; sample
-      first deployed in 39863541101):
-      <https://sciencebanda09.github.io/topoloka/?capture=metro_v1>
-- [x] Guildhall sample committed, pushed, and deployed (run 40925088865):
-      <https://sciencebanda09.github.io/topoloka/?capture=guildhall-v1>.
+- [x] Pages workflow stages every committed `test/*/web` sample; the viewer
+      selector switches samples without separate hosted links.
+- [x] Single hosted viewer: <https://sciencebanda09.github.io/topoloka/>
+      (improved Guildhall v2 is the default; choose any saved sample in the menu).
       HTTPS checks return 200 for `meta.json` (QA PASS), `nav.json`, and the
-      20.26 MB `splat.splat`; interactive visual QA on the hosted twin is
-      pending a browser run.
+      selected sample's `splat.splat` after deployment.
 - [x] Cold-load test from a fresh browser profile on the live Pages URL
       (metro): 18.4 MB web payload (14.63 MB splat + 3.75 MB cloud + nav),
       GPU-rendered splat 0.46 M, QA PASS; cold ready 19.2 s (13.96 MB splat +

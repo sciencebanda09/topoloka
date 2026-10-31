@@ -1,7 +1,7 @@
 {
   "stage": "qa",
   "capture": "guildhall-v2",
-  "time": "2026-10-30 21:55:45",
+  "time": "2026-10-30 23:36:41",
   "overall": "PASS",
   "checks": [
     {

@@ -37,12 +37,13 @@ export class WalkControls {
     canvas: HTMLCanvasElement,
     private camera: THREE.PerspectiveCamera,
     costmap: Costmap,
-    spawn: { position: [number, number, number]; yaw: number },
+    spawn: { position: [number, number, number]; yaw: number; pitch?: number },
   ) {
     this.canvas = canvas;
     this.costmap = costmap;
     this.position = [...spawn.position];
     this.yaw = spawn.yaw;
+    this.pitch = spawn.pitch ?? 0;
 
     canvas.addEventListener('click', () => {
       if (document.pointerLockElement !== canvas) canvas.requestPointerLock();

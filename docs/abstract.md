@@ -163,13 +163,13 @@ above the floor, gray = unobserved, blue = camera path; 1048 × 530 cells at
 
 *Figure 3 — the metro sample in the same shipped viewer (457,221 gaussians):
 the splat, the metric minimap (red = obstacles, blue = capture path) and the
-QA verdict in the HUD. The viewpoint is trajectory index 160 (64 s). Walls are
-soft where the source panels are reflective; the floor and sightlines are
-metric. The Guildhall twin uses the identical viewer and is captured live at
-the R1 link below; its browser FPS has not yet been measured.*
+QA verdict in the HUD. The viewpoint is a captured camera pose. Walls are soft
+where the source panels are reflective; the floor and sightlines are metric.
+Guildhall v1, improved v2, and Metro use the same viewer and are selected from
+its sample menu; browser FPS varies by sample and device.*
 
-Viewer (R1 stand-in): <https://sciencebanda09.github.io/topoloka/?capture=guildhall-v1> ·
-Viewer (second sample): <https://sciencebanda09.github.io/topoloka/?capture=metro_v1> ·
+Viewer (all committed public samples; improved Guildhall v2 opens by default):
+<https://sciencebanda09.github.io/topoloka/> ·
 Code: <https://github.com/sciencebanda09/topoloka> ·
 Demo video (metro cut, 3:33, 1080p):
 <https://github.com/sciencebanda09/topoloka/releases/download/r1-demo/topoloka_demo.mp4>

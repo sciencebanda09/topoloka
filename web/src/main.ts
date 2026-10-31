@@ -2,7 +2,7 @@
 /**
  * Topoloka viewer entry point.
  * Loads the artifact bundle (nav.json + cloud.ply + optional splat.splat),
- * builds the scene, spawns the walker on the capture's first trajectory point,
+ * builds the scene, spawns the walker at the capture's selected camera pose,
  * and runs the loop. The splat, when present, renders in our scene/camera;
  * the costmap drives collision, the minimap mirrors both.
  */
@@ -17,7 +17,16 @@ import { SplatLayer } from './splat';
 import { Viewer } from './viewer';
 
 const params = new URLSearchParams(location.search);
-const CAPTURE = params.get('capture') ?? 'metro_v1';
+const DEFAULT_CAPTURE = 'guildhall-v2';
+const requestedCapture = params.get('capture');
+const CAPTURE = requestedCapture && /^[a-zA-Z0-9_-]+$/.test(requestedCapture)
+  ? requestedCapture
+  : DEFAULT_CAPTURE;
+if (requestedCapture && CAPTURE !== requestedCapture) {
+  const cleanUrl = new URL(location.href);
+  cleanUrl.searchParams.delete('capture');
+  history.replaceState(null, '', cleanUrl);
+}
 const BASE = `${import.meta.env.BASE_URL}artifacts/${CAPTURE}`;
 // Render close to CSS resolution (1.9 MP) instead of upscaling a 0.75 MP
 // buffer: at 1080p the old budget drew 0.60x and stretched it 1.66x, which
@@ -31,12 +40,27 @@ const MANUAL_SCALE = Number.isFinite(requestedScale) && requestedScale > 0;
 const INITIAL_SCALE = MANUAL_SCALE
   ? Math.min(1, Math.max(0.35, requestedScale))
   : Math.min(1, Math.max(0.5, Math.sqrt(RENDER_PIXELS / (window.innerWidth * window.innerHeight))));
-const SPLAT_ALPHA = Math.min(255, Math.max(1, Number(params.get('alpha')) || 40));
+const SPLAT_ALPHA = Math.min(255, Math.max(1, Number(params.get('alpha')) || 5));
 const SPLAT_MAX_PX = Math.min(2048, Math.max(32, Number(params.get('splatpx')) || 512));
 
 const titleEl = document.getElementById('title');
 if (titleEl) titleEl.textContent = PRODUCT_NAME.toUpperCase();
 document.title = `${PRODUCT_NAME} — indoor twins in a link`;
+const captureSelect = document.getElementById('capture-select') as HTMLSelectElement;
+if (![...captureSelect.options].some((option) => option.value === CAPTURE)) {
+  const linkedSample = document.createElement('option');
+  linkedSample.value = CAPTURE;
+  linkedSample.textContent = `${CAPTURE} (linked sample)`;
+  captureSelect.add(linkedSample, 0);
+}
+captureSelect.value = CAPTURE;
+captureSelect.addEventListener('change', () => {
+  const nextUrl = new URL(location.href);
+  nextUrl.searchParams.set('capture', captureSelect.value);
+  nextUrl.searchParams.delete('t');
+  nextUrl.searchParams.delete('route');
+  location.assign(nextUrl);
+});
 
 const subtitle = document.getElementById('subtitle') as HTMLDivElement;
 const hint = document.getElementById('center-hint') as HTMLDivElement;
@@ -280,5 +304,7 @@ async function boot(): Promise<void> {
 
 boot().catch((err) => {
   console.error(err);
-  subtitle.textContent = `${CAPTURE} · failed to load: ${err.message}`;
+  subtitle.textContent = `Could not load ${CAPTURE}`;
+  hint.textContent = 'Choose a saved sample from VIEW SAMPLE above';
+  hint.classList.remove('hidden');
 });

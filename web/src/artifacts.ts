@@ -34,6 +34,11 @@ export interface NavData {
   grid: NavGrid;
   outline: [number, number][];
   trajectory: [number, number, number][];
+  /** Optional captured look direction for each trajectory point, in nav axes. */
+  trajectory_yaws?: number[];
+  trajectory_pitches?: number[];
+  /** Optional composition chosen from a clear, well-covered sample view. */
+  default_spawn?: number;
   scale_m_per_unit: number;
   scale_source?: string;
   cam_height_units: number;

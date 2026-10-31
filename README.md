@@ -34,17 +34,19 @@ See `kaggle/README.md`.
 
 ## Public samples
 
-Three committed samples, all built from public footage by the same pipeline:
+Three committed samples, all built from public footage by the same pipeline;
+a fourth Guildhall quality pass is training on Kaggle:
 
 | Sample | Source | Size | Measured |
 |---|---|---|---|
 | `test/metro_v1/` | *Modern Melbourne Metro Walkway Urban Design* by Joolsmagool (Pexels License), 86.07 s | 24.7 MB | 216/216 registered, 0.403 px median, 315.05 m² walkable |
 | `test/guildhall-v1/` | *Guildhall City of London England interior walkaround video* by Acabashi (CC BY-SA 4.0), 90.0 s trim | 31.0 MB | 218/218 registered, 0.515 px median, 458.81 m² walkable |
-| `test/guildhall-v2/` | Same public source, sharper 91.925 s trim beginning near 94 s | 32.86 MB | 204/230 registered, 0.554 px median, 23.4 m² walkable; QA 6/6 PASS |
+| `test/guildhall-v2/` | Same public source, sharper 91.925 s trim beginning near 94 s | 41.34 MB | 204/230 registered, 0.554 px median, 878,891 splats; QA 6/6 PASS |
+| `guildhall-v3` | Same source, retrained with Splatfacto Big | training on Kaggle | will be added after packaging and QA |
 
 `guildhall-v1` is the **R1 public stand-in** — a real indoor venue walk-through,
 but not the team's own venue. The metro capture remains a separate sample.
-Each hosted link below serves its corresponding sample.
+The hosted viewer below provides a sample picker for all public captures.
 
 `guildhall-v2` is a sharper alternate trim of the same public video, selected
 after the first sample looked soft. Its sharpness scan's p10 score is 1582.84
@@ -53,10 +55,10 @@ scan method. Its SfM report records two disconnected models and 204/230 frames
 registered; the smaller model is excluded from the shipped map. See
 [`test/guildhall-v2/README.md`](test/guildhall-v2/README.md) for full metrics.
 
-**Hosted twins:**
-<https://sciencebanda09.github.io/topoloka/?capture=guildhall-v1> ·
-<https://sciencebanda09.github.io/topoloka/?capture=metro_v1> |
-<https://sciencebanda09.github.io/topoloka/?capture=guildhall-v2>
+**Hosted viewer:** <https://sciencebanda09.github.io/topoloka/>
+
+It opens the improved Guildhall capture by default. Use **View sample** in the
+upper-left to switch among Guildhall v1, Guildhall v2, and Melbourne Metro.
 
 ![The metro twin in a browser: splat, minimap, QA status](docs/fig/twin.png)
 
@@ -70,26 +72,34 @@ floor; the geometry and sightlines are metric.*
 **Locally** (Node 20+):
 
 ```powershell
-# stage the committed sample where the viewer fetches artifacts
-New-Item -ItemType Directory -Force web\public\artifacts\metro_v1 | Out-Null
-Copy-Item -Recurse -Force test\metro_v1\web\* web\public\artifacts\metro_v1\
+# stage every committed sample where the viewer fetches artifacts
+foreach ($sampleDir in Get-ChildItem test -Directory) {
+  $bundlePath = Join-Path $sampleDir.FullName 'web'
+  if (Test-Path $bundlePath) {
+    $artifactPath = Join-Path 'web\public\artifacts' $sampleDir.Name
+    New-Item -ItemType Directory -Force $artifactPath | Out-Null
+    Copy-Item -Recurse -Force (Join-Path $bundlePath '*') $artifactPath
+  }
+}
 cd web
 npm ci
-npm run dev        # open http://127.0.0.1:5173/?capture=metro_v1
-# or stage test\guildhall-v1\web into artifacts\guildhall-v1 and use ?capture=guildhall-v1
+npm run dev        # open http://127.0.0.1:5173/ (improved Guildhall v2 by default)
 ```
 
 ```bash
 # same, on a POSIX shell
-mkdir -p web/public/artifacts/metro_v1
-cp -r test/metro_v1/web/. web/public/artifacts/metro_v1/
+for web_bundle in test/*/web; do
+  sample_name="$(basename "$(dirname "$web_bundle")")"
+  mkdir -p "web/public/artifacts/$sample_name"
+  cp -r "$web_bundle"/. "web/public/artifacts/$sample_name"/
+done
 cd web && npm ci && npm run dev
 ```
 
 Drag to look, **WASD/arrows** to walk, **M** toggles the minimap, **P** toggles
-the point cloud behind the splat. The viewer opens at 75% of the capture path,
-inside the reconstructed volume; append `?t=<index>` to spawn at a specific
-trajectory point (`?t=0` is the true start, `?t=160` is the Figure 3 view), and
+the point cloud behind the splat. The viewer opens at a clear captured camera
+pose inside the reconstructed volume; append `?t=<index>` to spawn at a
+specific trajectory point (`?t=0` is the true start), and
 `?clean` to hide the click prompt and fps readout. Unobserved space is not
 walkable: collision blocks it and carves a 1 m free corridor along the capture
 path, which the camera proved traversable. `?route` draws the scaffolded A*
@@ -99,14 +109,13 @@ left half is a walk stick and the right half looks; **M** hides the map for a
 full-screen view. `npm run build` produces a static `dist/` that can be served
 from any web host.
 
-**R2 preview — sandbox pick-and-place.** Append `&sandbox=1` to the viewer URL
-(or press **G**): keys **1–4** add a cone, barrier, crate, or wet-floor sign;
+**R2 preview — sandbox pick-and-place.** Press **G** in the viewer (or append
+`?sandbox=1` to the same URL): keys **1–4** add a cone, barrier, crate, or wet-floor sign;
 click to pick up/place; **R** rotates; **Del** removes; **T** toggles the route.
 Placed props are real meshes layered over the read-only splat and become
 dynamic costmap obstacles, so A* and collision reroute around them. They are
 not scanned furniture — see [`docs/sandbox.md`](docs/sandbox.md) for the honest
-boundary, controls, and implementation. Example:
-<https://sciencebanda09.github.io/topoloka/?capture=metro_v1&sandbox=1>
+boundary, controls, and implementation.
 
 **Frame budget (measured, live Pages build).** On an AMD Radeon integrated GPU
 through ANGLE/D3D11 at a 1600×900 viewport, the adaptive renderer holds
@@ -137,11 +146,11 @@ on every reading.
       true-FPS HUD, minimap legend, debug geometry hidden after splat load
 - [x] End-to-end public run — CPU SfM 59.2 min; GPU 79.0 min total; 510,336
       gaussians exported; 315.05 m² walkable; QA 6/6 PASS
-- [x] Hosted sample twin: <https://sciencebanda09.github.io/topoloka/?capture=metro_v1>
-      (457,221 gaussians / 14.63 MB, 3 m volume crop, 250 k-point cloud)
+- [x] Single hosted sample selector (link above; defaults to improved Guildhall v2;
+      includes all three committed public samples)
 - [x] R1 public stand-in twin: `test/guildhall-v1` (90.0 s CC BY-SA 4.0 crypt
       walk; 218/218 registered, 0.515 px median, 458.81 m², 632,993 gaussians,
-      QA 6/6 PASS) — <https://sciencebanda09.github.io/topoloka/?capture=guildhall-v1>
+      QA 6/6 PASS; selectable from the hosted viewer)
 - [x] Demo video (3:33, 1920×1080/30) — hosted twin walk-through, QA/metric
       cards, A* route, limitations and roadmap:
       <https://github.com/sciencebanda09/topoloka/releases/download/r1-demo/topoloka_demo.mp4>
