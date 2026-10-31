@@ -184,6 +184,17 @@ the portal is the only place that matters, this file is the defense copy.
   Guildhall v1 remains a local repository sample; the hosted viewer now
   publishes Melbourne Metro only.
 
+- **2026-10-31 — Live smartphone indoor room capture (home_v1) rebuilt and packaged.**
+  The team mapped a real personal indoor space with a smartphone camera (`VID20261031200916.mp4`,
+  62.2 s, 1920×1080/29.8 fps HEVC landscape). Ingested via the automated Kaggle CLI pipeline:
+  the CPU stage normalized upright 8-bit frames and registered **122/156 frames (78.2%)** with
+  35,122 3D points and **0.638 px median reprojection error** in 42.3 min; the GPU stage fused
+  depth across all registered frames (scale **0.4716 m/unit**, MAD **7.98%** over 61,157 samples)
+  and trained 25,000 iterations of splatfacto in 75.2 min. The sample bundle was assembled
+  under `test/home_v1`: **30.6 MB**, 14 preview frames, 250 k-point cloud, **703,564 gaussians**
+  (22.5 MB web splat), and an **8.05 m²** metric walkable floor with 63 outline points. The hosted
+  viewer now provides both `home_v1` and `metro_v1`, switchable directly from the UI dropdown.
+
 ## Engineering decisions worth defending
 
 - **One frame convention, one align block.** Raw SfM → metric nav

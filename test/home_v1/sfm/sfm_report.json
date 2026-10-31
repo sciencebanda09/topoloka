@@ -1,0 +1,27 @@
+{
+  "stage": "sfm",
+  "status": "ok",
+  "backend": "pycolmap",
+  "pycolmap_version": "4.2.1",
+  "matcher": "exhaustive",
+  "extract_strategy": "camera_mode=SINGLE",
+  "match_strategy": "positional",
+  "map_strategy": "positional",
+  "frames_in": 156,
+  "models_found": 2,
+  "frames_registered": 122,
+  "registered_fraction": 0.782,
+  "points3d": 35122,
+  "mean_reprojection_error_px": 0.733,
+  "median_reprojection_error_px": 0.638,
+  "timing_seconds": 2355.7,
+  "outputs": {
+    "sparse": "/tmp/namma/runs/capture_v1/sfm/sparse/model",
+    "sparse_ply": "/tmp/namma/runs/capture_v1/sfm/sparse.ply",
+    "poses": "/tmp/namma/runs/capture_v1/sfm/poses.json",
+    "transforms": "/tmp/namma/runs/capture_v1/sfm/transforms.json"
+  },
+  "warnings": [
+    "2 disconnected models [<bound method pybind11_detail_function_record_v1_system_libstdcpp_gxx_abi_1xxx_use_cxx11_abi_1.num_reg_images of Reconstruction(num_rigs=1, num_cameras=1, num_frames=122, num_reg_frames=122, num_images=122, num_points3D=35122)>, <bound method pybind11_detail_function_record_v1_system_libstdcpp_gxx_abi_1xxx_use_cxx11_abi_1.num_reg_images of Reconstruction(num_rigs=1, num_cameras=1, num_frames=13, num_reg_frames=13, num_images=13, num_points3D=6497)>]; kept the largest"
+  ]
+}

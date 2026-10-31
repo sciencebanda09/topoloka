@@ -236,11 +236,12 @@ def write_readme(dest: Path, meta: dict, n_frames: int, source_note: str = "") -
     table = "\n".join(f"| `{name}` | {_fmt_size(size)} |" for name, size in rows)
     g = meta.get("splat_gaussians")
     splat_txt = f"splat pruned to {int(g):,} gaussians" if g else "no splat in this build"
-    hosted_note = (
-        "Hosted viewer: <https://sciencebanda09.github.io/topoloka/?v=20261031-clean> (Melbourne Metro)."
-        if cap == "metro_v1"
-        else "Hosted viewer: this sample is not published; the hosted site currently serves Melbourne Metro only."
-    )
+    if cap == "metro_v1":
+        hosted_note = "Hosted viewer: <https://sciencebanda09.github.io/topoloka/?capture=metro_v1> (Melbourne Metro)."
+    elif cap == "home_v1":
+        hosted_note = "Hosted viewer: <https://sciencebanda09.github.io/topoloka/?capture=home_v1> (Indoor Home Capture)."
+    else:
+        hosted_note = "Hosted viewer: this sample is retained in the repository for local viewing (`?capture=" + cap + "`)."
     readme = f"""# {cap} -- sample capture
 
 Everything here was produced by the Topoloka pipeline on Kaggle from a single

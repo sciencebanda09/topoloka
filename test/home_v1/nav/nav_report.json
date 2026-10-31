@@ -1,0 +1,24 @@
+{
+  "stage": "geometry",
+  "status": "ok",
+  "points_in": 645407,
+  "points_used": 645407,
+  "floor_inliers": 73117,
+  "down_axis_source": "camera-y-mean",
+  "scale_source": "metric-input",
+  "scale_m_per_unit": 1.0,
+  "camera_height_units": 1.241,
+  "grid_w": 288,
+  "grid_h": 301,
+  "free_cells": 3219,
+  "obstacle_cells": 11510,
+  "unknown_cells": 71959,
+  "walkable_area_m2": 8.05,
+  "outline_points": 63,
+  "timing_seconds": 6.1,
+  "warnings": [],
+  "outputs": {
+    "nav": "/tmp/namma/run/nav/nav.json",
+    "occupancy": "/tmp/namma/run/nav/occupancy.png"
+  }
+}

@@ -26,6 +26,7 @@ CODE = SCRATCH / "code"
 RUN = SCRATCH / "runs" / "capture_v1"
 TARGET_RATE = os.environ.get("NM_TARGET_RATE", "2.5")
 MAX_WIDTH = os.environ.get("NM_MAX_W", "1600")
+MAX_SECONDS = os.environ.get("NM_MAX_SECONDS", "")
 
 
 def log(msg: str) -> None:
@@ -78,6 +79,29 @@ def find_video() -> Path:
     for v in vids:
         log(f"input video: {v} ({v.stat().st_size / 1e6:.1f} MB)")
     return sorted(vids, key=lambda p: p.stat().st_size, reverse=True)[0]
+
+
+def prepare_video(src: Path) -> Path:
+    """Normalize HEVC / rotation metadata via ffmpeg so OpenCV sees upright 8-bit H.264."""
+    if shutil.which("ffmpeg") is None:
+        log("ffmpeg not found; passing raw video directly to OpenCV")
+        return src
+    dst = SCRATCH / "input_norm.mp4"
+    dst.parent.mkdir(parents=True, exist_ok=True)
+    cmd = ["ffmpeg", "-y", "-v", "error", "-i", str(src)]
+    if MAX_SECONDS:
+        cmd += ["-t", MAX_SECONDS]
+    cmd += [
+        "-c:v", "libx264", "-preset", "veryfast", "-crf", "17",
+        "-pix_fmt", "yuv420p", "-an", str(dst),
+    ]
+    t0 = time.time()
+    r = subprocess.run(cmd, capture_output=True, text=True)
+    if r.returncode == 0 and dst.exists() and dst.stat().st_size > 0:
+        log(f"normalized video -> {dst.name} ({dst.stat().st_size / 1e6:.1f} MB in {time.time() - t0:.1f}s)")
+        return dst
+    log(f"ffmpeg normalize skipped (rc={r.returncode}: {(r.stderr or '').strip()[:240]}); using raw video")
+    return src
 
 
 def run_stage(args: list[str]) -> None:
@@ -139,7 +163,8 @@ def main() -> None:
         pycolmap_version = ensure_pycolmap()
         log(f"pycolmap {pycolmap_version}")
         video = find_video()
-        run_stage(["frames", str(video), str(RUN), "--target-rate", TARGET_RATE,
+        clean_video = prepare_video(video)
+        run_stage(["frames", str(clean_video), str(RUN), "--target-rate", TARGET_RATE,
                    "--max-width", MAX_WIDTH])
         run_stage(["sfm", str(RUN)])
         run_stage(["geometry", str(RUN)])

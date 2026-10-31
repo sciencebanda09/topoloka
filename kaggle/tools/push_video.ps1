@@ -72,21 +72,35 @@ if (-not (Test-Path $ffprobe)) {
 if ($ffprobe -and (Test-Path $ffprobe)) {
     $ErrorActionPreference = 'Continue'
     $raw = (& $ffprobe -v error -select_streams v:0 `
-        -show_entries stream=width,height,avg_frame_rate,codec_name:format=duration `
+        -show_streams -show_format `
         -of json $Video 2>$null | Out-String)
     $ErrorActionPreference = 'Stop'
     try {
         $info = $raw | ConvertFrom-Json
         $st = $info.streams[0]
-        $w = [int]$st.width
-        $h = [int]$st.height
+        $rawW = [int]$st.width
+        $rawH = [int]$st.height
+        $rot = 0
+        if ($st.tags -and $st.tags.rotate) {
+            $rot = [math]::Abs([int]$st.tags.rotate) % 180
+        } elseif ($st.side_data_list) {
+            foreach ($sd in $st.side_data_list) {
+                if ($null -ne $sd.rotation) {
+                    $rot = [math]::Abs([int]$sd.rotation) % 180
+                    break
+                }
+            }
+        }
+        $w = if ($rot -eq 90) { $rawH } else { $rawW }
+        $h = if ($rot -eq 90) { $rawW } else { $rawH }
         $dur = 0.0
         [void][double]::TryParse([string]$info.format.duration, [ref]$dur)
         $fps = 0.0
         if ($st.avg_frame_rate -match '^(\d+)/(\d+)$' -and [int]$Matches[2] -gt 0) {
             $fps = [double]$Matches[1] / [double]$Matches[2]
         }
-        Write-Host ("probe    {0}x{1}, {2:N1} fps, {3:N1} s, {4}" -f $w, $h, $fps, $dur, $st.codec_name)
+        $rotNote = if ($rot -eq 90) { " (rotated from ${rawW}x${rawH})" } else { "" }
+        Write-Host ("probe    {0}x{1}{5}, {2:N1} fps, {3:N1} s, {4}" -f $w, $h, $fps, $dur, $st.codec_name, $rotNote)
         if ($h -gt $w -and -not $AllowPortrait) {
             throw "portrait video ($w x $h); the SOP requires landscape. Re-record landscape, or pass -AllowPortrait to override."
         }
@@ -251,4 +265,5 @@ if (-not (Test-Path $splatFile)) {
 }
 Write-Host ""
 Write-Host "done. artifacts: kaggle\out\$splatName"
-Write-Host "stage the web bundle: powershell -File web\tools\sync_artifacts.ps1 -Kernel $splatName -Capture $slug"
+$destName = $slug -replace '-', '_'
+Write-Host "assemble sample: .venv\Scripts\python.exe tools\make_sample.py --pipe-out kaggle\out\$kernelName --splat-out kaggle\out\$splatName --dest test\$destName --frames 14 --max-gaussians 1000000"

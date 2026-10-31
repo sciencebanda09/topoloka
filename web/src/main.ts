@@ -17,8 +17,8 @@ import { SplatLayer } from './splat';
 import { Viewer } from './viewer';
 
 const params = new URLSearchParams(location.search);
-const DEFAULT_CAPTURE = 'metro_v1';
-const AVAILABLE_CAPTURES = new Set([DEFAULT_CAPTURE]);
+const DEFAULT_CAPTURE = 'home_v1';
+const AVAILABLE_CAPTURES = new Set(['home_v1', 'metro_v1']);
 const requestedCapture = params.get('capture');
 const cleanCapture = requestedCapture && /^[a-zA-Z0-9_-]+$/.test(requestedCapture)
   ? requestedCapture

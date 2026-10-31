@@ -1,0 +1,9 @@
+{
+  "stage": "metricize",
+  "status": "ok",
+  "scale_m_per_unit": 0.47164551414793665,
+  "frames_scaled": 122,
+  "points_scaled": 35122,
+  "timing_seconds": 0.02,
+  "note": "transforms.json camera centers + sfm/sparse.ply points *= depth scale"
+}

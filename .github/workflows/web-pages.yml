@@ -27,11 +27,14 @@ jobs:
       - name: Stage committed sample captures
         working-directory: .
         run: |
-          d="test/metro_v1/web"
-          name="metro_v1"
-          echo "staging $name"
-          mkdir -p "web/public/artifacts/$name"
-          cp -r "$d/." "web/public/artifacts/$name/"
+          for name in home_v1 metro_v1; do
+            d="test/$name/web"
+            if [ -d "$d" ]; then
+              echo "staging $name"
+              mkdir -p "web/public/artifacts/$name"
+              cp -r "$d/." "web/public/artifacts/$name/"
+            fi
+          done
       - uses: actions/setup-node@v4
         with:
           node-version: 22

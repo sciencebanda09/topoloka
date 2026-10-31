@@ -32,24 +32,25 @@ walk-through video ──► Kaggle pipeline ──► artifact bundle ──►
 The local machine only edits code, commits, and talks to the Kaggle CLI.
 See `kaggle/README.md`.
 
-## Public samples
+## Captured and benchmark samples
 
-Four sample builds from public footage remain in the repository. The hosted
-viewer publishes the QA-passing Melbourne Metro sample; Guildhall outputs are
-kept in the repository for reference and pipeline work. The experimental
-Guildhall Splatfacto v3 quality pass remains on Kaggle:
+The repository packages sample builds with complete paper trails. The hosted
+viewer publishes both the **home indoor walk-through** (`home_v1`) captured on a
+smartphone according to the team's SOP, and the **Melbourne Metro benchmark**
+(`metro_v1`), switchable from the in-viewer dropdown:
 
 | Sample | Source | Size | Measured |
 |---|---|---|---|
-| `test/metro_v1/` | *Modern Melbourne Metro Walkway Urban Design* by Joolsmagool (Pexels License), 86.07 s | 24.7 MB | 216/216 registered, 0.403 px median, 315.05 m² walkable |
+| `test/home_v1/` | Smartphone indoor capture following team SOP, 62.2 s | 30.6 MB | 122/156 registered, 0.638 px median, 703,564 splats; 8.05 m² walkable |
+| `test/metro_v1/` | *Modern Melbourne Metro Walkway Urban Design* by Joolsmagool (Pexels License), 86.07 s | 24.7 MB | 216/216 registered, 0.403 px median, 457,221 splats; 315.05 m² walkable |
 | `test/guildhall-v1/` | *Guildhall City of London England interior walkaround video* by Acabashi (CC BY-SA 4.0), 90.0 s trim | 31.0 MB | 218/218 registered, 0.515 px median, 458.81 m² walkable |
 | `test/guildhall-v2/` | Same public source, sharper 91.925 s trim beginning near 94 s | 41.34 MB | 204/230 registered, 0.554 px median, 878,891 splats; QA 6/6 PASS |
 | `test/guildhall-mvs/` | Same sharp Guildhall trim, rebuilt with COLMAP MVS and per-face photo texturing | 105.5 MB | 5.52M dense points → 650k mesh faces; 89.54% texture coverage; 23.4 m² walkable |
 | `guildhall-v3` | Same source, Splatfacto Big quality pass | running on Kaggle | retained as a separate experiment |
 
-`guildhall-v1` is the **R1 public stand-in** — a real indoor venue walk-through,
-but not the team's own venue. The hosted viewer currently features the Metro
-capture because it is the stronger public output.
+`home_v1` directly fulfills the Round 1 prompt to **map the team's own indoor
+space** using standard smartphone video. The hosted viewer opens `home_v1` by default
+and allows toggling to `metro_v1` via the **VIEW SAMPLE** picker.
 
 `guildhall-v2` is a sharper alternate trim of the same public video, selected
 after the first sample looked soft. Its sharpness scan's p10 score is 1582.84
