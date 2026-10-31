@@ -406,7 +406,7 @@ def card_close() -> None:
     d.text((90, 690), "One video in. A navigable place out.",
            font=font(SEGOE_L, 58), fill=CYAN)
     links = [
-        ("Live twin", "sciencebanda09.github.io/topoloka/"),
+        ("Live twin", "sciencebanda09.github.io/topoloka/?v=20261031-clean"),
         ("Repository", "github.com/sciencebanda09/topoloka"),
         ("Abstract", "docs/abstract.pdf"),
     ]

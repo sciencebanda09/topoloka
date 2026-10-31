@@ -165,11 +165,11 @@ above the floor, gray = unobserved, blue = camera path; 1048 × 530 cells at
 the splat, the metric minimap (red = obstacles, blue = capture path) and the
 QA verdict in the HUD. The viewpoint is a captured camera pose. Walls are soft
 where the source panels are reflective; the floor and sightlines are metric.
-Guildhall v1, improved v2, and Metro use the same viewer and are selected from
-its sample menu; browser FPS varies by sample and device.*
+The Guildhall reconstructions remain documented in the repository; the hosted
+viewer currently publishes Melbourne Metro only. Browser FPS varies by device.*
 
-Viewer (all committed public samples; improved Guildhall v2 opens by default):
-<https://sciencebanda09.github.io/topoloka/> ·
+Viewer (Melbourne Metro):
+<https://sciencebanda09.github.io/topoloka/?v=20261031-clean> ·
 Code: <https://github.com/sciencebanda09/topoloka> ·
 Demo video (metro cut, 3:33, 1080p):
 <https://github.com/sciencebanda09/topoloka/releases/download/r1-demo/topoloka_demo.mp4>

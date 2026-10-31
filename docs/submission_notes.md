@@ -8,8 +8,8 @@ the portal is the only place that matters, this file is the defense copy.
 | Item | Link | Status |
 |------|------|--------|
 | Repo | https://github.com/sciencebanda09/topoloka | public (MIT), created 2026-10-18 |
-| Viewer (all samples) | https://sciencebanda09.github.io/topoloka/ | Improved Guildhall v2 by default; use the sample picker for other committed samples |
-| Sandbox preview (R2) | same viewer; press G or append `?sandbox=1` | public sample selector chooses the scene |
+| Viewer (Melbourne Metro) | https://sciencebanda09.github.io/topoloka/?v=20261031-clean | single curated public sample |
+| Sandbox preview (R2) | same viewer; press G or append `?sandbox=1` | add and place props in the Metro twin |
 | Demo video | https://github.com/sciencebanda09/topoloka/releases/download/r1-demo/topoloka_demo.mp4 | 3:33, 1080p30, 41.0 MB; hosted 2026-10-26 |
 | Abstract PDF | `docs/abstract.pdf` in repo | two captures, 5 pages, 2.48 MB; rebuilt 2026-10-29 |
 
@@ -181,7 +181,8 @@ the portal is the only place that matters, this file is the defense copy.
   team's venue**; every twin and README label says so. The metro capture
   remains a separate sample. The derived sample data carries the source's
   CC BY-SA 4.0 attribution (`test/guildhall-v1/LICENSE`).
-  Choose Guildhall v1 from the sample menu in the single hosted viewer.
+  Guildhall v1 remains a local repository sample; the hosted viewer now
+  publishes Melbourne Metro only.
 
 ## Engineering decisions worth defending
 

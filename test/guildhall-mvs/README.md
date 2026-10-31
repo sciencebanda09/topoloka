@@ -7,10 +7,8 @@ surface, and assigns each face a sharp captured view. All reconstruction runs
 on Kaggle.
 
 The sample keeps the earlier Gaussian splat and point cloud alongside the
-mesh. The hosted viewer opens on the mesh and lets you switch models and
-captures without changing links:
-
-<https://sciencebanda09.github.io/topoloka/>
+mesh. It remains in the repository for pipeline reference and is not published
+on the hosted viewer, which currently serves Melbourne Metro only.
 
 Use W/S to walk forward or backward and A/D to sidestep around objects. Arrow
 keys work as well; on touchscreens, drag the left thumb sideways to sidestep.

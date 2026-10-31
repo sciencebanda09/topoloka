@@ -94,10 +94,13 @@ git commit -m "Sample: room-v1 from live phone capture"
 git push origin main
 ```
 
-Pages stages every `test/*/web` folder automatically. Open:
+The hosted viewer currently publishes Melbourne Metro only. A new capture can
+be checked locally with `npm run dev` and `?capture=room-v1`; adding a sample to
+the public site requires deliberately adding it to the viewer's allowlist and
+Pages staging workflow. The public viewer link remains:
 
 ```
-https://sciencebanda09.github.io/topoloka/?capture=room-v1
+https://sciencebanda09.github.io/topoloka/?v=20261031-clean
 ```
 
 Then check the QA report before claiming success:
@@ -117,8 +120,9 @@ submission must show your own space, rebuild those with `room-v1`:
   `docs/abstract.pdf` with `tools/build_pdf.ps1`.
 - `docs/demo_script.md` → replace the metro chapter with the room walkthrough;
   keep the licensed-metro clip only as a generality example.
-- `README.md` → point the hosted link at `?capture=room-v1`; add
-  `test/room-v1/README.md` to the sample table.
+- `README.md` → add `test/room-v1/README.md` to the repository sample table.
+  Keep the hosted viewer link on the curated public sample unless the new
+  capture is explicitly approved for publication.
 - `docs/submission.md` / `docs/submission_notes.md` → record the capture date,
   device, and the new commit.
 

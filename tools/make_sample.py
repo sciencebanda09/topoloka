@@ -236,6 +236,11 @@ def write_readme(dest: Path, meta: dict, n_frames: int, source_note: str = "") -
     table = "\n".join(f"| `{name}` | {_fmt_size(size)} |" for name, size in rows)
     g = meta.get("splat_gaussians")
     splat_txt = f"splat pruned to {int(g):,} gaussians" if g else "no splat in this build"
+    hosted_note = (
+        "Hosted viewer: <https://sciencebanda09.github.io/topoloka/?v=20261031-clean> (Melbourne Metro)."
+        if cap == "metro_v1"
+        else "Hosted viewer: this sample is not published; the hosted site currently serves Melbourne Metro only."
+    )
     readme = f"""# {cap} -- sample capture
 
 Everything here was produced by the Topoloka pipeline on Kaggle from a single
@@ -263,7 +268,7 @@ npm ci
 npm run dev   # open http://127.0.0.1:5173/?capture={cap}
 ```
 
-Hosted twin (same data): <https://sciencebanda09.github.io/topoloka/?capture={cap}>
+{hosted_note}
 
 Drag to look, WASD/arrows to walk, M toggles the minimap, P toggles the
 point cloud behind the splat. (Internal refreshes from fresh kernel outputs:

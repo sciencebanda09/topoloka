@@ -56,8 +56,8 @@ npm ci
 npm run dev   # open http://127.0.0.1:5173/?capture=guildhall-v1
 ```
 
-Open the single hosted viewer and choose **Guildhall · original** in the
-**View sample** menu.
+This historical sample is kept in the repository but is not published on the
+hosted viewer. To inspect it, run the local viewer with `?capture=guildhall-v1`.
 
 Drag to look, WASD/arrows to walk, M toggles the minimap, P toggles the
 point cloud behind the splat. (Internal refreshes from fresh kernel outputs:

@@ -18,13 +18,13 @@ sharpness measure, not a promise that every part of the video is in focus.
 
 ## View it
 
-Open the single hosted viewer; **Guildhall · improved** is selected by default.
-The **View sample** menu lets you choose another saved capture.
+This historical sample is kept in the repository but is not published on the
+hosted viewer. To inspect it, run the local viewer with `?capture=guildhall-v2`.
 
 Drag to look; W/S walk forward or backward, A/D sidestep around objects, and
 the arrow keys provide the same movement. Press M to toggle the minimap and P
-to toggle the point cloud behind the splat. The sample bundle below is the data
-served by that viewer route.
+to toggle the point cloud behind the splat. Stage the sample bundle below for
+local development using the instructions in `test/README.md`.
 
 ## Measured reconstruction
 

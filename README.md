@@ -58,7 +58,7 @@ scan method. Its SfM report records two disconnected models and 204/230 frames
 registered; the smaller model is excluded from the shipped map. See
 [`test/guildhall-v2/README.md`](test/guildhall-v2/README.md) for full metrics.
 
-**Hosted viewer:** <https://sciencebanda09.github.io/topoloka/>
+**Hosted viewer:** <https://sciencebanda09.github.io/topoloka/?v=20261031-clean>
 
 It opens Melbourne Metro. **View model** switches between the Gaussian splat
 and point cloud; A/D sidestep around objects.

@@ -56,8 +56,7 @@ npm ci
 npm run dev   # open http://127.0.0.1:5173/?capture=metro_v1
 ```
 
-Open the single hosted viewer and choose **Melbourne Metro** in the
-**View sample** menu.
+Open the single hosted viewer; Melbourne Metro opens by default.
 
 Drag to look, WASD/arrows to walk, M toggles the minimap, P toggles the
 point cloud behind the splat. (Internal refreshes from fresh kernel outputs:
