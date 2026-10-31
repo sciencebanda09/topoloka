@@ -20,9 +20,18 @@
         <label id="scene-picker">
           <span>VIEW SAMPLE</span>
           <select id="capture-select" aria-label="Choose a sample capture">
-            <option value="guildhall-v2">Guildhall · improved</option>
+            <option value="guildhall-mvs">Guildhall · photo mesh (best)</option>
+            <option value="guildhall-v2">Guildhall · improved splat</option>
             <option value="guildhall-v1">Guildhall · original</option>
             <option value="metro_v1">Melbourne Metro</option>
+          </select>
+        </label>
+        <label id="representation-picker" class="hidden">
+          <span>VIEW MODEL</span>
+          <select id="representation-select" aria-label="Choose a reconstruction view">
+            <option value="mesh">Photo-textured mesh · recommended</option>
+            <option value="splat">Gaussian splats</option>
+            <option value="points">Point cloud</option>
           </select>
         </label>
       </div>
@@ -40,7 +49,7 @@
       </div>
 
       <div id="help">
-        <b>WASD</b> walk · <b>mouse</b> look · <b>shift</b> faster · <b>M</b> map · <b>P</b> points · <b>click</b> to capture mouse
+        <b>W/S</b> forward/back | <b>A/D</b> sidestep | <b>mouse</b> look | <b>shift</b> faster | <b>M</b> map | <b>click</b> to enter
       </div>
 
       <div id="center-hint">click to enter walkthrough</div>

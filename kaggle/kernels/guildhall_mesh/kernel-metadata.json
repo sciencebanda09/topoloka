@@ -1,0 +1,18 @@
+{
+  "id": "shashankdev09/guildhall-mesh",
+  "title": "Guildhall Mesh",
+  "code_file": "mesh.py",
+  "language": "python",
+  "kernel_type": "script",
+  "is_private": true,
+  "enable_gpu": true,
+  "enable_internet": true,
+  "dataset_sources": [
+    "shashankdev09/namma-code",
+    "shashankdev09/namma-capture-guildhall-v2"
+  ],
+  "competition_sources": [],
+  "kernel_sources": [
+    "shashankdev09/namma-splat-guildhall-v2"
+  ]
+}

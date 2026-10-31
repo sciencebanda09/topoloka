@@ -108,7 +108,7 @@ export class WalkControls {
   }
 
   private blocked(x: number, y: number): boolean {
-    return this.costmap.isBlockedRadius(x, y, 0.16);
+    return this.costmap.isBlockedRadius(x, y, 0.12);
   }
 
   private applyLook(mx: number, my: number): void {

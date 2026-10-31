@@ -3,10 +3,10 @@
  * World is the pipeline's metric frame: x/y horizontal, z up (meters).
  */
 
-import { FREE, type NavData, OBSTACLE } from './artifacts';
+import { FREE, type NavData, OBSTACLE, UNKNOWN } from './artifacts';
 
-/** Half-width of the free corridor carved along the capture path, in metres. */
-const WALKED_PATH_RADIUS_M = 0.5;
+/** Exploration margin around the recorded walk; mapped obstacles stay blocked. */
+const WALKED_PATH_RADIUS_M = 0.85;
 
 /** Oriented footprint in the nav frame (x/y horizontal, radians). */
 export interface Footprint {
@@ -65,10 +65,9 @@ export class Costmap {
   }
 
   /**
-   * The camera physically traversed this path, so a narrow corridor around it
-   * is known free even where the 5 cm grid fragments (ticket gates, railings,
-   * low-clearance cells) break connectivity. This is a navigation safety
-   * carve, not a replacement for the measured occupancy map.
+   * The captured walk opens nearby unclassified floor so viewers can sidestep
+   * around props and people. It never clears a cell the geometry marked as an
+   * obstacle; unknown space farther from the observed route remains closed.
    */
   private carveWalkedPath(trajectory: [number, number, number][]): void {
     const span = Math.ceil(WALKED_PATH_RADIUS_M / this.cell);
@@ -78,7 +77,9 @@ export class Costmap {
         for (let dx = -span; dx <= span; dx++) {
           if (dx * dx + dy * dy > span * span) continue;
           const nx = cx + dx, ny = cy + dy;
-          if (this.inBounds(nx, ny)) this.data[ny * this.w + nx] = FREE;
+          if (!this.inBounds(nx, ny)) continue;
+          const i = ny * this.w + nx;
+          if (this.data[i] === UNKNOWN) this.data[i] = FREE;
         }
       }
     }
@@ -99,8 +100,8 @@ export class Costmap {
     return this.dynamic[cy * this.w + cx] === 1;
   }
 
-  /** blocked test with a small radius (4 samples around the point) */
-  isBlockedRadius(x: number, y: number, r = 0.18): boolean {
+  /** Small avatar clearance so narrow gaps between nearby objects stay usable. */
+  isBlockedRadius(x: number, y: number, r = 0.12): boolean {
     if (this.isBlocked(x, y)) return true;
     return (
       this.isBlocked(x + r, y) || this.isBlocked(x - r, y) ||

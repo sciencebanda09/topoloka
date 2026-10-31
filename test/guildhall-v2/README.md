@@ -21,7 +21,8 @@ sharpness measure, not a promise that every part of the video is in focus.
 Open the single hosted viewer; **Guildhall · improved** is selected by default.
 The **View sample** menu lets you choose another saved capture.
 
-Drag to look, use WASD or the arrow keys to walk, M to toggle the minimap, and P
+Drag to look; W/S walk forward or backward, A/D sidestep around objects, and
+the arrow keys provide the same movement. Press M to toggle the minimap and P
 to toggle the point cloud behind the splat. The sample bundle below is the data
 served by that viewer route.
 

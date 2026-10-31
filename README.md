@@ -34,15 +34,16 @@ See `kaggle/README.md`.
 
 ## Public samples
 
-Three committed samples, all built from public footage by the same pipeline;
-a fourth Guildhall quality pass is training on Kaggle:
+Four selectable samples, all built from public footage by the same pipeline;
+the experimental Guildhall Splatfacto v3 quality pass remains on Kaggle:
 
 | Sample | Source | Size | Measured |
 |---|---|---|---|
 | `test/metro_v1/` | *Modern Melbourne Metro Walkway Urban Design* by Joolsmagool (Pexels License), 86.07 s | 24.7 MB | 216/216 registered, 0.403 px median, 315.05 m² walkable |
 | `test/guildhall-v1/` | *Guildhall City of London England interior walkaround video* by Acabashi (CC BY-SA 4.0), 90.0 s trim | 31.0 MB | 218/218 registered, 0.515 px median, 458.81 m² walkable |
 | `test/guildhall-v2/` | Same public source, sharper 91.925 s trim beginning near 94 s | 41.34 MB | 204/230 registered, 0.554 px median, 878,891 splats; QA 6/6 PASS |
-| `guildhall-v3` | Same source, retrained with Splatfacto Big | training on Kaggle | will be added after packaging and QA |
+| `test/guildhall-mvs/` | Same sharp Guildhall trim, rebuilt with COLMAP MVS and per-face photo texturing | 105.5 MB | 5.52M dense points → 650k mesh faces; 89.54% texture coverage; 23.4 m² walkable |
+| `guildhall-v3` | Same source, Splatfacto Big quality pass | running on Kaggle | retained as a separate experiment |
 
 `guildhall-v1` is the **R1 public stand-in** — a real indoor venue walk-through,
 but not the team's own venue. The metro capture remains a separate sample.
@@ -57,8 +58,10 @@ registered; the smaller model is excluded from the shipped map. See
 
 **Hosted viewer:** <https://sciencebanda09.github.io/topoloka/>
 
-It opens the improved Guildhall capture by default. Use **View sample** in the
-upper-left to switch among Guildhall v1, Guildhall v2, and Melbourne Metro.
+It opens the photo-textured Guildhall mesh by default. Use **View sample** in
+the upper-left to switch among the new mesh, both earlier Guildhall captures,
+and Melbourne Metro. **View model** switches the mesh, retained splat, and point
+cloud; A/D sidestep around the sculptures and other objects.
 
 ![The metro twin in a browser: splat, minimap, QA status](docs/fig/twin.png)
 
@@ -83,7 +86,7 @@ foreach ($sampleDir in Get-ChildItem test -Directory) {
 }
 cd web
 npm ci
-npm run dev        # open http://127.0.0.1:5173/ (improved Guildhall v2 by default)
+npm run dev        # open http://127.0.0.1:5173/ (Guildhall photo mesh by default)
 ```
 
 ```bash
@@ -146,8 +149,11 @@ on every reading.
       true-FPS HUD, minimap legend, debug geometry hidden after splat load
 - [x] End-to-end public run — CPU SfM 59.2 min; GPU 79.0 min total; 510,336
       gaussians exported; 315.05 m² walkable; QA 6/6 PASS
-- [x] Single hosted sample selector (link above; defaults to improved Guildhall v2;
-      includes all three committed public samples)
+- [x] Single hosted sample selector (link above; defaults to the Guildhall photo
+      mesh and includes all four committed public samples)
+- [x] Guildhall MVS photo mesh: `test/guildhall-mvs` (5.52M fused points,
+      650k mesh faces, 89.54% textured-face coverage; capture navigation is
+      retained because the dense cloud did not yield a floor fit)
 - [x] R1 public stand-in twin: `test/guildhall-v1` (90.0 s CC BY-SA 4.0 crypt
       walk; 218/218 registered, 0.515 px median, 458.81 m², 632,993 gaussians,
       QA 6/6 PASS; selectable from the hosted viewer)
@@ -173,6 +179,8 @@ on every reading.
 - The same Guildhall source is used for `test/guildhall-v2`, with a stream-copied
   91.925 s segment beginning near 94 s. It is also distributed under CC BY-SA
   4.0; see `test/guildhall-v2/LICENSE`.
+- The Guildhall MVS mesh uses that same licensed trim and is distributed under
+  CC BY-SA 4.0; see `test/guildhall-mvs/LICENSE`.
 
 The pipeline code is MIT. No personal capture is shipped.
 

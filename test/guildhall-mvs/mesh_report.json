@@ -1,0 +1,16 @@
+{
+  "method": "COLMAP PatchMatch MVS + Poisson surface + best-visible-view texture projection",
+  "dense_points": 5518929,
+  "mesh_faces": 650000,
+  "mesh_vertices_after_texture_seams": 834672,
+  "texture_views": 64,
+  "texture_atlas": [
+    8192,
+    4608
+  ],
+  "textured_face_fraction": 0.8954,
+  "mesh_bytes": 46350272,
+  "walkable_area_m2": 23.4,
+  "navigation_status": "fallback",
+  "geometry_seconds": 122.0
+}

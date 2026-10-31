@@ -1,0 +1,23 @@
+{
+  "stage": "geometry",
+  "status": "fallback",
+  "points_in": 0,
+  "points_used": 0,
+  "floor_inliers": 0,
+  "down_axis_source": "camera-y-mean",
+  "scale_source": "chest-height",
+  "scale_m_per_unit": 0.0,
+  "camera_height_units": 0.0,
+  "grid_w": 0,
+  "grid_h": 0,
+  "free_cells": 0,
+  "obstacle_cells": 0,
+  "unknown_cells": 0,
+  "walkable_area_m2": 23.4,
+  "outline_points": 0,
+  "timing_seconds": 0.0,
+  "warnings": [
+    "retained capture navigation: no floor plane found (no horizontal plane below the cameras)"
+  ],
+  "outputs": {}
+}

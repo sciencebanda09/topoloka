@@ -160,6 +160,11 @@ export class SplatLayer {
     this.viewer.update();
   }
 
+  setVisible(visible: boolean): void {
+    const view = this.viewer as unknown as { splatMesh?: THREE.Object3D };
+    if (view.splatMesh) view.splatMesh.visible = visible;
+  }
+
   render(): void {
     this.viewer.render();
   }

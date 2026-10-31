@@ -1,9 +1,9 @@
 /// <reference types="vite/client" />
 /**
  * Topoloka viewer entry point.
- * Loads the artifact bundle (nav.json + cloud.ply + optional splat.splat),
+ * Loads the artifact bundle (nav.json + cloud.ply + optional mesh.glb/splat.splat),
  * builds the scene, spawns the walker at the capture's selected camera pose,
- * and runs the loop. The splat, when present, renders in our scene/camera;
+ * and runs the loop. Textured meshes and splats share our scene/camera;
  * the costmap drives collision, the minimap mirrors both.
  */
 
@@ -17,11 +17,14 @@ import { SplatLayer } from './splat';
 import { Viewer } from './viewer';
 
 const params = new URLSearchParams(location.search);
-const DEFAULT_CAPTURE = 'guildhall-v2';
+const DEFAULT_CAPTURE = 'guildhall-mvs';
 const requestedCapture = params.get('capture');
-const CAPTURE = requestedCapture && /^[a-zA-Z0-9_-]+$/.test(requestedCapture)
+const cleanCapture = requestedCapture && /^[a-zA-Z0-9_-]+$/.test(requestedCapture)
   ? requestedCapture
-  : DEFAULT_CAPTURE;
+  : null;
+// Keep the previously shared Hall link working; the project now uses its
+// reconstruction name for the current best Guildhall sample.
+const CAPTURE = cleanCapture === 'house_v1' ? DEFAULT_CAPTURE : cleanCapture ?? DEFAULT_CAPTURE;
 if (requestedCapture && CAPTURE !== requestedCapture) {
   const cleanUrl = new URL(location.href);
   cleanUrl.searchParams.delete('capture');
@@ -39,7 +42,7 @@ const requestedScale = Number(params.get('scale'));
 const MANUAL_SCALE = Number.isFinite(requestedScale) && requestedScale > 0;
 const INITIAL_SCALE = MANUAL_SCALE
   ? Math.min(1, Math.max(0.35, requestedScale))
-  : Math.min(1, Math.max(0.5, Math.sqrt(RENDER_PIXELS / (window.innerWidth * window.innerHeight))));
+  : Math.min(1, Math.max(MIN_ADAPTIVE_SCALE, Math.sqrt(RENDER_PIXELS / (window.innerWidth * window.innerHeight))));
 const SPLAT_ALPHA = Math.min(255, Math.max(1, Number(params.get('alpha')) || 5));
 const SPLAT_MAX_PX = Math.min(2048, Math.max(32, Number(params.get('splatpx')) || 512));
 
@@ -76,8 +79,8 @@ if (CLEAN) hint.classList.add('hidden');
 
 const TOUCH = window.matchMedia('(pointer: coarse)').matches || navigator.maxTouchPoints > 0;
 if (TOUCH) {
-  hint.textContent = 'drag to look · left thumb to walk';
-  help.innerHTML = '<b>drag</b> look · <b>left thumb</b> walk · rotate for the full view';
+  hint.textContent = 'drag to look · slide left thumb to move around';
+  help.innerHTML = '<b>drag</b> look · <b>left thumb</b> move / sidestep · rotate for the full view';
   canvas.addEventListener('touchstart', () => hint.classList.add('hidden'), { passive: true, once: true });
 }
 
@@ -87,6 +90,7 @@ interface Meta {
   walkable_area_m2?: number;
   qa_overall?: string;
   splat?: { present: boolean; gaussians?: number };
+  mesh?: { present: boolean; format?: string };
 }
 
 async function loadMeta(): Promise<Meta> {
@@ -105,7 +109,20 @@ async function boot(): Promise<void> {
   const grid = await decodeGrid(nav.grid);
   const costmap = new Costmap(nav, grid);
 
-  const viewer = new Viewer(canvas, INITIAL_SCALE);
+  let hasMesh = Boolean(meta.mesh?.present);
+  const hasSplat = Boolean(meta.splat?.present);
+  const requestedModel = params.get('model');
+  type Representation = 'mesh' | 'splat' | 'points';
+  let representation: Representation = hasMesh ? 'mesh' : hasSplat ? 'splat' : 'points';
+  if (requestedModel === 'mesh' && hasMesh) representation = 'mesh';
+  else if (requestedModel === 'splat' && hasSplat) representation = 'splat';
+  else if (requestedModel === 'points') representation = 'points';
+
+  // The mesh and point cloud are cheap enough to draw at native CSS resolution;
+  // only the splat starts at the lower GPU budget and adapts from there.
+  let renderScale = MANUAL_SCALE ? INITIAL_SCALE : representation === 'splat' ? INITIAL_SCALE : 1;
+
+  const viewer = new Viewer(canvas, renderScale);
   viewer.setNavCamera(nav);
   viewer.addGroundGrid(40);
   viewer.addOutline(nav.outline);
@@ -116,9 +133,9 @@ async function boot(): Promise<void> {
 
   // splat, when the pipeline has produced one: render in our scene/camera
   let splat: SplatLayer | null = null;
-  if (meta.splat?.present) {
+  if (hasSplat && (requestedModel === 'splat' || (!hasMesh && requestedModel !== 'points'))) {
     try {
-      subtitle.textContent = `${CAPTURE} · loading splat…`;
+      subtitle.textContent = 'Loading splat...';
       splat = new SplatLayer(viewer.renderer, viewer.scene, viewer.camera, {
         alphaThreshold: SPLAT_ALPHA,
         maxScreenSpaceSplatSize: SPLAT_MAX_PX,
@@ -132,6 +149,98 @@ async function boot(): Promise<void> {
       splat = null;
     }
   }
+
+  const representationWrap = document.getElementById('representation-picker');
+  const representationSelect = document.getElementById('representation-select') as HTMLSelectElement;
+  const modelOptions = [...representationSelect.options];
+  for (const option of modelOptions) {
+    option.hidden = (option.value === 'mesh' && !hasMesh)
+      || (option.value === 'splat' && !hasSplat)
+      || (option.value === 'points' && !nPoints);
+  }
+  const availableModels = Number(hasMesh) + Number(hasSplat) + Number(Boolean(nPoints));
+  if (representationWrap) representationWrap.classList.toggle('hidden', availableModels < 2);
+  let meshLoaded = false;
+
+  async function ensureSplat(): Promise<void> {
+    if (splat?.loaded) return;
+    if (!hasSplat) throw new Error('This sample has no Gaussian splat');
+    subtitle.textContent = 'Loading splat...';
+    const next = new SplatLayer(viewer.renderer, viewer.scene, viewer.camera, {
+      alphaThreshold: SPLAT_ALPHA,
+      maxScreenSpaceSplatSize: SPLAT_MAX_PX,
+    });
+    await next.load(`${BASE}/splat.splat`, nav);
+    splat = next;
+  }
+
+  async function activateRepresentation(next: Representation): Promise<void> {
+    if (next === 'mesh') {
+      if (!hasMesh) throw new Error('This sample has no photo-textured mesh');
+      if (!meshLoaded) {
+        subtitle.textContent = 'Loading photo-textured mesh...';
+        await viewer.addTexturedMesh(`${BASE}/mesh.glb`);
+        meshLoaded = true;
+      }
+      viewer.setMeshVisible(true);
+      splat?.setVisible(false);
+      viewer.setPointsVisible(false);
+      viewer.setTrajectoryVisible(false);
+      viewer.setDebugVisible(false);
+      renderScale = MANUAL_SCALE ? INITIAL_SCALE : 1;
+      viewer.setRenderScale(renderScale);
+      representation = 'mesh';
+    } else if (next === 'splat') {
+      await ensureSplat();
+      splat?.setVisible(true);
+      viewer.setMeshVisible(false);
+      viewer.setPointsVisible(false);
+      viewer.setTrajectoryVisible(false);
+      viewer.setDebugVisible(false);
+      renderScale = INITIAL_SCALE;
+      viewer.setRenderScale(renderScale);
+      representation = 'splat';
+    } else {
+      splat?.setVisible(false);
+      viewer.setMeshVisible(false);
+      viewer.setPointsVisible(true);
+      viewer.setTrajectoryVisible(true);
+      viewer.setDebugVisible(true);
+      renderScale = MANUAL_SCALE ? INITIAL_SCALE : 1;
+      viewer.setRenderScale(renderScale);
+      representation = 'points';
+    }
+    representationSelect.value = representation;
+    const url = new URL(location.href);
+    if (representation === (hasMesh ? 'mesh' : hasSplat ? 'splat' : 'points')) {
+      url.searchParams.delete('model');
+    } else {
+      url.searchParams.set('model', representation);
+    }
+    history.replaceState(null, '', url);
+  }
+
+  try {
+    await activateRepresentation(representation);
+  } catch (err) {
+    console.warn(`${representation} load failed; using a fallback:`, err);
+    if (representation === 'mesh') {
+      hasMesh = false;
+      const meshOption = representationSelect.querySelector<HTMLOptionElement>('option[value="mesh"]');
+      if (meshOption) meshOption.hidden = true;
+      if (representationWrap) {
+        representationWrap.classList.toggle('hidden', Number(hasMesh) + Number(hasSplat) + Number(Boolean(nPoints)) < 2);
+      }
+    }
+    const fallback: Representation = representation === 'mesh' && hasSplat ? 'splat' : 'points';
+    await activateRepresentation(fallback);
+  }
+  representationSelect.addEventListener('change', () => {
+    void activateRepresentation(representationSelect.value as Representation).catch((err) => {
+      console.warn('could not switch representation:', err);
+      representationSelect.value = representation;
+    });
+  });
 
   const spawnParam = new URLSearchParams(location.search).get('t');
   const spawn = viewer.spawnAt(nav, spawnParam ? Number(spawnParam) : undefined);
@@ -238,13 +347,14 @@ async function boot(): Promise<void> {
   let fps = 0;
   let statTimer = 0;
   let adaptTimer = -3; // let the first frames/sorting settle before judging
-  let renderScale = INITIAL_SCALE;
   const free = grid.data.reduce((s, v) => s + (v === 0 ? 1 : 0), 0);
   const walkable = meta.walkable_area_m2 ?? (free * nav.cell_m * nav.cell_m);
 
   function statLine(): string {
     const parts = [`${CAPTURE}`];
-    if (splat?.loaded) {
+    if (representation === 'mesh') {
+      parts.push('photo-textured mesh');
+    } else if (representation === 'splat' && splat?.loaded) {
       parts.push(meta.splat?.gaussians ? `splat ${(meta.splat.gaussians / 1e6).toFixed(2)}M` : 'splat');
     } else if (nPoints) {
       parts.push(`${nPoints.toLocaleString()} pts${viewer.pointsVisible ? '' : ' (hidden)'}`);
@@ -267,7 +377,7 @@ async function boot(): Promise<void> {
 
     controls.update(dt);
     sandbox.update(dt);
-    if (splat?.loaded) {
+    if (representation === 'splat' && splat?.loaded) {
       splat.update();
       splat.render();
     } else {
@@ -278,7 +388,7 @@ async function boot(): Promise<void> {
     // Dynamic resolution: the splat is fill-rate bound. Only step down when we
     // are clearly below 24 fps (a 30 Hz panel must not trigger it), and stop at
     // 0.6x so the twin never turns into an upscaled blur. A manual ?scale wins.
-    if (!MANUAL_SCALE && splat?.loaded) {
+    if (!MANUAL_SCALE && representation === 'splat' && splat?.loaded) {
       adaptTimer += rawDt;
       if (adaptTimer > 1.0) {
         if (fps < 24 && renderScale > MIN_ADAPTIVE_SCALE) {

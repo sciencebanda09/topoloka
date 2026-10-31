@@ -5,6 +5,7 @@
  */
 
 import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import type { NavData } from './artifacts';
 
 export const navToThree = (x: number, y: number, z: number): THREE.Vector3 =>
@@ -19,6 +20,7 @@ export class Viewer {
   pointsVisible = true;
   private routeLine: THREE.Mesh | null = null;
   private pointsObj: THREE.Points | null = null;
+  private meshRoot: THREE.Group | null = null;
   private trajectory: THREE.Line | null = null;
   private groundGrid: THREE.GridHelper | null = null;
   private outline: THREE.LineLoop | null = null;
@@ -115,6 +117,44 @@ export class Viewer {
   setPointsVisible(visible: boolean): void {
     this.pointsVisible = visible;
     if (this.pointsObj) this.pointsObj.visible = visible;
+  }
+
+  /** Load the photo-textured MVS surface in navigation coordinates (z up). */
+  async addTexturedMesh(url: string): Promise<void> {
+    const gltf = await new GLTFLoader().loadAsync(url);
+    const root = new THREE.Group();
+    root.rotation.x = -Math.PI / 2; // nav (x,y,z-up) -> Three.js (x,z,-y)
+    root.add(gltf.scene);
+    gltf.scene.traverse((object) => {
+      if (!(object instanceof THREE.Mesh)) return;
+      const materials = Array.isArray(object.material) ? object.material : [object.material];
+      const photoMaterials = materials.map((material) => {
+        const map = material instanceof THREE.MeshStandardMaterial || material instanceof THREE.MeshBasicMaterial
+          ? material.map
+          : null;
+        if (map) {
+          map.colorSpace = THREE.SRGBColorSpace;
+          map.anisotropy = Math.min(8, this.renderer.capabilities.getMaxAnisotropy());
+        }
+        // Keep captured colors bright and stable regardless of scene lighting.
+        return new THREE.MeshBasicMaterial({
+          map,
+          color: 0xffffff,
+          side: THREE.DoubleSide,
+          fog: false,
+          toneMapped: false,
+        });
+      });
+      object.material = Array.isArray(object.material) ? photoMaterials : photoMaterials[0];
+      object.frustumCulled = false;
+    });
+    root.visible = false;
+    this.meshRoot = root;
+    this.scene.add(root);
+  }
+
+  setMeshVisible(visible: boolean): void {
+    if (this.meshRoot) this.meshRoot.visible = visible;
   }
 
   addOutline(points: [number, number][]): void {

@@ -289,6 +289,16 @@ def build_costmap(points_m: np.ndarray, traj_m: np.ndarray, cell: float = CELL_M
     if len(floor_pts):
         gy, gx = cells_of(floor_pts)
         grid[gy, gx] = FREE
+        # Dense MVS samples still leave occasional one-cell holes between
+        # adjacent floor pixels. Close only those tiny gaps; do not dilate the
+        # observed floor footprint into unobserved space.
+        floor_mask = np.zeros((h, w), np.uint8)
+        floor_mask[gy, gx] = 255
+        floor_mask = cv2.morphologyEx(
+            floor_mask, cv2.MORPH_CLOSE,
+            cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3, 3)),
+        )
+        grid[floor_mask > 0] = FREE
     # obstacles
     band = pts[(pts[:, 2] >= OBSTACLE_Z[0]) & (pts[:, 2] <= OBSTACLE_Z[1])]
     if len(band):

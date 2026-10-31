@@ -1,6 +1,7 @@
 # test — sample captures for reviewers and fresh clones
 
-Three committed, redistributable samples. All are complete end-to-end runs of
+Four committed, redistributable samples; the Splatfacto v3 experiment is kept
+separate. All are complete end-to-end runs of
 the pipeline on **public** walk-through clips, small enough to live in git so
 anyone can serve the twin and inspect every artifact without a Kaggle account
 or a GPU.
@@ -10,7 +11,8 @@ or a GPU.
 | `metro_v1/` | *Modern Melbourne Metro Walkway Urban Design* by Joolsmagool (Pexels License), 86.07 s | 24.7 MB | 6/6 PASS |
 | `guildhall-v1/` | *Guildhall City of London England interior walkaround video* by Acabashi (CC BY-SA 4.0), 90.0 s trim | 31.0 MB | 6/6 PASS |
 | `guildhall-v2/` | Same public source, sharper 91.925 s trim beginning near 94 s (CC BY-SA 4.0) | 41.34 MB | 6/6 PASS; 204/230 registered; 878,891 splats |
-| `guildhall-v3` (pending) | Same Guildhall source with a higher quality Splatfacto Big training pass | training on Kaggle | not published yet |
+| `guildhall-mvs/` | Same sharp Guildhall trim, dense COLMAP MVS and photo-textured mesh | 105.5 MB | 5.52M dense points, 650k faces, 89.54% textured-face coverage |
+| `guildhall-v3` (pending) | Same Guildhall source with a higher quality Splatfacto Big training pass | running on Kaggle | kept as a separate experiment |
 
 `guildhall-v1` is the R1 public stand-in: a real indoor venue capture, but
 **not the team's own venue**. The source is credited in
@@ -21,8 +23,9 @@ inherits CC BY-SA 4.0.
 report records partial registration (204/230 frames) and two disconnected
 models; see its `README.md` and `capture_qa.md` for the measurements and limits.
 The improved Guildhall v2 web bundle retains 878,891 splats and uses recorded
-camera headings for its default starting view. The larger Splatfacto Big v3
-run is still in training and will be added after packaging and QA.
+camera headings for its default starting view. The Splatfacto Big v3 run remains
+a separate Kaggle experiment. The new MVS sample uses a photo-textured triangle
+mesh by default and keeps the Gaussian splat and point cloud selectable.
 
 ## Layout
 
@@ -93,7 +96,7 @@ sample** to switch among the three committed captures. Drag to look, WASD/arrows
 to walk, M for the minimap, P to toggle the point cloud, and `?t=<index>` to
 choose a spawn point.
 
-The hosted viewer opens improved Guildhall v2 by default. Use the **View
+The hosted viewer opens the Guildhall photo-textured mesh by default. Use the **View
 sample** menu to switch among the three committed samples.
 
 ```bash

@@ -9,9 +9,16 @@ artifacts/<capture>/
                   and the capture camera intrinsics (`camera`)
   cloud.ply       point cloud in the nav frame (fallback / debug view, key: P)
   splat.splat     gaussian splat (optional; placed via nav.json.align)
+  mesh.glb        photo-textured MVS mesh (optional; preferred when present)
   occupancy.png   debug grid image
   meta.json       capture summary shown in the HUD
 ```
+
+When a sample has multiple representations, **VIEW MODEL** switches between
+its photo-textured mesh, Gaussian splat, and point cloud. The Guildhall MVS
+sample opens on the photo-textured mesh; its splat and point cloud remain
+selectable, as do the earlier Guildhall and Metro captures in **VIEW SAMPLE**.
+Each alternate remains shareable through `?model=`.
 
 ## Develop
 
@@ -24,7 +31,8 @@ powershell -File tools\sync_artifacts.ps1 -Kernel namma_splat
 npm run dev            # http://localhost:5173/?capture=synthetic
 ```
 
-Query params: `?capture=<name>` picks the artifact folder, `?route` computes
+Query params: `?capture=<name>` picks the artifact folder, `?model=mesh|splat|points`
+selects a representation, `?route` computes
 an A* path from the spawn point to the capture's last trajectory point and
 draws it in the 3D scene and the minimap (pathfinding smoke test), `?t=<index>`
 spawns at a trajectory sample, `?clean` hides the prompt/FPS for stills, and
@@ -66,7 +74,7 @@ any host with zero configuration.
 
 ## Controls
 
-WASD walk · mouse look (click to capture pointer) · Shift faster ·
+W/S forward/back | A/D sidestep around objects | mouse look (click to capture pointer) | Shift faster |
 M toggle minimap · P toggle point cloud · touch: left half virtual stick,
 right half look. The minimap legend is free / obstacle / unknown / path, plus
 route when `?route` is enabled.
