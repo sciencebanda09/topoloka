@@ -3,12 +3,11 @@
   "status": "ok",
   "model": "depth-anything/Depth-Anything-V2-Metric-Indoor-Large-hf",
   "frames": 122,
-  "frames_fused": 122,
-  "points_raw": 19544400,
-  "points_voxel": 645407,
-  "scale_m_per_unit": 0.471646,
-  "scale_samples": 61157,
-  "scale_mad_rel": 0.0799,
-  "timing_seconds": 81.3,
-  "warnings": []
+  "frames_fused": 115,
+  "points_raw": 6677367,
+  "points_voxel": 176773,
+  "points_fine_20mm": 498117,
+  "scale_m_per_unit": 0.477019,
+  "scale_samples": 178155,
+  "scale_mad_rel": 0.08
 }

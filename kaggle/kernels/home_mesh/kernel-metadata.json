@@ -1,0 +1,18 @@
+{
+  "id": "shashankdev09/namma-mesh-home-v1",
+  "title": "namma-mesh-home-v1",
+  "code_file": "mesh.py",
+  "language": "python",
+  "kernel_type": "script",
+  "is_private": true,
+  "enable_gpu": true,
+  "enable_tpu": false,
+  "enable_internet": true,
+  "dataset_sources": [
+    "shashankdev09/namma-code",
+    "shashankdev09/namma-capture-home-v1"
+  ],
+  "competition_sources": [],
+  "kernel_sources": [],
+  "model_sources": []
+}

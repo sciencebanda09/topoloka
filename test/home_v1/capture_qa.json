@@ -1,7 +1,7 @@
 {
   "stage": "qa",
-  "capture": "home_v1",
-  "time": "2026-10-31 23:04:45",
+  "capture": "run",
+  "time": "2026-10-31 19:07:06",
   "overall": "WARN",
   "checks": [
     {
@@ -35,7 +35,7 @@
     {
       "name": "floor_outline",
       "status": "PASS",
-      "detail": "63 outline points, 8.05 m2 walkable",
+      "detail": "51 outline points, 14.21 m2 walkable",
       "compensation": "sparse cloud can under-draw the footprint; the depth stage densifies it",
       "value": null
     },

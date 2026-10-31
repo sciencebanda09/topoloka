@@ -1,16 +1,20 @@
 {
   "capture": "home_v1",
-  "created": "2026-10-31 17:20:21",
+  "created": "2026-10-31 19:07:49",
   "cloud_source": "depth/map.npz",
-  "cloud_points": 250000,
+  "cloud_points": 176773,
   "splat": {
     "present": true,
-    "bytes": 9647616,
-    "gaussians": 301488
+    "bytes": 32000000,
+    "gaussians": 1000000
   },
   "scale_source": "metric-input",
-  "walkable_area_m2": 8.05,
+  "walkable_area_m2": 14.21,
   "qa_overall": "WARN",
   "packaging_seconds": 0.1,
-  "sample": "decimated copy of the Kaggle pipeline output"
+  "mesh": {
+    "present": true,
+    "format": "glb",
+    "source": "Multi-View Poisson + 8K Photo Atlas"
+  }
 }
