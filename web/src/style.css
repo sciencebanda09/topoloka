@@ -22,7 +22,7 @@ html, body, #app { width: 100%; height: 100%; overflow: hidden; background: #0b0
   width: fit-content; pointer-events: auto;
   font-family: ui-monospace, 'Cascadia Code', Consolas, monospace;
 }
-#representation-picker.hidden { display: none; }
+#scene-picker.hidden, #representation-picker.hidden { display: none; }
 #scene-picker span, #representation-picker span {
   color: #70879a; font-size: 9px; letter-spacing: 0.16em; white-space: nowrap;
 }

@@ -14,11 +14,10 @@ artifacts/<capture>/
   meta.json       capture summary shown in the HUD
 ```
 
-When a sample has multiple representations, **VIEW MODEL** switches between
-its photo-textured mesh, Gaussian splat, and point cloud. The Guildhall MVS
-sample opens on the photo-textured mesh; its splat and point cloud remain
-selectable, as do the earlier Guildhall and Metro captures in **VIEW SAMPLE**.
-Each alternate remains shareable through `?model=`.
+The hosted viewer currently serves the Melbourne Metro sample. **VIEW MODEL**
+switches between its Gaussian splat and point cloud. Guildhall captures remain
+in `test/` for reference and pipeline work, but are not part of the hosted
+viewer. The default public URL opens the Metro sample.
 
 ## Develop
 

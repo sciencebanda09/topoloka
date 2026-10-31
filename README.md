@@ -34,8 +34,10 @@ See `kaggle/README.md`.
 
 ## Public samples
 
-Four selectable samples, all built from public footage by the same pipeline;
-the experimental Guildhall Splatfacto v3 quality pass remains on Kaggle:
+Four sample builds from public footage remain in the repository. The hosted
+viewer publishes the QA-passing Melbourne Metro sample; Guildhall outputs are
+kept in the repository for reference and pipeline work. The experimental
+Guildhall Splatfacto v3 quality pass remains on Kaggle:
 
 | Sample | Source | Size | Measured |
 |---|---|---|---|
@@ -46,8 +48,8 @@ the experimental Guildhall Splatfacto v3 quality pass remains on Kaggle:
 | `guildhall-v3` | Same source, Splatfacto Big quality pass | running on Kaggle | retained as a separate experiment |
 
 `guildhall-v1` is the **R1 public stand-in** — a real indoor venue walk-through,
-but not the team's own venue. The metro capture remains a separate sample.
-The hosted viewer below provides a sample picker for all public captures.
+but not the team's own venue. The hosted viewer currently features the Metro
+capture because it is the stronger public output.
 
 `guildhall-v2` is a sharper alternate trim of the same public video, selected
 after the first sample looked soft. Its sharpness scan's p10 score is 1582.84
@@ -58,10 +60,8 @@ registered; the smaller model is excluded from the shipped map. See
 
 **Hosted viewer:** <https://sciencebanda09.github.io/topoloka/>
 
-It opens the photo-textured Guildhall mesh by default. Use **View sample** in
-the upper-left to switch among the new mesh, both earlier Guildhall captures,
-and Melbourne Metro. **View model** switches the mesh, retained splat, and point
-cloud; A/D sidestep around the sculptures and other objects.
+It opens Melbourne Metro. **View model** switches between the Gaussian splat
+and point cloud; A/D sidestep around objects.
 
 ![The metro twin in a browser: splat, minimap, QA status](docs/fig/twin.png)
 
@@ -86,7 +86,7 @@ foreach ($sampleDir in Get-ChildItem test -Directory) {
 }
 cd web
 npm ci
-npm run dev        # open http://127.0.0.1:5173/ (Guildhall photo mesh by default)
+npm run dev        # open http://127.0.0.1:5173/ (Metro sample by default)
 ```
 
 ```bash
@@ -149,14 +149,14 @@ on every reading.
       true-FPS HUD, minimap legend, debug geometry hidden after splat load
 - [x] End-to-end public run — CPU SfM 59.2 min; GPU 79.0 min total; 510,336
       gaussians exported; 315.05 m² walkable; QA 6/6 PASS
-- [x] Single hosted sample selector (link above; defaults to the Guildhall photo
-      mesh and includes all four committed public samples)
+- [x] Hosted Metro sample at the single public link; Guildhall outputs remain
+      in the repository but are excluded from the deployed viewer
 - [x] Guildhall MVS photo mesh: `test/guildhall-mvs` (5.52M fused points,
       650k mesh faces, 89.54% textured-face coverage; capture navigation is
       retained because the dense cloud did not yield a floor fit)
 - [x] R1 public stand-in twin: `test/guildhall-v1` (90.0 s CC BY-SA 4.0 crypt
       walk; 218/218 registered, 0.515 px median, 458.81 m², 632,993 gaussians,
-      QA 6/6 PASS; selectable from the hosted viewer)
+      QA 6/6 PASS; retained as a repository sample)
 - [x] Demo video (3:33, 1920×1080/30) — hosted twin walk-through, QA/metric
       cards, A* route, limitations and roadmap:
       <https://github.com/sciencebanda09/topoloka/releases/download/r1-demo/topoloka_demo.mp4>

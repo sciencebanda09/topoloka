@@ -17,14 +17,15 @@ import { SplatLayer } from './splat';
 import { Viewer } from './viewer';
 
 const params = new URLSearchParams(location.search);
-const DEFAULT_CAPTURE = 'guildhall-mvs';
+const DEFAULT_CAPTURE = 'metro_v1';
+const AVAILABLE_CAPTURES = new Set([DEFAULT_CAPTURE]);
 const requestedCapture = params.get('capture');
 const cleanCapture = requestedCapture && /^[a-zA-Z0-9_-]+$/.test(requestedCapture)
   ? requestedCapture
   : null;
-// Keep the previously shared Hall link working; the project now uses its
-// reconstruction name for the current best Guildhall sample.
-const CAPTURE = cleanCapture === 'house_v1' ? DEFAULT_CAPTURE : cleanCapture ?? DEFAULT_CAPTURE;
+const captureIsAvailable = cleanCapture
+  && (AVAILABLE_CAPTURES.has(cleanCapture) || import.meta.env.DEV);
+const CAPTURE = captureIsAvailable ? cleanCapture : DEFAULT_CAPTURE;
 if (requestedCapture && CAPTURE !== requestedCapture) {
   const cleanUrl = new URL(location.href);
   cleanUrl.searchParams.delete('capture');
@@ -50,13 +51,16 @@ const titleEl = document.getElementById('title');
 if (titleEl) titleEl.textContent = PRODUCT_NAME.toUpperCase();
 document.title = `${PRODUCT_NAME} — indoor twins in a link`;
 const captureSelect = document.getElementById('capture-select') as HTMLSelectElement;
-if (![...captureSelect.options].some((option) => option.value === CAPTURE)) {
+if (import.meta.env.DEV && ![...captureSelect.options].some((option) => option.value === CAPTURE)) {
   const linkedSample = document.createElement('option');
   linkedSample.value = CAPTURE;
-  linkedSample.textContent = `${CAPTURE} (linked sample)`;
+  linkedSample.textContent = `${CAPTURE} (local sample)`;
   captureSelect.add(linkedSample, 0);
 }
 captureSelect.value = CAPTURE;
+if (captureSelect.options.length < 2) {
+  document.getElementById('scene-picker')?.classList.add('hidden');
+}
 captureSelect.addEventListener('change', () => {
   const nextUrl = new URL(location.href);
   nextUrl.searchParams.set('capture', captureSelect.value);
@@ -415,6 +419,6 @@ async function boot(): Promise<void> {
 boot().catch((err) => {
   console.error(err);
   subtitle.textContent = `Could not load ${CAPTURE}`;
-  hint.textContent = 'Choose a saved sample from VIEW SAMPLE above';
+  hint.textContent = 'The sample could not load. Check your connection and reload.';
   hint.classList.remove('hidden');
 });

@@ -91,13 +91,13 @@ npm ci
 npm run dev
 ```
 
-Open <http://127.0.0.1:5173/>. Improved Guildhall v2 is the default; use **View
-sample** to switch among the three committed captures. Drag to look, WASD/arrows
+Open <http://127.0.0.1:5173/>. Melbourne Metro is the default public sample.
+Guildhall bundles remain in the repository for pipeline reference. Drag to look, WASD/arrows
 to walk, M for the minimap, P to toggle the point cloud, and `?t=<index>` to
 choose a spawn point.
 
-The hosted viewer opens the Guildhall photo-textured mesh by default. Use the **View
-sample** menu to switch among the three committed samples.
+The hosted viewer opens Melbourne Metro. Guildhall outputs remain available in
+the repository but are excluded from the deployed viewer.
 
 ```bash
 # POSIX equivalent

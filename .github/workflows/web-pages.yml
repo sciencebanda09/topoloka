@@ -1,9 +1,8 @@
 # Builds the web viewer and deploys it to GitHub Pages.
 #
 # Artifacts: web/public/artifacts/* is gitignored (large pipeline outputs).
-# Every committed sample capture under test/<name>/web/ is copied into
-# web/public/artifacts/<name>/ here before the build, so the deployed viewer
-# can serve ?capture=<name> without any duplicate data in git.
+# The selected public sample is copied into web/public/artifacts here before
+# the build. Other research captures remain in the repo but are not published.
 name: web-pages
 
 on:
@@ -28,13 +27,11 @@ jobs:
       - name: Stage committed sample captures
         working-directory: .
         run: |
-          for d in test/*/web; do
-            [ -d "$d" ] || continue
-            name="$(basename "$(dirname "$d")")"
-            echo "staging $name"
-            mkdir -p "web/public/artifacts/$name"
-            cp -r "$d/." "web/public/artifacts/$name/"
-          done
+          d="test/metro_v1/web"
+          name="metro_v1"
+          echo "staging $name"
+          mkdir -p "web/public/artifacts/$name"
+          cp -r "$d/." "web/public/artifacts/$name/"
       - uses: actions/setup-node@v4
         with:
           node-version: 22
