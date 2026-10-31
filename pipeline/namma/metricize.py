@@ -62,15 +62,17 @@ def _scale_transforms(capture_dir: Path, scale: float) -> int:
 
 
 def _scale_cloud(capture_dir: Path, scale: float) -> int:
-    """Scale sparse.ply points (interleaved PLY, colors preserved)."""
+    """Scale sparse.ply points (both sfm/sparse.ply and root sparse.ply if present)."""
     ply_path = capture_dir / "sfm" / "sparse.ply"
     if not ply_path.exists():
         raise SystemExit(f"missing {ply_path}")
     xyz, rgb = load_cloud(ply_path)
     xyz = (xyz.astype(np.float64) * scale).astype(np.float32)
-    tmp = ply_path.with_suffix(".ply.tmp")
-    _write_ply(tmp, xyz, rgb)
-    os.replace(tmp, ply_path)
+    for target in (ply_path, capture_dir / "sparse.ply"):
+        if target.exists() or target == ply_path:
+            tmp = target.with_suffix(".ply.tmp")
+            _write_ply(tmp, xyz, rgb)
+            os.replace(tmp, target)
     return len(xyz)
 
 
