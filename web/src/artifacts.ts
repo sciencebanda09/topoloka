@@ -59,17 +59,27 @@ export async function loadNav(base: string): Promise<NavData> {
 
 /** Decode the base64 PNG grid into {w, h, data} of palette indices (0/1/2). */
 export async function decodeGrid(grid: NavGrid): Promise<{ w: number; h: number; data: Uint8Array }> {
-  const img = new Image();
-  img.src = `data:image/png;base64,${grid.data_b64}`;
-  await img.decode();
-  const canvas = new OffscreenCanvas(img.width, img.height);
-  const ctx = canvas.getContext('2d');
-  if (!ctx) throw new Error('no 2d context');
-  ctx.drawImage(img, 0, 0);
-  const px = ctx.getImageData(0, 0, img.width, img.height).data;
-  const data = new Uint8Array(img.width * img.height);
-  for (let i = 0; i < data.length; i++) data[i] = px[i * 4]; // grayscale: R holds the value
-  return { w: img.width, h: img.height, data };
+  try {
+    const img = new Image();
+    img.src = `data:image/png;base64,${grid.data_b64}`;
+    await img.decode();
+    const canvas = typeof OffscreenCanvas !== 'undefined'
+      ? new OffscreenCanvas(img.width, img.height)
+      : document.createElement('canvas');
+    if ('width' in canvas) { canvas.width = img.width; canvas.height = img.height; }
+    const ctx = canvas.getContext('2d') as CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D | null;
+    if (!ctx) throw new Error('no 2d context');
+    ctx.drawImage(img, 0, 0);
+    const px = ctx.getImageData(0, 0, img.width, img.height).data;
+    const data = new Uint8Array(img.width * img.height);
+    for (let i = 0; i < data.length; i++) data[i] = px[i * 4]; // grayscale: R holds the value
+    return { w: img.width, h: img.height, data };
+  } catch (err) {
+    console.warn('decodeGrid fallback to empty free grid:', err);
+    const w = grid.w || 100;
+    const h = grid.h || 100;
+    return { w, h, data: new Uint8Array(w * h) }; // all 0 = free space
+  }
 }
 
 export async function loadCloud(base: string): Promise<{ positions: Float32Array; colors: Uint8Array } | null> {
