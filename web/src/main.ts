@@ -15,8 +15,13 @@ import { Costmap } from './nav';
 import { Sandbox } from './sandbox';
 import { SplatLayer } from './splat';
 import { Viewer } from './viewer';
+import * as THREE from 'three';
 
 const params = new URLSearchParams(location.search);
+let curRx = Number(params.get('rx')) || 0;
+let curRy = Number(params.get('ry')) || 0;
+let curRz = Number(params.get('rz')) || 0;
+let curOy = Number(params.get('oy')) || 0;
 const DEFAULT_CAPTURE = 'metro_v1';
 const AVAILABLE_CAPTURES = new Set(['metro_v1', 'home_v1', 'kitchen', 'room']);
 const requestedCapture = params.get('capture');
@@ -66,8 +71,22 @@ captureSelect.addEventListener('change', () => {
   nextUrl.searchParams.set('capture', captureSelect.value);
   nextUrl.searchParams.delete('t');
   nextUrl.searchParams.delete('route');
+  nextUrl.searchParams.delete('rx');
+  nextUrl.searchParams.delete('ry');
+  nextUrl.searchParams.delete('rz');
+  nextUrl.searchParams.delete('oy');
   location.assign(nextUrl);
 });
+
+const toastEl = document.getElementById('toast') as HTMLDivElement | null;
+let toastTimer = 0;
+function showToast(message: string): void {
+  if (!toastEl) return;
+  toastEl.textContent = message;
+  toastEl.classList.add('show');
+  window.clearTimeout(toastTimer);
+  toastTimer = window.setTimeout(() => toastEl.classList.remove('show'), 2200);
+}
 
 const subtitle = document.getElementById('subtitle') as HTMLDivElement;
 const hint = document.getElementById('center-hint') as HTMLDivElement;
@@ -132,6 +151,29 @@ async function boot(): Promise<void> {
   viewer.addOutline(nav.outline);
   viewer.addTrajectory(nav.trajectory);
 
+
+  const spawnParam = new URLSearchParams(location.search).get('t');
+  const spawn = viewer.spawnAt(nav, spawnParam ? Number(spawnParam) : undefined);
+  const pivot = new THREE.Vector3(spawn.position[0], spawn.position[2], -spawn.position[1]);
+
+  function applyOrientation(saveUrl = true): void {
+    splat?.setExtraTransform(curRx, curRy, curRz, curOy, pivot);
+    viewer.setExtraTransform(curRx, curRy, curRz, curOy, pivot);
+    const readout = document.getElementById('orient-readout');
+    if (readout) {
+      const oyStr = curOy >= 0 ? `+${curOy.toFixed(1)}m` : `${curOy.toFixed(1)}m`;
+      readout.textContent = `rx: ${curRx}° · ry: ${curRy}° · rz: ${curRz}° · oy: ${oyStr}`;
+    }
+    if (saveUrl) {
+      const url = new URL(location.href);
+      if (curRx) url.searchParams.set('rx', curRx.toString()); else url.searchParams.delete('rx');
+      if (curRy) url.searchParams.set('ry', curRy.toString()); else url.searchParams.delete('ry');
+      if (curRz) url.searchParams.set('rz', curRz.toString()); else url.searchParams.delete('rz');
+      if (curOy) url.searchParams.set('oy', curOy.toFixed(1)); else url.searchParams.delete('oy');
+      history.replaceState(null, '', url);
+    }
+  }
+
   const cloud = await loadCloud(BASE);
   const nPoints = cloud ? viewer.addPointCloud(cloud.positions, cloud.colors) : 0;
 
@@ -194,6 +236,7 @@ async function boot(): Promise<void> {
       renderScale = MANUAL_SCALE ? INITIAL_SCALE : 1;
       viewer.setRenderScale(renderScale);
       representation = 'mesh';
+      applyOrientation(false);
     } else if (next === 'splat') {
       await ensureSplat();
       splat?.setVisible(true);
@@ -204,6 +247,7 @@ async function boot(): Promise<void> {
       renderScale = INITIAL_SCALE;
       viewer.setRenderScale(renderScale);
       representation = 'splat';
+      applyOrientation(false);
     } else {
       splat?.setVisible(false);
       viewer.setMeshVisible(false);
@@ -213,6 +257,7 @@ async function boot(): Promise<void> {
       renderScale = MANUAL_SCALE ? INITIAL_SCALE : 1;
       viewer.setRenderScale(renderScale);
       representation = 'points';
+      applyOrientation(false);
     }
     representationSelect.value = representation;
     const url = new URL(location.href);
@@ -245,9 +290,6 @@ async function boot(): Promise<void> {
       representationSelect.value = representation;
     });
   });
-
-  const spawnParam = new URLSearchParams(location.search).get('t');
-  const spawn = viewer.spawnAt(nav, spawnParam ? Number(spawnParam) : undefined);
   const controls = new WalkControls(canvas, viewer.camera, costmap, spawn);
   const minimap = new Minimap(minimapCanvas, nav,
     { w: costmap.w, h: costmap.h, data: costmap.data });
@@ -334,6 +376,103 @@ async function boot(): Promise<void> {
   if (params.has('route') && routeEnd) setRouteGoal(routeEnd);
   if (sandbox.autoEnable) sandbox.setEnabled(true);
 
+  function stepAngle(cur: number, delta: number): number {
+    let next = (cur + delta) % 360;
+    if (next > 180) next -= 360;
+    if (next < -180) next += 360;
+    return next;
+  }
+
+  const btnFlip = document.getElementById('btn-flip');
+  btnFlip?.addEventListener('click', () => {
+    curRx = stepAngle(curRx, 180);
+    applyOrientation(true);
+    showToast(`Flipped 180° (rx: ${curRx}°)`);
+  });
+
+  const btnResetRot = document.getElementById('btn-reset-rot');
+  btnResetRot?.addEventListener('click', () => {
+    curRx = 0;
+    curRy = 0;
+    curRz = 0;
+    curOy = 0;
+    applyOrientation(true);
+    showToast('Orientation reset to 0°');
+  });
+
+  const btnCopyRot = document.getElementById('btn-copy-rot');
+  btnCopyRot?.addEventListener('click', () => {
+    const shareUrl = location.href;
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(shareUrl)
+        .then(() => showToast('Share link copied to clipboard!'))
+        .catch(() => showToast('Could not copy link'));
+    } else {
+      showToast(shareUrl);
+    }
+  });
+
+  document.getElementById('btn-ry-m90')?.addEventListener('click', () => {
+    curRy = stepAngle(curRy, -90);
+    applyOrientation(true);
+  });
+  document.getElementById('btn-ry-p90')?.addEventListener('click', () => {
+    curRy = stepAngle(curRy, 90);
+    applyOrientation(true);
+  });
+  document.getElementById('btn-ry-m15')?.addEventListener('click', () => {
+    curRy = stepAngle(curRy, -15);
+    applyOrientation(true);
+  });
+  document.getElementById('btn-ry-p15')?.addEventListener('click', () => {
+    curRy = stepAngle(curRy, 15);
+    applyOrientation(true);
+  });
+
+  document.getElementById('btn-rx-m90')?.addEventListener('click', () => {
+    curRx = stepAngle(curRx, -90);
+    applyOrientation(true);
+  });
+  document.getElementById('btn-rx-p90')?.addEventListener('click', () => {
+    curRx = stepAngle(curRx, 90);
+    applyOrientation(true);
+  });
+  document.getElementById('btn-rx-m15')?.addEventListener('click', () => {
+    curRx = stepAngle(curRx, -15);
+    applyOrientation(true);
+  });
+  document.getElementById('btn-rx-p15')?.addEventListener('click', () => {
+    curRx = stepAngle(curRx, 15);
+    applyOrientation(true);
+  });
+
+  document.getElementById('btn-rz-m15')?.addEventListener('click', () => {
+    curRz = stepAngle(curRz, -15);
+    applyOrientation(true);
+  });
+  document.getElementById('btn-rz-p15')?.addEventListener('click', () => {
+    curRz = stepAngle(curRz, 15);
+    applyOrientation(true);
+  });
+  document.getElementById('btn-oy-up')?.addEventListener('click', () => {
+    curOy = Math.round((curOy + 0.2) * 10) / 10;
+    applyOrientation(true);
+  });
+  document.getElementById('btn-oy-down')?.addEventListener('click', () => {
+    curOy = Math.round((curOy - 0.2) * 10) / 10;
+    applyOrientation(true);
+  });
+
+  const orientControls = document.getElementById('orient-controls');
+  const orientToggle = document.getElementById('orient-toggle');
+  orientToggle?.addEventListener('click', () => {
+    const isMin = orientControls?.classList.toggle('minimized');
+    if (orientToggle) orientToggle.textContent = isMin ? '+' : '−';
+  });
+
+  applyOrientation(false);
+
+
   document.addEventListener('pointerlockchange', () => {
     const locked = document.pointerLockElement === canvas;
     hint.classList.toggle('hidden', locked);
@@ -341,6 +480,25 @@ async function boot(): Promise<void> {
   window.addEventListener('keydown', (e) => {
     if (e.code === 'KeyP') viewer.setPointsVisible(!viewer.pointsVisible);
     if (e.code === 'KeyM') mapWrap.classList.toggle('hidden');
+    if (e.code === 'KeyO') {
+      curRx = stepAngle(curRx, 180);
+      applyOrientation(true);
+      showToast(`Flipped 180° (rx: ${curRx}°)`);
+    }
+    if (e.code === 'BracketLeft') {
+      curRy = stepAngle(curRy, -90);
+      applyOrientation(true);
+      showToast(`Turned left 90° (ry: ${curRy}°)`);
+    }
+    if (e.code === 'BracketRight') {
+      curRy = stepAngle(curRy, 90);
+      applyOrientation(true);
+      showToast(`Turned right 90° (ry: ${curRy}°)`);
+    }
+    if (e.code === 'Backslash') {
+      const isMin = orientControls?.classList.toggle('minimized');
+      if (orientToggle) orientToggle.textContent = isMin ? '+' : '−';
+    }
     if (e.code === 'KeyT' && sandbox.isEnabled) {
       if (routeGoal) setRouteGoal(null);
       else if (routeEnd) setRouteGoal(routeEnd);

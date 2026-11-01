@@ -34,6 +34,42 @@
             <option value="points">Point cloud</option>
           </select>
         </label>
+
+        <div id="orientation-section">
+          <div class="orient-header">
+            <span>ROTATE / ALIGN SCENE</span>
+            <button id="orient-toggle" type="button" title="Minimize / Expand orientation controls (\)">−</button>
+          </div>
+          <div id="orient-controls">
+            <div class="orient-row">
+              <button id="btn-flip" class="orient-btn btn-highlight" type="button" title="Flip upside down 180° (Hotkey: O)">🔄 Flip 180°</button>
+              <button id="btn-reset-rot" class="orient-btn" type="button" title="Reset to default rotation">↺ Reset</button>
+              <button id="btn-copy-rot" class="orient-btn btn-share" type="button" title="Copy link with this exact rotation">🔗 Copy Link</button>
+            </div>
+            <div class="orient-row">
+              <span class="orient-tag">Turn Y</span>
+              <button id="btn-ry-m90" class="orient-btn" type="button" title="Rotate left 90° (Hotkey: [)">↺ 90°</button>
+              <button id="btn-ry-p90" class="orient-btn" type="button" title="Rotate right 90° (Hotkey: ])">↻ 90°</button>
+              <button id="btn-ry-m15" class="orient-btn" type="button" title="Rotate left 15°">-15°</button>
+              <button id="btn-ry-p15" class="orient-btn" type="button" title="Rotate right 15°">+15°</button>
+            </div>
+            <div class="orient-row">
+              <span class="orient-tag">Tilt X</span>
+              <button id="btn-rx-m90" class="orient-btn" type="button" title="Tilt up 90°">⬆ 90°</button>
+              <button id="btn-rx-p90" class="orient-btn" type="button" title="Tilt down 90°">⬇ 90°</button>
+              <button id="btn-rx-m15" class="orient-btn" type="button" title="Tilt up 15°">-15°</button>
+              <button id="btn-rx-p15" class="orient-btn" type="button" title="Tilt down 15°">+15°</button>
+            </div>
+            <div class="orient-row">
+              <span class="orient-tag">Level</span>
+              <button id="btn-rz-m15" class="orient-btn" type="button" title="Roll counterclockwise 15°">⤹ 15°</button>
+              <button id="btn-rz-p15" class="orient-btn" type="button" title="Roll clockwise 15°">⤸ 15°</button>
+              <button id="btn-oy-up" class="orient-btn" type="button" title="Raise model +0.2m">▲ +0.2m</button>
+              <button id="btn-oy-down" class="orient-btn" type="button" title="Lower model -0.2m">▼ -0.2m</button>
+            </div>
+            <div id="orient-readout" class="orient-readout">rx: 0° · ry: 0° · rz: 0° · oy: 0.0m</div>
+          </div>
+        </div>
       </div>
 
       <div id="map-wrap">
@@ -49,7 +85,7 @@
       </div>
 
       <div id="help">
-        <b>W/S</b> forward/back | <b>A/D</b> sidestep | <b>mouse</b> look | <b>shift</b> faster | <b>M</b> map | <b>G</b> sandbox | <b>click</b> to enter
+        <b>W/S</b> forward/back | <b>A/D</b> sidestep | <b>O</b> flip 180° | <b>[ / ]</b> rotate | <b>M</b> map | <b>G</b> sandbox | <b>click</b> to enter
       </div>
 
       <div id="center-hint">click to enter walkthrough</div>

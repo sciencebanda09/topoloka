@@ -69,6 +69,7 @@ export class SplatLayer {
       sceneRevealMode: GaussianSplats3D.SceneRevealMode.Instant,
       logLevel: GaussianSplats3D.LogLevel.None,
       focalAdjustment: 1.0,
+      dynamicScene: true,
       maxScreenSpaceSplatSize: this.options.maxScreenSpaceSplatSize,
     });
   }
@@ -163,6 +164,33 @@ export class SplatLayer {
   setVisible(visible: boolean): void {
     const view = this.viewer as unknown as { splatMesh?: THREE.Object3D };
     if (view.splatMesh) view.splatMesh.visible = visible;
+  }
+
+  setExtraTransform(rxDeg: number, ryDeg: number, rzDeg: number, oyMeters: number, pivot?: THREE.Vector3): void {
+    const view = this.viewer as unknown as { splatMesh?: THREE.Mesh };
+    if (!view.splatMesh) return;
+    const p = pivot ?? new THREE.Vector3(0, 0, 0);
+    const rot = new THREE.Euler(
+      THREE.MathUtils.degToRad(rxDeg),
+      THREE.MathUtils.degToRad(ryDeg),
+      THREE.MathUtils.degToRad(rzDeg),
+      'YXZ',
+    );
+    const extraR = new THREE.Matrix4().makeRotationFromEuler(rot);
+    const toCenter = new THREE.Matrix4().makeTranslation(-p.x, -p.y, -p.z);
+    const fromCenter = new THREE.Matrix4().makeTranslation(p.x, p.y + oyMeters, p.z);
+    const mExtra = new THREE.Matrix4().multiply(fromCenter).multiply(extraR).multiply(toCenter);
+
+    const pos = new THREE.Vector3();
+    const quat = new THREE.Quaternion();
+    const scale = new THREE.Vector3();
+    mExtra.decompose(pos, quat, scale);
+
+    view.splatMesh.position.copy(pos);
+    view.splatMesh.quaternion.copy(quat);
+    view.splatMesh.scale.copy(scale);
+    view.splatMesh.updateMatrix();
+    view.splatMesh.updateMatrixWorld(true);
   }
 
   render(): void {

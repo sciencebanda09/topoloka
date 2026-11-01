@@ -18,6 +18,7 @@ export class Viewer {
   readonly scene: THREE.Scene;
   readonly camera: THREE.PerspectiveCamera;
   pointsVisible = true;
+  private modelRoot = new THREE.Group();
   private routeLine: THREE.Mesh | null = null;
   private pointsObj: THREE.Points | null = null;
   private meshRoot: THREE.Group | null = null;
@@ -38,6 +39,7 @@ export class Viewer {
     this.scene = new THREE.Scene();
     this.scene.background = new THREE.Color(0x0b0d10);
     this.scene.fog = new THREE.Fog(0x0b0d10, 18, 42);
+    this.scene.add(this.modelRoot);
 
     this.camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.05, 200);
     this.applyFov();
@@ -110,7 +112,7 @@ export class Viewer {
     const points = new THREE.Points(geo, mat);
     points.frustumCulled = false;
     this.pointsObj = points;
-    this.scene.add(points);
+    this.modelRoot.add(points);
     return n;
   }
 
@@ -150,7 +152,32 @@ export class Viewer {
     });
     root.visible = false;
     this.meshRoot = root;
-    this.scene.add(root);
+    this.modelRoot.add(root);
+  }
+
+  setExtraTransform(rxDeg: number, ryDeg: number, rzDeg: number, oyMeters: number, pivot?: THREE.Vector3): void {
+    const p = pivot ?? new THREE.Vector3(0, 0, 0);
+    const rot = new THREE.Euler(
+      THREE.MathUtils.degToRad(rxDeg),
+      THREE.MathUtils.degToRad(ryDeg),
+      THREE.MathUtils.degToRad(rzDeg),
+      'YXZ',
+    );
+    const extraR = new THREE.Matrix4().makeRotationFromEuler(rot);
+    const toCenter = new THREE.Matrix4().makeTranslation(-p.x, -p.y, -p.z);
+    const fromCenter = new THREE.Matrix4().makeTranslation(p.x, p.y + oyMeters, p.z);
+    const mExtra = new THREE.Matrix4().multiply(fromCenter).multiply(extraR).multiply(toCenter);
+
+    const pos = new THREE.Vector3();
+    const quat = new THREE.Quaternion();
+    const scale = new THREE.Vector3();
+    mExtra.decompose(pos, quat, scale);
+
+    this.modelRoot.position.copy(pos);
+    this.modelRoot.quaternion.copy(quat);
+    this.modelRoot.scale.copy(scale);
+    this.modelRoot.updateMatrix();
+    this.modelRoot.updateMatrixWorld(true);
   }
 
   setMeshVisible(visible: boolean): void {
