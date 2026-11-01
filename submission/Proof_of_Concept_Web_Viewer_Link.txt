@@ -1,0 +1,14 @@
+Project: Topoloka — Indoor Twins in a Link
+Competition: Namma Space — Techfest 2026-27 (IIT Bombay)
+Deliverable: Proof of Concept & Web Viewer Link
+
+Working Web Viewer URL:
+https://sciencebanda09.github.io/topoloka/
+
+Features:
+- Free-roaming first-person walkthrough with WASD keyboard controls and mouse look (pointer lock).
+- Mobile support with virtual on-screen touch joystick.
+- Interactive HUD toolbar for dynamic scene orientation (Flip 180°, Turn Y, Tilt X, Level, Height offset).
+- 2.5D metric occupancy minimap with live player synchronization.
+- Obstacle-aware collision avoidance and A* pathfinding.
+- Sub-50MB zero-install static WebGL payload running at 50–60 FPS.

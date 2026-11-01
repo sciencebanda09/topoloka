@@ -1,0 +1,12 @@
+Project: Topoloka — Indoor Twins in a Link
+Competition: Namma Space — Techfest 2026-27 (IIT Bombay)
+Deliverable: Demonstration Video (3 to 5 minutes)
+
+Direct Video Stream / Download URL:
+https://github.com/sciencebanda09/topoloka/releases/download/r1-demo/topoloka_demo.mp4
+
+Specifications:
+- Duration: 3 minutes 33 seconds (3:33) — strictly within the 3–5 minute requirement.
+- Resolution: Full HD (1920x1080), 30 FPS.
+- Format: H.264 video with AAC audio (41.0 MB).
+- Content: Explains project scope, smartphone capture SOP, SfM + depth metricization pipeline, live 3D web walkthrough, minimap synchronization, orientation controls, and obstacle-avoidance routing.

@@ -1,0 +1,13 @@
+Project: Topoloka — Indoor Twins in a Link
+Competition: Namma Space — Techfest 2026-27 (IIT Bombay)
+Deliverable: Code Repository
+
+GitHub Repository URL:
+https://github.com/sciencebanda09/topoloka
+
+Specifications:
+- Open-source codebase (MIT License).
+- Contains full setup instructions in README.md for reconstructing models.
+- End-to-end pipeline: smartphone capture SOP, pycolmap SfM, Depth Anything V2 metric scaling, nerfstudio 3DGS, costmap generation, and WebGL viewer.
+- Includes sample data placed inside the `test/` directory (`test/metro_v1/`, `test/guildhall-v1/`) with preview frames, SfM poses, metric nav metadata, and point clouds.
+- 100% free-tier cloud execution tooling under `kaggle/`.
