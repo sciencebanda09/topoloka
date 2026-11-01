@@ -12,6 +12,12 @@ web/node_modules/
 web/dist/
 web/public/artifacts/*
 !web/public/artifacts/README.md
+!web/public/artifacts/metro_v1/
+!web/public/artifacts/metro_v1/**
+!web/public/artifacts/home_v1/
+!web/public/artifacts/home_v1/**
+!web/public/artifacts/kitchen/
+!web/public/artifacts/kitchen/**
 
 # kaggle tooling
 kaggle/staging/
