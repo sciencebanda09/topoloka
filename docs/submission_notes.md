@@ -8,7 +8,7 @@ the portal is the only place that matters, this file is the defense copy.
 | Item | Link | Status |
 |------|------|--------|
 | Repo | https://github.com/sciencebanda09/topoloka | public (MIT), created 2026-10-18 |
-| Viewer (Melbourne Metro) | https://sciencebanda09.github.io/topoloka/?v=20261031-clean | single curated public sample |
+| Viewer (Studio Room + Metro) | https://sciencebanda09.github.io/topoloka/ | live free-roam twin with interactive orientation controls |
 | Sandbox preview (R2) | same viewer; press G or append `?sandbox=1` | add and place props in the Metro twin |
 | Demo video | https://github.com/sciencebanda09/topoloka/releases/download/r1-demo/topoloka_demo.mp4 | 3:33, 1080p30, 41.0 MB; hosted 2026-10-26 |
 | Abstract PDF | `docs/abstract.pdf` in repo | two captures, 5 pages, 2.48 MB; rebuilt 2026-10-29 |

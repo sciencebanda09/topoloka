@@ -1,4 +1,4 @@
-﻿# R1 submission checklist (due Oct 31, 2026)
+# R1 submission checklist (due Oct 31, 2026)
 
 Round 1 deliverables and their exact state. Numbers below trace to
 `test/guildhall-v1/` (the R1 public stand-in), `test/metro_v1/` (second
@@ -30,7 +30,7 @@ sample), and the Kaggle outputs they were assembled from.
 - [x] Real bundles synced into `web/public/artifacts/` and visually verified on
       a hardware GPU (ANGLE/D3D11) for metro: splat, minimap, HUD, collision
 - [x] Pages workflow stages the curated Metro sample for the single hosted
-      viewer: <https://sciencebanda09.github.io/topoloka/?v=20261031-clean>. Guildhall samples
+      viewer: <https://sciencebanda09.github.io/topoloka/>. Studio Room and Melbourne Metro samples
       remain available in the repository and local development only.
       HTTPS checks return 200 for Metro `meta.json`, `nav.json`, and
       `splat.splat` after deployment.

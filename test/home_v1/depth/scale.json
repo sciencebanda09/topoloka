@@ -1,6 +1,0 @@
-{
-  "scale_m_per_unit": 0.4770186266165757,
-  "method": "median(depth_m / sparse_camera_z) + 2D COLMAP non-rigid depth warping",
-  "samples": 178155,
-  "mad_rel": 0.08001153174567405
-}

@@ -22,8 +22,8 @@ let curRx = Number(params.get('rx')) || 0;
 let curRy = Number(params.get('ry')) || 0;
 let curRz = Number(params.get('rz')) || 0;
 let curOy = Number(params.get('oy')) || 0;
-const DEFAULT_CAPTURE = 'metro_v1';
-const AVAILABLE_CAPTURES = new Set(['metro_v1', 'home_v1', 'kitchen', 'room']);
+const DEFAULT_CAPTURE = 'room';
+const AVAILABLE_CAPTURES = new Set(['room', 'metro_v1']);
 const requestedCapture = params.get('capture');
 const cleanCapture = requestedCapture && /^[a-zA-Z0-9_-]+$/.test(requestedCapture)
   ? requestedCapture

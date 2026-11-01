@@ -35,31 +35,20 @@ See `kaggle/README.md`.
 ## Captured and benchmark samples
 
 The repository packages sample builds with complete paper trails. The hosted
-viewer publishes both the **home indoor walk-through** (`home_v1`) captured on a
-smartphone according to the team's SOP, and the **Melbourne Metro benchmark**
+viewer publishes both the **Studio Room** (`room`) with 1.59M Gaussians and
+live in-viewer orientation controls, and the **Melbourne Metro benchmark**
 (`metro_v1`), switchable from the in-viewer dropdown:
 
 | Sample | Source | Size | Measured |
 |---|---|---|---|
-| `test/home_v1/` | Smartphone indoor capture following team SOP, 62.2 s | 30.6 MB | 122/156 registered, 0.638 px median, 703,564 splats; 8.05 m² walkable |
+| `web/public/artifacts/room/` | High-fidelity studio interior (30k 3DGS, floater-free) | 48.6 MB | 1,593,376 splats, 73.3 m² walkable, real-time in-viewer orientation controls |
 | `test/metro_v1/` | *Modern Melbourne Metro Walkway Urban Design* by Joolsmagool (Pexels License), 86.07 s | 24.7 MB | 216/216 registered, 0.403 px median, 457,221 splats; 315.05 m² walkable |
-| `test/guildhall-v1/` | *Guildhall City of London England interior walkaround video* by Acabashi (CC BY-SA 4.0), 90.0 s trim | 31.0 MB | 218/218 registered, 0.515 px median, 458.81 m² walkable |
-| `test/guildhall-v2/` | Same public source, sharper 91.925 s trim beginning near 94 s | 41.34 MB | 204/230 registered, 0.554 px median, 878,891 splats; QA 6/6 PASS |
-| `test/guildhall-mvs/` | Same sharp Guildhall trim, rebuilt with COLMAP MVS and per-face photo texturing | 105.5 MB | 5.52M dense points → 650k mesh faces; 89.54% texture coverage; 23.4 m² walkable |
-| `guildhall-v3` | Same source, Splatfacto Big quality pass | running on Kaggle | retained as a separate experiment |
 
-`home_v1` directly fulfills the Round 1 prompt to **map the team's own indoor
-space** using standard smartphone video. The hosted viewer opens `home_v1` by default
-and allows toggling to `metro_v1` via the **VIEW SAMPLE** picker.
+The hosted viewer opens **Studio Room** by default (with interactive orientation controls:
+Flip 180°, Turn Y, Tilt X, Level, and shareable URL query parameters) and allows toggling to
+**Melbourne Metro** via the **VIEW SAMPLE** picker.
 
-`guildhall-v2` is a sharper alternate trim of the same public video, selected
-after the first sample looked soft. Its sharpness scan's p10 score is 1582.84
-versus 418.56 for the earlier 305-395 s window, measured with the same source
-scan method. Its SfM report records two disconnected models and 204/230 frames
-registered; the smaller model is excluded from the shipped map. See
-[`test/guildhall-v2/README.md`](test/guildhall-v2/README.md) for full metrics.
-
-**Hosted viewer:** <https://sciencebanda09.github.io/topoloka/?v=20261031-clean>
+**Hosted viewer:** <https://sciencebanda09.github.io/topoloka/>
 
 It opens Melbourne Metro. **View model** switches between the Gaussian splat
 and point cloud; A/D sidestep around objects.
