@@ -1,97 +1,165 @@
-/* Print styling for Topoloka docs (abstract PDF). Inlined by pandoc. */
+/* Print styling for Topoloka technical abstract (PDF generation). Inlined by pandoc. */
 @page {
   size: A4;
-  margin: 14mm 15mm 14mm 15mm;
+  margin: 11mm 13mm 11mm 13mm;
 }
 
-html { font-size: 9.9pt; }
+html {
+  font-size: 9.5pt;
+}
 
 body {
-  font-family: "Segoe UI", "Calibri", system-ui, sans-serif;
-  line-height: 1.37;
-  color: #1c1c22;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  line-height: 1.34;
+  color: #1a202c;
   max-width: 100%;
 }
 
 h1 {
-  font-size: 1.55rem;
-  line-height: 1.25;
+  font-size: 1.40rem;
+  line-height: 1.20;
   margin: 0 0 0.2rem 0;
-  color: #0d2b45;
+  color: #0c2340;
+  font-weight: 700;
 }
 
 h2 {
-  font-size: 1.12rem;
-  margin: 1.0rem 0 0.35rem 0;
-  color: #0d2b45;
-  border-bottom: 2px solid #d8e3ee;
+  font-size: 1.05rem;
+  margin: 0.75rem 0 0.25rem 0;
+  color: #0c2340;
+  border-bottom: 1.5px solid #cbd5e0;
   padding-bottom: 2px;
   page-break-after: avoid;
+  font-weight: 600;
 }
 
-h3 { font-size: 1rem; margin: 0.8rem 0 0.25rem 0; page-break-after: avoid; }
+h3 {
+  font-size: 0.92rem;
+  margin: 0.55rem 0 0.15rem 0;
+  color: #1a365d;
+  page-break-after: avoid;
+  font-weight: 600;
+}
 
-p, li { orphans: 2; widows: 2; }
+p, li {
+  orphans: 2;
+  widows: 2;
+  margin: 0.28rem 0;
+}
 
-strong { color: #123; }
+ul, ol {
+  margin: 0.2rem 0;
+  padding-left: 1.25rem;
+}
+
+strong {
+  color: #0c2340;
+}
 
 blockquote {
-  margin: 0.4rem 0;
-  padding: 0.35rem 0.7rem;
-  border-left: 3px solid #7aa7c7;
-  background: #f2f7fb;
-  color: #334;
-  font-size: 0.93em;
+  margin: 0.35rem 0;
+  padding: 0.3rem 0.6rem;
+  border-left: 3px solid #3182ce;
+  background: #ebf8ff;
+  color: #2b6cb0;
+  font-size: 0.92em;
 }
 
 code {
-  font-family: "Cascadia Mono", Consolas, monospace;
-  font-size: 0.86em;
-  background: #f3f3f6;
-  padding: 0.05em 0.3em;
+  font-family: "Cascadia Code", "Consolas", monospace;
+  font-size: 0.85em;
+  background: #edf2f7;
+  padding: 0.05em 0.25em;
   border-radius: 3px;
+  color: #2d3748;
 }
 
 pre {
-  background: #f6f8fa;
-  border: 1px solid #e1e4e8;
+  background: #f7fafc;
+  border: 1px solid #e2e8f0;
   border-radius: 4px;
-  padding: 0.5rem 0.7rem;
-  font-size: 0.78rem;
-  line-height: 1.3;
+  padding: 0.4rem 0.6rem;
+  font-size: 0.75rem;
+  line-height: 1.25;
   overflow: hidden;
   page-break-inside: avoid;
 }
 
-pre code { background: none; padding: 0; }
+pre code {
+  background: none;
+  padding: 0;
+}
 
 table {
   border-collapse: collapse;
   width: 100%;
-  font-size: 0.9em;
+  font-size: 0.86em;
+  margin: 0.4rem 0;
   page-break-inside: avoid;
 }
 
 th, td {
   border: 1px solid #cbd5e0;
-  padding: 0.28rem 0.45rem;
+  padding: 0.22rem 0.38rem;
   text-align: left;
   vertical-align: top;
 }
 
-th { background: #edf2f7; }
+th {
+  background-color: #edf2f7;
+  color: #0c2340;
+  font-weight: 600;
+}
 
-hr { border: none; border-top: 1px solid #ccd; margin: 0.9rem 0; }
+tr:nth-child(even) td {
+  background-color: #f8fafc;
+}
+
+hr {
+  border: none;
+  border-top: 1px solid #e2e8f0;
+  margin: 0.65rem 0;
+}
 
 img {
   max-width: 100%;
-  max-height: 117mm;
+  max-height: 74mm;
   height: auto;
   display: block;
-  margin: 0.35rem auto;
+  margin: 0.25rem auto;
   page-break-inside: avoid;
-  border: 1px solid #dde3ea;
+  border: 1px solid #e2e8f0;
   border-radius: 4px;
 }
 
-a { color: #1155aa; text-decoration: none; }
+.figure-block {
+  page-break-inside: avoid;
+  margin: 0.3rem 0;
+}
+
+.figure-caption {
+  font-size: 0.82em;
+  color: #4a5568;
+  text-align: center;
+  margin-top: 2px;
+  margin-bottom: 6px;
+  font-style: italic;
+  page-break-before: avoid;
+}
+
+.math-box {
+  background-color: #f7fafc;
+  border: 1px solid #e2e8f0;
+  border-left: 3px solid #4a5568;
+  border-radius: 4px;
+  padding: 0.35rem 0.65rem;
+  margin: 0.35rem 0;
+  font-family: "Cascadia Code", Consolas, monospace;
+  font-size: 0.88em;
+  page-break-inside: avoid;
+}
+
+a {
+  color: #2b6cb0;
+  text-decoration: none;
+}
