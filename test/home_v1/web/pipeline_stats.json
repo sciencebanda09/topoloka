@@ -1,0 +1,10 @@
+{
+  "metric_scale_m_per_unit": 0.4769638043548354,
+  "frame": "metric (original COLMAP units * metric_scale)",
+  "gaussians_exported": 1034821,
+  "gaussians_in_splat": 903446,
+  "iterations": 20000,
+  "train_minutes": 27.8,
+  "total_minutes": 30.9,
+  "gpu": "NVIDIA L4"
+}
