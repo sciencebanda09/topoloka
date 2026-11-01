@@ -1487,29 +1487,29 @@
   "scale_m_per_unit": 1,
   "scale_source": "metric-input",
   "cam_height_units": 1.2,
-  "down_axis_source": "camera-y-mean",
+  "down_axis_source": "three-y-up",
   "align": {
     "R_row_major": [
       [
-        -0.6918336451383148,
-        -0.1428137583979233,
-        0.7077926517468883
-      ],
-      [
-        0.7220569281259146,
-        -0.13683597400662048,
-        0.6781664314628285
+        1,
+        0,
+        0
       ],
       [
         0,
-        0.9802449421598252,
-        0.197787394365973
+        0,
+        1
+      ],
+      [
+        0,
+        -1,
+        0
       ]
     ],
     "origin": [
-      -0.22773,
-      -0.49753,
-      0.05488
+      0,
+      0,
+      0
     ],
     "scale_m_per_unit": 1,
     "formula": "p_nav_m = scale * R^T @ (p_scene_units - origin)"

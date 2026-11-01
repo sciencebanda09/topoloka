@@ -1,0 +1,22 @@
+{
+  "capture": "room",
+  "created": "2026-11-01 10:20:00",
+  "cloud_source": "mipnerf360-inria-official-3dgs",
+  "cloud_points": 1593376,
+  "splat": {
+    "present": true,
+    "bytes": 50988032,
+    "gaussians": 1593376,
+    "model": "Official INRIA 3DGS 30k High-Fidelity (Spike- & Floater-Free)",
+    "iterations": 30000,
+    "metric_scale_m_per_unit": 1,
+    "train_minutes": 45,
+    "gpu": "NVIDIA RTX 3090 / Cloud ($0.00)"
+  },
+  "scale_source": "metric-indoor-benchmark",
+  "walkable_area_m2": 73.3,
+  "qa_overall": "PASS",
+  "mesh": {
+    "present": false
+  }
+}

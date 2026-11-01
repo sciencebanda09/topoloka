@@ -18,7 +18,7 @@ import { Viewer } from './viewer';
 
 const params = new URLSearchParams(location.search);
 const DEFAULT_CAPTURE = 'metro_v1';
-const AVAILABLE_CAPTURES = new Set(['metro_v1', 'home_v1', 'kitchen']);
+const AVAILABLE_CAPTURES = new Set(['metro_v1', 'home_v1', 'kitchen', 'room']);
 const requestedCapture = params.get('capture');
 const cleanCapture = requestedCapture && /^[a-zA-Z0-9_-]+$/.test(requestedCapture)
   ? requestedCapture
