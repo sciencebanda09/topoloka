@@ -10,6 +10,7 @@ went wrong and what the pipeline did about it ("report, never lie").
   sfm/               stage 2  poses.json, sparse model, sparse.ply, transforms.json
   depth/             stage 3  metric scale + dense map.npz (GPU)
   nav/               stage 4  nav.json (costmap, outline, trajectory, align)
+  nav/pois.json      stage 4b authored POIs (validated, optional)
   capture_qa.*       stage 5  QA checks (never blocks, always reports)
   splat/             stage 6  splat.splat (GPU; web format)
   web/               stage 7  the artifact bundle the viewer serves
@@ -21,10 +22,11 @@ went wrong and what the pipeline did about it ("report, never lie").
 | sfm | `python -m namma.cli sfm <capture>` | Kaggle CPU | pycolmap SIFT + matching + incremental mapping; exports poses, PLY, transforms.json |
 | depth | `python -m namma.cli depth <capture>` | **GPU** | Depth Anything V2 (metric indoor); aligns metric depth to arbitrary-scale SfM via `median(depth_m / sparse_camera_z)`; fuses a dense 3 cm cloud in meters |
 | geometry | `python -m namma.cli geometry <capture>` | Kaggle CPU | gravity from camera up-axis mean → RANSAC floor plane → z-up metric frame → 5 cm 2.5D costmap → floor outline polygon |
-| qa | `python -m namma.cli qa <capture>` | anywhere | capture QA table (sharpness, registration, reprojection, footprint) |
+| qa | `python -m namma.cli qa <capture>` | anywhere | capture QA table (sharpness, registration, reprojection, footprint, POIs) |
+| pois | `python -m namma.cli pois <capture>` | anywhere | validates `nav/pois.json`: schema, unique ids, in-bounds coordinates, on free floor, radius, camera view |
 | splat training | `kaggle/kernels/namma_splat` | **GPU** | nerfstudio splatfacto (auto-orient/center/scale disabled — the nav frame is the contract) |
 | splat-convert | `python -m namma.cli splat-convert <ply> <out.splat>` | anywhere | 3DGS PLY → 32-byte-per-gaussian web format (DC colors) |
-| package | `python -m namma.cli package <capture>` | Kaggle | assembles `web/` (nav.json, cloud.ply in nav frame, splat.splat, meta.json) |
+| package | `python -m namma.cli package <capture>` | Kaggle | assembles `web/` (nav.json, pois.json, cloud.ply in nav frame, splat.splat, meta.json) |
 
 ## Frame conventions (the part that bites)
 

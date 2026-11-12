@@ -8,9 +8,11 @@ the portal is the only place that matters, this file is the defense copy.
 | Item | Link | Status |
 |------|------|--------|
 | Repo | https://github.com/sciencebanda09/topoloka | public (MIT), created 2026-10-18 |
-| Viewer (Studio Room + Metro) | https://sciencebanda09.github.io/topoloka/ | live free-roam twin with interactive orientation controls |
-| Sandbox preview (R2) | same viewer; press G or append `?sandbox=1` | add and place props in the Metro twin |
-| Demo video | https://github.com/sciencebanda09/topoloka/releases/download/r1-demo/topoloka_demo.mp4 | 3:33, 1080p30, 41.0 MB; hosted 2026-10-26 |
+| Viewer (Metro + Studio Room) | https://sciencebanda09.github.io/topoloka/ | live R2 twin: 7 POIs, search, POI routing, sandbox |
+| R2 branch | https://github.com/sciencebanda09/topoloka/tree/r2-pois-nav | POI/search/navigation work |
+| R2 evidence | `docs/r2_evidence.md` in repo | route numbers, inventory, tests, demo outline |
+| Sandbox (R2) | same viewer; press G or append `?sandbox=1` | add and place props in the Metro twin |
+| Demo video (R1 baseline) | https://github.com/sciencebanda09/topoloka/releases/download/r1-demo/topoloka_demo.mp4 | 3:33, 1080p30, 41.0 MB; hosted 2026-10-26 |
 | Abstract PDF | `docs/abstract.pdf` in repo | two captures, 5 pages, 2.48 MB; rebuilt 2026-10-29 |
 
 ## Log
@@ -195,6 +197,24 @@ the portal is the only place that matters, this file is the defense copy.
   (22.5 MB web splat), and an **8.05 m²** metric walkable floor with 63 outline points. The hosted
   viewer now provides both `home_v1` and `metro_v1`, switchable directly from the UI dropdown.
 
+- **2026-11-12 — R2 shipped: POIs, spatial search, and obstacle-aware navigation.**
+  Added `nav/pois.json` (versioned contract) and the `namma pois` /
+  `package` / `qa` stages. Final Metro set: **7 POIs across 5 categories**.
+  The browser builds a 1 m spatial bucket grid plus an inverted token index
+  over names/aliases/categories, with Levenshtein (≤ 2) fallback and
+  deterministic ranking. Selecting a result or marker highlights only; the
+  camera moves on **Jump here** or `?poi=<id>`. **Navigate** plans A* on the
+  same 5 cm collision costmap and renders a chevron ribbon in 3D and on the
+  minimap. Fixed the GaussianSplats3D compositing order by rendering POIs and
+  routes in an after-splat overlay pass; labels are screen-constant and
+  decluttered. Verified route evidence: two corridor barriers change the
+  Tunnel Walkway route **31.66 m / 2 waypoints → 31.86 m / 3 waypoints**.
+  Final checks: **50/50** web tests, **21/21** pipeline tests, typecheck and
+  production build pass, `poi_dataset: 7 POIs across 5 categories` QA PASS,
+  and **76/76** Playwright browser checks across desktop, deep links,
+  editor/export, sandbox reroute, sample switching, mobile, and 980–1280 px
+  layouts. Docs: `docs/poi.md`, `docs/r2_evidence.md`.
+
 ## Engineering decisions worth defending
 
 - **One frame convention, one align block.** Raw SfM → metric nav
@@ -227,7 +247,8 @@ the portal is the only place that matters, this file is the defense copy.
 - The raw 5 cm grid fragments at gates/railings; the viewer blocks unknown
   cells and carves the walked path. The pipeline should emit a connected nav
   grid in R2 rather than relying on the viewer carve.
-- POIs/search and AR are R2/R3; `?route` is a dev flag, not the shipped UI.
+- POIs/search ship in R2; AR remains R3. `?route` stays a dev flag; shipped
+  navigation starts from a POI card or `?poi=`.
 
 ## Reproduce
 

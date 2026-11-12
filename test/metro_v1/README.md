@@ -35,10 +35,13 @@ Source: *Modern Melbourne Metro Walkway Urban Design* by Joolsmagool (Pexels Lic
 | `nav/nav.json` | 41 KB |
 | `nav/nav_report.json` | 582 B |
 | `nav/occupancy.png` | 24 KB |
+| `nav/pois.json` | 4.4 KB |
+| `nav/poi_report.json` | 287 B |
 | `web/cloud.ply` | 3.75 MB |
-| `web/meta.json` | 401 B |
+| `web/meta.json` | 583 B |
 | `web/nav.json` | 41 KB |
 | `web/occupancy.png` | 24 KB |
+| `web/pois.json` | 4.4 KB |
 | `web/splat.splat` | 14.63 MB |
 
 Total: **24.7 MB** (cloud decimated to 250,000
@@ -71,5 +74,8 @@ point cloud behind the splat. (Internal refreshes from fresh kernel outputs:
   viewer to check that "up" is up and a metre is a metre.
 - `web/splat.splat` -- the Gaussian-splat twin exactly as the web viewer
   loads it (32 bytes per gaussian).
+- `nav/pois.json` + `nav/poi_report.json` -- seven authored points of
+  interest across five categories, validated against the nav grid; the web
+  bundle carries the same file beside `nav.json`.
 - `sfm/`, `depth/`, `capture_qa.*` -- the honest paper trail: every quality
   number the pipeline measured, including the ones that did not pass.

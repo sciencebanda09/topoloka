@@ -8,6 +8,18 @@
     "bytes": 14631072,
     "gaussians": 457221
   },
+  "pois": {
+    "present": true,
+    "count": 7,
+    "categories": {
+      "area": 2,
+      "exit": 1,
+      "facility": 1,
+      "landmark": 2,
+      "platform": 1
+    },
+    "warnings": []
+  },
   "scale_source": "metric-input",
   "walkable_area_m2": 315.05,
   "qa_overall": "PASS",

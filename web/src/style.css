@@ -15,7 +15,10 @@ html, body, #app { width: 100%; height: 100%; overflow: hidden; background: #0b0
   width: fit-content; max-width: calc(100vw - 320px);
 }
 #title { font-size: 15px; letter-spacing: 0.35em; font-weight: 600; color: #7fd4ff; }
-#subtitle { font-size: 12px; margin-top: 4px; color: #9fb0c0; line-height: 1.45; overflow-wrap: anywhere; }
+#subtitle {
+  font-size: 12px; margin-top: 4px; color: #9fb0c0; line-height: 1.45;
+  overflow-wrap: anywhere; max-width: 330px;
+}
 
 #scene-picker, #representation-picker {
   display: flex; align-items: center; gap: 9px; margin-top: 8px;
@@ -27,7 +30,7 @@ html, body, #app { width: 100%; height: 100%; overflow: hidden; background: #0b0
   color: #70879a; font-size: 9px; letter-spacing: 0.16em; white-space: nowrap;
 }
 #capture-select, #representation-select {
-  max-width: min(250px, calc(100vw - 170px));
+  max-width: min(240px, calc(100vw - 170px));
   padding: 6px 28px 6px 9px; border-radius: 6px;
   border: 1px solid rgba(127, 212, 255, 0.24);
   color: #e8eef5; background: rgba(10, 14, 18, 0.96);
@@ -290,11 +293,15 @@ body.sandbox-on #help { display: none; }
   #hud { max-width: calc(100vw - 24px); }
   #scene-picker, #representation-picker { max-width: 100%; }
   #capture-select, #representation-select { max-width: calc(100vw - 150px); }
-  /* leave room for a three-line HUD before the map starts */
-  #map-wrap { top: 132px; right: 10px; width: 180px; }
+  /* leave room for the collapsed HUD before the map starts */
+  #map-wrap { top: 212px; right: 10px; width: 180px; }
+  body.orient-expanded #map-wrap { display: none; }
   #minimap { width: 180px; height: 180px; }
   #map-legend { font-size: 9px; gap: 3px 6px; padding: 5px 6px; }
-  #help { font-size: 11px; white-space: normal; max-width: calc(100vw - 20px); text-align: center; }
+  #help {
+    bottom: 64px; font-size: 11px; white-space: normal;
+    max-width: calc(100vw - 20px); text-align: center;
+  }
   #sandbox {
     left: 8px; right: 8px; bottom: 8px; width: auto;
     max-height: 44vh; overflow-y: auto;
@@ -304,11 +311,349 @@ body.sandbox-on #help { display: none; }
     max-width: calc(100vw - 20px);
   }
   #carry-hint span { display: block; margin: 3px 0 0; }
-  #toast { top: 120px; white-space: normal; text-align: center; max-width: calc(100vw - 30px); }
+  #toast { top: 56%; white-space: normal; text-align: center; max-width: calc(100vw - 30px); }
   #reticle-label { font-size: 10px; max-width: calc(100vw - 30px); white-space: normal; text-align: center; }
 }
 @media (max-width: 760px) and (orientation: landscape) {
   #map-wrap { top: 10px; width: 140px; }
   #minimap { width: 140px; height: 140px; }
   #map-legend { font-size: 8px; }
+}
+
+/* ====================================================================== */
+/* R2: spatial search, POI cards, navigation banner, POI editor           */
+/* ====================================================================== */
+
+:root {
+  --panel-bg: rgba(9, 14, 19, 0.92);
+  --panel-border: rgba(127, 212, 255, 0.22);
+  --panel-border-hot: rgba(127, 212, 255, 0.62);
+  --ink: #e8eef5;
+  --ink-dim: #9fb0c0;
+  --ink-faint: #70879a;
+  --accent: #7fd4ff;
+  --go: #40ff9a;
+}
+
+/* ---- search ---------------------------------------------------------- */
+
+#search-panel {
+  position: fixed; top: 14px; left: 50%; transform: translateX(-50%);
+  z-index: 30; width: min(460px, calc(100vw - 620px));
+  font-family: ui-monospace, 'Cascadia Code', Consolas, monospace;
+  pointer-events: none;
+}
+#search-box {
+  display: flex; align-items: center; gap: 8px;
+  height: 46px; padding: 0 8px 0 12px;
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.42);
+  pointer-events: auto;
+  backdrop-filter: blur(9px);
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+#search-panel.open #search-box,
+#search-box:focus-within {
+  border-color: var(--panel-border-hot);
+  box-shadow: 0 10px 34px rgba(0, 0, 0, 0.55), 0 0 0 3px rgba(127, 212, 255, 0.09);
+}
+.search-icon { color: var(--accent); font-size: 19px; line-height: 1; }
+#search-input {
+  flex: 1 1 auto; min-width: 0;
+  border: 0; outline: 0; background: transparent;
+  color: var(--ink); font: 12px ui-monospace, 'Cascadia Code', Consolas, monospace;
+  letter-spacing: 0.01em;
+}
+#search-input::placeholder { color: #688093; }
+#search-clear {
+  border: 0; background: transparent; color: var(--ink-dim);
+  font-size: 19px; line-height: 1; cursor: pointer; padding: 2px 4px;
+}
+#search-clear:hover { color: #fff; }
+#search-clear.hidden { display: none; }
+.search-kbd {
+  flex: 0 0 auto; color: var(--ink-faint); border: 1px solid rgba(127, 212, 255, 0.17);
+  border-radius: 4px; padding: 1px 5px; font-size: 10px;
+}
+#tag-button {
+  flex: 0 0 auto; cursor: pointer;
+  font: 10px ui-monospace, monospace; color: var(--ink);
+  background: rgba(127, 212, 255, 0.08);
+  border: 1px solid var(--panel-border);
+  border-radius: 7px; padding: 5px 7px;
+  transition: all 0.12s;
+}
+#tag-button:hover { background: rgba(127, 212, 255, 0.18); border-color: var(--accent); }
+#tag-button.active { color: #07120c; background: var(--go); border-color: var(--go); font-weight: 600; }
+
+#search-facets {
+  display: none; flex-wrap: wrap; gap: 5px; padding: 8px 2px 0;
+  pointer-events: auto;
+}
+#search-panel.open #search-facets { display: flex; }
+.facet {
+  cursor: pointer; font: 9px ui-monospace, monospace;
+  color: var(--ink-dim); background: rgba(9, 14, 19, 0.9);
+  border: 1px solid rgba(127, 212, 255, 0.17);
+  border-radius: 999px; padding: 4px 8px;
+}
+.facet::before {
+  content: ''; display: inline-block; width: 6px; height: 6px; border-radius: 50%;
+  background: var(--poi-color, transparent); margin-right: 5px; vertical-align: 1px;
+}
+.facet:first-child::before { display: none; }
+.facet:hover { color: #fff; border-color: var(--accent); }
+.facet.active { color: #07120c; background: var(--accent); border-color: var(--accent); font-weight: 600; }
+
+#search-results {
+  margin-top: 8px; padding: 6px;
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: 12px;
+  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.55);
+  pointer-events: auto;
+  backdrop-filter: blur(9px);
+  max-height: min(430px, calc(100vh - 150px));
+  overflow-y: auto;
+}
+#search-results.hidden { display: none; }
+.search-head {
+  padding: 4px 8px 6px; font-size: 9px; letter-spacing: 0.14em;
+  color: var(--ink-faint); text-transform: uppercase;
+}
+.search-result {
+  --poi-color: #7fd4ff;
+  display: flex; align-items: center; gap: 10px; width: 100%;
+  padding: 8px 9px; border: 0; border-radius: 8px;
+  background: transparent; color: var(--ink); text-align: left; cursor: pointer;
+}
+.search-result:hover, .search-result.active {
+  background: rgba(127, 212, 255, 0.12);
+}
+.search-result.active { outline: 1px solid rgba(127, 212, 255, 0.28); }
+.result-dot {
+  flex: 0 0 auto; width: 9px; height: 9px; border-radius: 50%;
+  background: var(--poi-color, var(--accent));
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--poi-color, #7fd4ff) 22%, transparent);
+}
+.result-main { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.result-name { font-size: 12px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.result-sub { font-size: 9.5px; color: var(--ink-dim); }
+.result-arrow { color: var(--ink-faint); font-size: 12px; }
+.search-result.active .result-arrow { color: var(--go); }
+.search-empty { padding: 12px 10px; font-size: 11px; line-height: 1.55; color: var(--ink-dim); }
+
+/* ---- POI card -------------------------------------------------------- */
+
+#poi-card {
+  position: fixed; top: 318px; right: 14px; z-index: 22;
+  width: 282px; padding: 12px 13px 12px;
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: 12px;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.5);
+  font-family: ui-monospace, 'Cascadia Code', Consolas, monospace;
+  color: var(--ink);
+  backdrop-filter: blur(9px);
+}
+#poi-card.hidden { display: none; }
+.pc-head { display: flex; align-items: center; gap: 7px; }
+.poi-chip {
+  --poi-color: #7fd4ff;
+  font-size: 9px; letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--poi-color);
+  border: 1px solid color-mix(in srgb, var(--poi-color) 45%, transparent);
+  background: color-mix(in srgb, var(--poi-color) 12%, transparent);
+  border-radius: 999px; padding: 2px 7px;
+}
+.poi-source { font-size: 8.5px; color: var(--ink-faint); }
+#poi-card-close {
+  margin-left: auto; cursor: pointer; font-size: 18px; line-height: 1;
+  color: var(--ink-dim); background: transparent; border: 0; padding: 0 2px;
+}
+#poi-card-close:hover { color: #fff; }
+#poi-name { margin: 8px 0 4px; font-size: 17px; line-height: 1.25; letter-spacing: -0.01em; }
+#poi-desc { font-size: 10.5px; line-height: 1.55; color: var(--ink-dim); min-height: 16px; }
+.pc-meta {
+  display: flex; justify-content: space-between; gap: 8px; margin-top: 8px;
+  font-size: 9.5px; color: var(--ink-faint);
+}
+.pc-actions { display: flex; gap: 6px; margin-top: 10px; }
+.pc-actions button {
+  flex: 1 1 auto; cursor: pointer; padding: 7px 8px;
+  font: 10px ui-monospace, monospace; color: var(--ink);
+  background: rgba(127, 212, 255, 0.08); border: 1px solid var(--panel-border);
+  border-radius: 7px;
+}
+.pc-actions button:hover { background: rgba(127, 212, 255, 0.18); border-color: var(--accent); }
+.pc-actions button.primary { color: #07120c; background: var(--go); border-color: var(--go); font-weight: 700; }
+.pc-actions button.primary:hover { background: #63ffb0; }
+.pc-actions button:disabled {
+  opacity: 0.45; cursor: default;
+  background: rgba(127, 212, 255, 0.04); border-color: var(--panel-border);
+  color: var(--ink-dim);
+}
+.pc-actions button.primary:disabled { color: #07120c; background: var(--go); border-color: var(--go); }
+
+/* ---- navigation banner ---------------------------------------------- */
+
+#nav-banner {
+  --progress: 0%;
+  position: fixed; top: 72px; left: 50%; transform: translateX(-50%);
+  z-index: 28; width: min(520px, calc(100vw - 40px));
+  display: flex; align-items: center; gap: 11px;
+  padding: 10px 11px 11px;
+  background: rgba(8, 15, 12, 0.94);
+  border: 1px solid rgba(64, 255, 154, 0.38);
+  border-radius: 12px;
+  box-shadow: 0 12px 38px rgba(0, 0, 0, 0.55), 0 0 0 3px rgba(64, 255, 154, 0.06);
+  font-family: ui-monospace, 'Cascadia Code', Consolas, monospace;
+  color: var(--ink);
+  overflow: hidden;
+  backdrop-filter: blur(9px);
+}
+#nav-banner.hidden { display: none; }
+.nb-progress {
+  position: absolute; left: 0; right: 0; bottom: 0; height: 3px;
+  background: rgba(64, 255, 154, 0.12);
+}
+.nb-progress i {
+  display: block; height: 100%; width: var(--progress);
+  background: linear-gradient(90deg, #1e9e5e, var(--go));
+  transition: width 0.25s linear;
+}
+.nb-icon {
+  flex: 0 0 auto; display: grid; place-items: center;
+  width: 38px; height: 38px; border-radius: 9px;
+  color: #07120c; background: var(--go); font-size: 20px; font-weight: 700;
+}
+.nb-main { flex: 1 1 auto; min-width: 0; }
+.nb-target { font-size: 8.5px; letter-spacing: 0.16em; color: #7fe8b2; text-transform: uppercase; }
+#nav-instruction { font-size: 13px; font-weight: 600; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.nb-meta { display: flex; gap: 10px; margin-top: 2px; font-size: 9.5px; color: var(--ink-dim); }
+#nav-banner button {
+  flex: 0 0 auto; cursor: pointer; width: 28px; height: 28px;
+  border-radius: 50%; border: 1px solid rgba(64, 255, 154, 0.24);
+  background: rgba(64, 255, 154, 0.08); color: #b8e8cd; font-size: 13px;
+}
+#nav-banner button:hover { background: rgba(64, 255, 154, 0.2); color: #fff; }
+
+/* ---- POI editor ------------------------------------------------------ */
+
+body.editing-pois #view { cursor: crosshair; }
+body.editing-pois #help { display: none; }
+
+#poi-editor {
+  position: fixed; left: 16px; bottom: 16px; z-index: 40;
+  width: 320px; max-height: min(70vh, 620px); overflow-y: auto;
+  padding: 12px 13px 12px;
+  background: var(--panel-bg);
+  border: 1px solid rgba(64, 255, 154, 0.32);
+  border-radius: 12px;
+  box-shadow: 0 16px 44px rgba(0, 0, 0, 0.58);
+  font-family: ui-monospace, 'Cascadia Code', Consolas, monospace;
+  color: var(--ink);
+  backdrop-filter: blur(10px);
+}
+#poi-editor.hidden { display: none; }
+.pe-head {
+  display: flex; align-items: center; justify-content: space-between;
+  font-size: 10px; letter-spacing: 0.18em; color: var(--go);
+}
+.pe-head button {
+  cursor: pointer; border: 0; background: transparent; color: var(--ink-dim);
+  font-size: 18px; line-height: 1; padding: 0 2px;
+}
+.pe-head button:hover { color: #fff; }
+.pe-coords { margin: 5px 0 9px; font-size: 9px; color: var(--ink-faint); }
+.pe-field { display: flex; flex-direction: column; gap: 4px; margin-bottom: 8px; }
+.pe-field > span { font-size: 9px; letter-spacing: 0.1em; color: var(--ink-faint); text-transform: uppercase; }
+.pe-field input, .pe-field select, .pe-field textarea {
+  width: 100%; padding: 7px 8px; resize: vertical;
+  color: var(--ink); background: rgba(4, 8, 11, 0.82);
+  border: 1px solid var(--panel-border); border-radius: 6px;
+  font: 11px ui-monospace, 'Cascadia Code', Consolas, monospace;
+  outline: none;
+}
+.pe-field input:focus, .pe-field select:focus, .pe-field textarea:focus { border-color: var(--accent); }
+.pe-view { font-size: 9px; color: var(--ink-dim); margin: 2px 0 9px; }
+.pe-actions { display: flex; gap: 6px; }
+.pe-actions button {
+  flex: 1 1 auto; cursor: pointer; padding: 7px 8px;
+  font: 10px ui-monospace, monospace; color: var(--ink);
+  background: rgba(127, 212, 255, 0.08); border: 1px solid var(--panel-border); border-radius: 7px;
+}
+.pe-actions button:hover { background: rgba(127, 212, 255, 0.18); }
+.pe-actions button.primary { color: #07120c; background: var(--go); border-color: var(--go); font-weight: 700; }
+.pe-list-head {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-top: 13px; padding-top: 10px; border-top: 1px solid rgba(127, 212, 255, 0.14);
+  font-size: 9px; letter-spacing: 0.14em; color: var(--ink-faint);
+}
+.pe-list-head button {
+  cursor: pointer; font: 9px ui-monospace, monospace; color: var(--accent);
+  background: transparent; border: 1px solid rgba(127, 212, 255, 0.24);
+  border-radius: 5px; padding: 3px 6px;
+}
+.pe-list-head button:hover { background: rgba(127, 212, 255, 0.14); }
+#poi-local-list { margin-top: 6px; display: flex; flex-direction: column; gap: 3px; }
+.local-row { display: flex; align-items: center; gap: 7px; padding: 3px 2px; }
+.local-name {
+  flex: 1 1 auto; min-width: 0; text-align: left; cursor: pointer;
+  color: var(--ink); background: transparent; border: 0; font: 10.5px ui-monospace, monospace;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.local-name:hover { color: var(--accent); text-decoration: underline; }
+.local-action {
+  cursor: pointer; font: 8.5px ui-monospace, monospace; color: var(--ink-dim);
+  background: transparent; border: 1px solid rgba(127, 212, 255, 0.18);
+  border-radius: 4px; padding: 2px 5px;
+}
+.local-action:hover { color: #fff; border-color: var(--accent); }
+.local-action.danger:hover { color: #ff8a8a; border-color: #ff8a8a; }
+
+.sw-poi { background: #7fd4ff; border-radius: 50%; }
+
+/* ---- responsive ------------------------------------------------------ */
+
+@media (max-width: 1180px) {
+  /* Park the search bar in the gap between the HUD and the minimap instead of
+     centring it over whichever panel happens to be there. */
+  #search-panel {
+    left: auto; right: 270px; transform: none;
+    width: min(460px, calc(100vw - 660px)); top: 14px;
+  }
+  #hud { max-width: calc(100vw - 300px); }
+}
+@media (max-width: 980px) {
+  #search-panel { left: auto; right: 270px; transform: none; width: min(430px, calc(100vw - 660px)); top: 14px; }
+  #hud { max-width: calc(100vw - 28px); }
+  #nav-banner { top: 74px; }
+}
+@media (max-width: 900px) {
+  /* Too narrow for HUD + search + map in one row: search docks at the bottom. */
+  #search-panel { top: auto; bottom: 8px; left: 8px; right: 8px; width: auto; transform: none; }
+  #search-results { max-height: min(46vh, 330px); }
+}
+@media (max-width: 760px) {
+  #search-panel { top: auto; bottom: 8px; left: 8px; right: 8px; width: auto; transform: none; }
+  #search-box { height: 44px; }
+  #search-results { max-height: min(46vh, 330px); }
+  #search-facets { padding-top: 6px; }
+  #nav-banner { top: 8px; left: 8px; right: 8px; width: auto; transform: none; }
+  #poi-card {
+    top: auto; bottom: 64px; left: 8px; right: 8px; width: auto;
+    max-height: 40vh; overflow-y: auto;
+  }
+  #poi-editor { left: 8px; right: 8px; bottom: 8px; width: auto; max-height: 66vh; }
+  #map-wrap { top: 212px; }
+  body.editing-pois #map-wrap { display: none; }
+}
+@media (max-width: 760px) and (orientation: landscape) {
+  #search-panel { top: 8px; bottom: auto; left: 50%; right: auto; width: min(420px, calc(100vw - 320px)); transform: translateX(-50%); }
+  #nav-banner { top: 8px; width: min(420px, calc(100vw - 320px)); left: 50%; right: auto; transform: translateX(-50%); }
+  #poi-card { top: 110px; bottom: auto; right: 154px; left: auto; width: 260px; }
+  #poi-editor { width: 300px; left: 8px; right: auto; bottom: 8px; top: auto; max-height: 62vh; }
 }

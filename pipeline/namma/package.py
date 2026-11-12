@@ -4,6 +4,7 @@ Input:  <capture>/nav/nav.json, sfm/sparse.ply or depth/map.npz,
         splat/splat.splat (optional, from the GPU kernel)
 Output: <capture>/web/
     nav.json        copy of the nav artifact (grid, outline, trajectory, align)
+    pois.json       validated authored POIs (optional; copied from nav/)
     cloud.ply       point cloud in the NAV frame (x/y ground, z up, meters)
     splat.splat     gaussian splat (kept in its training frame; the web app
                     places it with nav.json's align transform)
@@ -23,6 +24,7 @@ from pathlib import Path
 
 import numpy as np
 
+from . import pois
 from .geometry import load_cloud
 
 
@@ -66,6 +68,7 @@ def run_package(capture_dir: Path) -> dict:
         raise SystemExit(f"missing {nav_path} (run `geometry` first)")
     nav = json.loads(nav_path.read_text(encoding="utf-8"))
     shutil.copy2(nav_path, out / "nav.json")
+    poi_meta = pois.stage_pois(capture_dir, out)
 
     occ = capture_dir / "nav" / "occupancy.png"
     if occ.exists():
@@ -107,6 +110,7 @@ def run_package(capture_dir: Path) -> dict:
         "cloud_source": cloud_source,
         "cloud_points": int(len(nav_xyz)),
         "splat": splat,
+        "pois": poi_meta,
         "scale_source": nav.get("scale_source"),
         "walkable_area_m2": None,
         "qa_overall": qa,
@@ -119,5 +123,6 @@ def run_package(capture_dir: Path) -> dict:
     (out / "meta.json").write_text(json.dumps(meta, indent=2), encoding="utf-8")
 
     print(f"[package] web bundle in {out}: cloud {len(nav_xyz)} pts "
-          f"({cloud_source}), splat {'yes' if splat['present'] else 'no'}")
+          f"({cloud_source}), splat {'yes' if splat['present'] else 'no'}, "
+          f"POIs {poi_meta['count'] if poi_meta['present'] else 'none'}")
     return meta

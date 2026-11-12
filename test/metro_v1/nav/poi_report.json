@@ -1,0 +1,15 @@
+{
+  "stage": "pois",
+  "capture": "metro_v1",
+  "time": "2026-11-12 09:56:05",
+  "source": "..\\test\\metro_v1\\nav\\pois.json",
+  "count": 7,
+  "categories": {
+    "area": 2,
+    "exit": 1,
+    "facility": 1,
+    "landmark": 2,
+    "platform": 1
+  },
+  "warnings": []
+}

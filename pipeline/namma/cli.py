@@ -9,7 +9,7 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
-from . import depth, frames, geometry, metricize, package, qa, sfm, splat_convert
+from . import depth, frames, geometry, metricize, package, pois, qa, sfm, splat_convert
 
 
 def main() -> None:
@@ -52,6 +52,11 @@ def main() -> None:
     mz = sub.add_parser("metricize", help="scale transforms.json + sparse.ply to meters (depth scale)")
     mz.add_argument("capture_dir", type=Path, help="capture working dir (must contain depth/scale.json)")
 
+    pz = sub.add_parser("pois", help="validate/import POI tags (<capture>/nav/pois.json)")
+    pz.add_argument("capture_dir", type=Path, help="capture working dir")
+    pz.add_argument("--source", type=Path, default=None,
+                    help="exported pois.json to import (default: nav/pois.json)")
+
     pk = sub.add_parser("package", help="assemble the web artifact bundle (<capture>/web/)")
     pk.add_argument("capture_dir", type=Path, help="capture working dir")
 
@@ -86,6 +91,8 @@ def main() -> None:
         depth.run_depth(args.capture_dir)
     elif args.stage == "metricize":
         metricize.run_metricize(args.capture_dir)
+    elif args.stage == "pois":
+        pois.run_pois(args.capture_dir, source=args.source)
     elif args.stage == "package":
         package.run_package(args.capture_dir)
 

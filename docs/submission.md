@@ -1,5 +1,8 @@
 # R1 submission checklist (due Oct 31, 2026)
 
+> Historical record of the Round 1 delivery. Round 2 state, links, and measured
+> evidence live in [`r2_evidence.md`](r2_evidence.md).
+
 Round 1 deliverables and their exact state. Numbers below trace to
 `test/guildhall-v1/` (the R1 public stand-in), `test/metro_v1/` (second
 sample), and the Kaggle outputs they were assembled from.

@@ -20,6 +20,8 @@ from dataclasses import dataclass, asdict
 from pathlib import Path
 from typing import Any
 
+from . import pois
+
 PASS, WARN, FAIL, SKIP = "PASS", "WARN", "FAIL", "SKIP"
 
 
@@ -48,6 +50,7 @@ def run_qa(capture_dir: Path) -> list[Check]:
     frames_meta = _read_json(capture_dir / "frames_meta.json")
     sfm = _read_json(capture_dir / "sfm" / "sfm_report.json")
     nav = _read_json(capture_dir / "nav" / "nav_report.json")
+    nav_doc = _read_json(capture_dir / "nav" / "nav.json")
 
     # 1 -- frame sharpness
     if frames_meta:
@@ -98,6 +101,27 @@ def run_qa(capture_dir: Path) -> list[Check]:
             "see nav_report.json for details"))
     else:
         checks.append(Check("floor_outline", SKIP, "nav_report.json not found"))
+
+    # 4 -- R2 POI dataset (authored tags staged beside nav.json)
+    poi_path = capture_dir / "nav" / "pois.json"
+    if poi_path.exists():
+        try:
+            poi_doc, warnings = pois.read_poi_file(
+                poi_path, nav=nav_doc, capture=capture_dir.name)
+            categories = sorted({poi["category"] for poi in poi_doc["pois"]})
+            checks.append(Check(
+                "poi_dataset", PASS if not warnings else WARN,
+                f"{len(poi_doc['pois'])} POIs across {len(categories)} categories",
+                "; ".join(warnings) if warnings else "indexed by the viewer at load time",
+                value=len(poi_doc["pois"])))
+        except pois.PoiValidationError as exc:
+            checks.append(Check(
+                "poi_dataset", FAIL, str(exc),
+                "fix nav/pois.json; package refuses an invalid POI file"))
+    else:
+        checks.append(Check(
+            "poi_dataset", SKIP, "nav/pois.json not found",
+            "tag POIs in the viewer and export them to nav/pois.json"))
 
     return checks
 

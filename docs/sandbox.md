@@ -1,10 +1,10 @@
-# Sandbox: pick-and-place props (R2 preview)
+# Sandbox: pick-and-place props
 
 The sandbox is an **additive** layer on the hosted viewer. It is off by
 default and runs on the hosted Melbourne Metro sample.
 
 **Preview link:**
-<https://sciencebanda09.github.io/topoloka/?v=20261031-clean>
+<https://sciencebanda09.github.io/topoloka/?sandbox=1>
 
 Press **G** to enter the sandbox (or add `&sandbox=1` to the viewer URL).
 
@@ -40,13 +40,17 @@ layout into `?props=`, so a layout can be opened on another machine.
 ## Dynamic obstacles and routing
 
 Each placed prop is rasterized into the 5 cm costmap's dynamic layer. Player
-collision and A* both see it. With a route active (`?route`, `T`, or the
-panel's route button), placing a barrier recomputes the path from the current
-position; removing it restores the old path. If the route is severed, the tube
-and minimap line disappear and the HUD says `route: no path`.
+collision, POI routing, and the dev end-of-capture route all see it. With a
+route active (**Navigate** on a POI card, `?route`, `T`, or the panel's route
+button), placing a barrier recomputes the path from the current position;
+removing it restores the old path. If the route is severed, the tube and
+minimap line disappear and the HUD says `route: no path`.
 
 This is the R2-relevant part: the twin is not just a picture, it is a navigable
-model whose obstacles can be edited.
+model whose obstacles can be edited. Measured example: two barriers across the
+Metro corridor move the **Tunnel Walkway** POI route from 31.66 m (2 waypoints)
+to 31.86 m (3 waypoints); clearing them restores 31.66 m. See
+[`r2_evidence.md`](r2_evidence.md).
 
 ## What is and is not being picked up
 
@@ -82,19 +86,20 @@ primitives and canvas textures.
 ## Verification
 
 - `cd web && npm run build` — TypeScript strict + Vite production build.
-- Dynamic costmap test (headless): barrier severs a corridor, clearing it
-  restores the route, and a blocked A* start escapes to a free cell.
+- `cd web && npm test` — 50 Vitest tests, including dynamic obstacle
+  footprints and route invalidation.
+- Browser QA (76 checks): sandbox placement, reroute around placed barriers,
+  share-link round-trip, and route restoration after clearing.
 - R1 regression by construction: with no `?sandbox`/`?props`, the sandbox
   group stays invisible (props/lights inert), the panel and reticle stay
   hidden, and the dynamic obstacle layer is empty, so the default HUD, route,
   and rendering path are unchanged. The extra hidden DOM is inert.
 - Deployed Pages build checked over HTTPS: the viewer HTML contains the hidden
   sandbox panel, the JS bundle contains the sandbox and splat-raycast code, and
-  `nav.json` / `splat.splat` return 200 for `metro_v1`.
+  `nav.json` / `pois.json` / `splat.splat` return 200 for `metro_v1`.
 
 ## Not in this pass
 
-- POI database/search cards (R2 next).
 - Wall-mounted placement and surface-normal snapping.
 - Moving scanned objects (see above).
 - Multi-user sync; layouts are local or link-shared, not server-backed.

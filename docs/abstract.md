@@ -128,7 +128,8 @@ The web interface enables first-person navigation, real-time spatial orientation
 1. **First-Person Desktop Roaming:** Standard WASD navigation with mouse pointer lock. Moving forward and backward traverses horizontally across the calibrated floor plane with zero vertical drift.
 2. **In-Viewer Spatial Orientation Controls:** Live toolbar allowing visitors to flip 180 degrees (Hotkey: O), rotate along Y (Hotkeys: [ and ]), tilt along X, roll along Z, and adjust vertical elevation offsets. All transforms synchronize directly to the browser URL for one-click sharing.
 3. **Obstacle-Aware Pathfinding (A\*):** Computes optimal floor paths avoiding detected walls and furniture, rendering a 3D tubular route ribbon on the floor.
-4. **Sandbox Simulation Mode:** Allows users to place dynamic props (cones, barriers, crates, signs) directly into the 3D twin (Hotkey: G). The occupancy grid automatically re-carves walkable cells and re-routes paths around placed objects.
+4. **POI Search and Wayfinding (R2):** Seven authored points of interest across five categories are clickable in 3D and searchable by name, alias, or category. Selecting a result highlights it without moving the camera; **Jump here** or `?poi=` moves to the authored view, and **Navigate** draws an obstacle-aware route with turn-by-turn distance and auto-turn.
+5. **Sandbox Simulation Mode:** Allows users to place dynamic props (cones, barriers, crates, signs) directly into the 3D twin (Hotkey: G). The occupancy grid automatically re-carves walkable cells and re-routes paths around placed objects.
 
 ---
 
@@ -146,7 +147,7 @@ The web interface enables first-person navigation, real-time spatial orientation
 - **Reconstruction and Visual Quality (20%):** High-density Gaussian representations (up to 1.59 million splats) capturing complex indoor furniture, reflections, and fine text.
 - **Web Viewer and UX (20%):** Zero-install static link running at 60 FPS on desktop and mobile, with interactive HUD orientation controls and shareable URL states.
 - **Spatial Search and Path Calculation (20%):** 5 cm metric costmap, collision boundaries, and real-time A\* path generation.
-- **Round 2 and Round 3 Roadmap:** Implementation of CLIP-based semantic point-of-interest (POI) indexing for Round 2, followed by on-site QR-fiducial mobile AR tracking for the Round 3 IIT Bombay finale.
+- **Round 2 and Round 3 Roadmap:** Round 2 ships a versioned POI contract, an in-browser spatial + lexical search index, and obstacle-aware POI routing on the 5 cm costmap (7 authored Metro POIs across 5 categories). Round 3 adds on-site QR-fiducial mobile AR tracking for the IIT Bombay finale.
 
 ---
 

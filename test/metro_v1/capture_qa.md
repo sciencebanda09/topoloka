@@ -1,6 +1,6 @@
 # Capture QA -- metro_v1
 
-**Overall: PASS** (2026-10-22 15:33:24)
+**Overall: PASS** (2026-11-12 09:56:06)
 
 | Check | Status | Detail | Compensation |
 |---|---|---|---|
@@ -10,3 +10,4 @@
 | sfm_reprojection_error | PASS | median 0.403px (threshold 1.0) | check video stabilization is OFF; EIS warps break rigid geometry |
 | floor_outline | PASS | 193 outline points, 315.05 m2 walkable | sparse cloud can under-draw the footprint; the depth stage densifies it |
 | geometry_warnings | PASS | none | see nav_report.json for details |
+| poi_dataset | PASS | 7 POIs across 5 categories | indexed by the viewer at load time |

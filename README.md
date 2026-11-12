@@ -5,13 +5,14 @@
 *Topoloka*: Greek τόπος (*topos*, "place") + Sanskrit लोक (*loka*, "world") —
 the place-world. Turns a walk-through video of an indoor space into an
 interactive, metric 3D digital twin served as a shareable web link: free
-first-person roaming now, spatial search and obstacle-aware walking directions
-next. Built for Techfest 2026-27 (IIT Bombay).
+first-person roaming, spatial point-of-interest (POI) search, and
+obstacle-aware walking directions in the browser. Built for Techfest 2026-27
+(IIT Bombay).
 
 ```
 walk-through video ──► Kaggle pipeline ──► artifact bundle ──► web app (static link)
- (phone SOP or         frames → SfM          splat + nav graph      roam / (R2) search
-  licensed clip)       → depth → 3DGS       + QA + align          and route / (R3) AR
+ (phone SOP or         frames → SfM          splat + nav graph      search / jump / route
+  licensed clip)       → depth → 3DGS       + POIs + QA           + sandbox / (R3) AR
 ```
 
 ## Repository layout
@@ -44,14 +45,20 @@ live in-viewer orientation controls, and the **Melbourne Metro benchmark**
 | `web/public/artifacts/room/` | High-fidelity studio interior (30k 3DGS, floater-free) | 48.6 MB | 1,593,376 splats, 73.3 m² walkable, real-time in-viewer orientation controls |
 | `test/metro_v1/` | *Modern Melbourne Metro Walkway Urban Design* by Joolsmagool (Pexels License), 86.07 s | 24.7 MB | 216/216 registered, 0.403 px median, 457,221 splats; 315.05 m² walkable |
 
-The hosted viewer opens **Studio Room** by default (with interactive orientation controls:
-Flip 180°, Turn Y, Tilt X, Level, and shareable URL query parameters) and allows toggling to
-**Melbourne Metro** via the **VIEW SAMPLE** picker.
+The hosted viewer opens **Melbourne Metro — POIs & navigation** by default (the
+R2 sample: 7 authored POIs, spatial search, and walkable routes) and allows
+switching to **Studio Room** (a visual benchmark with interactive orientation
+controls) via the **VIEW SAMPLE** picker.
 
 **Hosted viewer:** <https://sciencebanda09.github.io/topoloka/>
 
 It opens Melbourne Metro. **View model** switches between the Gaussian splat
-and point cloud; A/D sidestep around objects.
+and point cloud; A/D sidesteps around objects. Press `/` to search the POIs,
+click a result to inspect it, and **Navigate** for a route. The Studio Room
+costmap is synthetic all-free space, so it demonstrates rendering and
+orientation, not pathfinding. R2 evidence and the demo script live in
+[`docs/r2_evidence.md`](docs/r2_evidence.md); the POI contract is
+[`docs/poi.md`](docs/poi.md).
 
 ![The metro twin in a browser: splat, minimap, QA status](docs/fig/twin.png)
 
@@ -95,20 +102,28 @@ pose inside the reconstructed volume; append `?t=<index>` to spawn at a
 specific trajectory point (`?t=0` is the true start), and
 `?clean` to hide the click prompt and fps readout. Unobserved space is not
 walkable: collision blocks it and carves a 1 m free corridor along the capture
-path, which the camera proved traversable. `?route` draws the scaffolded A*
-route as a thin green floor tube (20.3 m / 350 waypoints from the default
-spawn), with a matching swatch in the minimap legend. On touch devices the
-left half is a walk stick and the right half looks; **M** hides the map for a
-full-screen view. `npm run build` produces a static `dist/` that can be served
-from any web host.
+path, which the camera proved traversable.
 
-**R2 preview — sandbox pick-and-place.** Press **G** in the viewer (or append
+**R2 controls.** `/` (or `Ctrl/Cmd+K`) focuses search; typing never moves the
+walker. Results cover names, aliases, categories, prefixes, substrings, and
+small typos. Selecting a result, a 3D marker, or a minimap dot highlights the
+POI but leaves the camera alone; **Jump here** flies to its authored view, and
+**Navigate** plans a route. **E** opens the POI editor (click the floor, name
+the place, save locally, export `pois.json`). `?q=<query>` opens search and
+`?poi=<id>` deep-links to a POI view. The dev flag `?route` still draws the A*
+route to the end of the capture (20.3 m / 350 waypoints from the default
+spawn). On touch devices the left half is a walk stick and the right half
+looks; **M** hides the map for a full-screen view. `npm run build` produces a
+static `dist/` that can be served from any web host.
+
+**R2 bonus — sandbox pick-and-place.** Press **G** in the viewer (or append
 `?sandbox=1` to the same URL): keys **1–4** add a cone, barrier, crate, or wet-floor sign;
 click to pick up/place; **R** rotates; **Del** removes; **T** toggles the route.
 Placed props are real meshes layered over the read-only splat and become
-dynamic costmap obstacles, so A* and collision reroute around them. They are
-not scanned furniture — see [`docs/sandbox.md`](docs/sandbox.md) for the honest
-boundary, controls, and implementation.
+dynamic costmap obstacles, so A* and collision reroute around them — including
+an active POI route. They are not scanned furniture — see
+[`docs/sandbox.md`](docs/sandbox.md) for the honest boundary, controls, and
+implementation.
 
 **Frame budget (measured, live Pages build).** On an AMD Radeon integrated GPU
 through ANGLE/D3D11 at a 1600×900 viewport, the adaptive renderer holds
@@ -150,9 +165,16 @@ on every reading.
 - [x] Demo video (3:33, 1920×1080/30) — hosted twin walk-through, QA/metric
       cards, A* route, limitations and roadmap:
       <https://github.com/sciencebanda09/topoloka/releases/download/r1-demo/topoloka_demo.mp4>
-- [x] R2 preview: sandbox pick-and-place with dynamic obstacles + rerouting
+- [x] R2 bonus: sandbox pick-and-place with dynamic obstacles + rerouting
       (`?sandbox=1`; see `docs/sandbox.md`)
-- [ ] Web: POI search + user-facing pathfinding (R2; A* / route rendering already scaffolded)
+- [x] R2: POI contract + authoring editor; 7 authored Metro POIs across 5
+      categories; validated/staged by `namma pois` and `namma package`
+- [x] R2: in-browser 1 m bucket + inverted token index with fuzzy search,
+      ranked results, category facets, 3D/minimap selection, and Jump/Navigate
+- [x] R2: A* POI navigation with clearance, smoothing, turn instructions,
+      remaining distance/ETA, live reroute, arrival toast, and `?poi`/`?q` links
+- [x] R2 verification: 50 web tests + 21 pipeline tests, typecheck/build pass,
+      `poi_dataset` QA PASS; evidence in `docs/r2_evidence.md`
 - [ ] AR mode (QR-anchored relocalization, R3)
 
 ## Credit and licences

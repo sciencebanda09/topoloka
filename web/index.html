@@ -20,8 +20,8 @@
         <label id="scene-picker">
           <span>VIEW SAMPLE</span>
           <select id="capture-select" aria-label="Choose a sample capture">
-            <option value="room" selected>Studio Room (Interactive Orientation Controls)</option>
-            <option value="metro_v1">Melbourne Metro</option>
+            <option value="metro_v1" selected>Melbourne Metro — POIs &amp; nav</option>
+            <option value="room">Studio Room (visual benchmark)</option>
           </select>
         </label>
         <label id="representation-picker" class="hidden">
@@ -70,20 +70,74 @@
         </div>
       </div>
 
+      <div id="search-panel" role="search">
+        <div id="search-box">
+          <span class="search-icon" aria-hidden="true">⌕</span>
+          <input
+            id="search-input"
+            type="text"
+            role="combobox"
+            aria-label="Search points of interest"
+            aria-autocomplete="list"
+            aria-controls="search-results"
+            aria-expanded="false"
+            autocomplete="off"
+            spellcheck="false"
+            placeholder="Search POIs — name or alias"
+          />
+          <button id="search-clear" class="hidden" type="button" title="Clear search" aria-label="Clear search">×</button>
+          <kbd class="search-kbd" title="Press / to search">/</kbd>
+          <button id="tag-button" type="button" title="Tag a POI (E)">＋ Tag</button>
+        </div>
+        <div id="search-facets"></div>
+        <div id="search-results" class="hidden" role="listbox" aria-label="Search results"></div>
+      </div>
+
+      <aside id="poi-card" class="hidden" aria-live="polite" aria-label="Point of interest">
+        <div class="pc-head">
+          <span id="poi-card-category" class="poi-chip">Landmark</span>
+          <span id="poi-source" class="poi-source"></span>
+          <button id="poi-card-close" type="button" title="Close" aria-label="Close POI card">×</button>
+        </div>
+        <h2 id="poi-name"></h2>
+        <p id="poi-desc"></p>
+        <div class="pc-meta">
+          <span id="poi-distance"></span>
+          <span id="poi-coords"></span>
+        </div>
+        <div class="pc-actions">
+          <button id="poi-jump" type="button">Jump here</button>
+          <button id="poi-navigate" type="button" class="primary">Navigate</button>
+        </div>
+      </aside>
+
+      <div id="nav-banner" class="hidden" role="status" aria-live="polite">
+        <div class="nb-progress"><i></i></div>
+        <span id="nav-icon" class="nb-icon" aria-hidden="true">↑</span>
+        <div class="nb-main">
+          <div id="nav-target" class="nb-target"></div>
+          <div id="nav-instruction">Head toward…</div>
+          <div class="nb-meta"><span id="nav-remaining"></span><span id="nav-eta"></span></div>
+        </div>
+        <button id="nav-search" type="button" title="Search another destination (/)" aria-label="Search another destination">⌕</button>
+        <button id="nav-stop" type="button" title="Stop navigation" aria-label="Stop navigation">✕</button>
+      </div>
+
       <div id="map-wrap">
-        <canvas id="minimap"></canvas>
+        <canvas id="minimap" aria-label="Minimap with POIs"></canvas>
         <div id="map-legend">
           <span><i class="sw-free"></i>free</span>
           <span><i class="sw-obstacle"></i>obstacle</span>
           <span><i class="sw-unknown"></i>unknown</span>
           <span><i class="sw-path"></i>path</span>
+          <span><i class="sw-poi"></i>POI</span>
           <span id="legend-route" style="display:none"><i class="sw-route"></i>route</span>
           <span id="legend-prop" style="display:none"><i class="sw-prop"></i>prop</span>
         </div>
       </div>
 
       <div id="help">
-        <b>W/S</b> forward/back | <b>A/D</b> sidestep | <b>O</b> flip 180° | <b>[ / ]</b> rotate | <b>M</b> map | <b>G</b> sandbox | <b>click</b> to enter
+        <b>W/S</b> walk · <b>/</b> search · <b>E</b> tag POI · <b>click</b> a POI · <b>M</b> map · <b>G</b> sandbox
       </div>
 
       <div id="center-hint">click to enter walkthrough</div>
@@ -92,6 +146,44 @@
       <div id="reticle-label" class="hidden"></div>
       <div id="carry-hint" class="hidden"></div>
       <div id="toast"></div>
+
+      <aside id="poi-editor" class="hidden" aria-label="POI editor">
+        <div class="pe-head">
+          <span id="poi-editor-title">TAG A POI</span>
+          <button id="poi-editor-close" type="button" title="Exit tagging" aria-label="Exit tagging">×</button>
+        </div>
+        <div id="poi-editor-coords" class="pe-coords"></div>
+        <label class="pe-field">
+          <span>Name</span>
+          <input id="poi-name-input" type="text" maxlength="80" placeholder="e.g. Ticket gates" />
+        </label>
+        <label class="pe-field">
+          <span>Category</span>
+          <select id="poi-category-input">
+            <option value="landmark">Landmark</option>
+            <option value="facility">Facility</option>
+            <option value="exit">Exit</option>
+            <option value="platform">Platform</option>
+            <option value="area">Area / room</option>
+            <option value="retail">Retail</option>
+            <option value="other">Other</option>
+          </select>
+        </label>
+        <label class="pe-field">
+          <span>Description</span>
+          <textarea id="poi-desc-input" rows="2" maxlength="240" placeholder="What can a visitor find here?"></textarea>
+        </label>
+        <div id="poi-view-status" class="pe-view">Camera pose captured when you save.</div>
+        <div class="pe-actions">
+          <button id="poi-save" type="button" class="primary">Save POI</button>
+          <button id="poi-cancel" type="button">Cancel</button>
+        </div>
+        <div class="pe-list-head">
+          <span>LOCAL POIs</span>
+          <button id="poi-export" type="button" title="Download a pois.json bundle">Export pois.json</button>
+        </div>
+        <div id="poi-local-list"></div>
+      </aside>
 
       <div id="sandbox" class="hidden">
         <div class="sb-head">

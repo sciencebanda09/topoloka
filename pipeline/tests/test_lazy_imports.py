@@ -37,6 +37,7 @@ def main() -> None:
     import namma.depth  # noqa: F401
     import namma.geometry  # noqa: F401
     import namma.package  # noqa: F401
+    import namma.pois  # noqa: F401
     import namma.qa  # noqa: F401
     import namma.sfm  # noqa: F401
     import namma.splat_convert  # noqa: F401

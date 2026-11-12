@@ -1,7 +1,7 @@
 {
   "stage": "qa",
   "capture": "metro_v1",
-  "time": "2026-10-22 15:33:24",
+  "time": "2026-11-12 09:56:06",
   "overall": "PASS",
   "checks": [
     {
@@ -45,6 +45,13 @@
       "detail": "none",
       "compensation": "see nav_report.json for details",
       "value": null
+    },
+    {
+      "name": "poi_dataset",
+      "status": "PASS",
+      "detail": "7 POIs across 5 categories",
+      "compensation": "indexed by the viewer at load time",
+      "value": 7
     }
   ]
 }

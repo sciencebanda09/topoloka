@@ -48,6 +48,7 @@ COPY_FROM_PIPELINE = [
     ("sparse.ply", "sfm/sparse.ply"),
     ("nav.json", "nav/nav.json"),
     ("nav_report.json", "nav/nav_report.json"),
+    ("pois.json", "nav/pois.json"),
     ("occupancy.png", "nav/occupancy.png"),
 ]
 COPY_FROM_SPLAT = [
@@ -156,6 +157,12 @@ def build_web(pipe_out: Path, splat_out: Path, dest: Path,
     for name in ("nav.json", "occupancy.png", "meta.json"):
         if (web_src / name).exists():
             shutil.copy2(web_src / name, web / name)
+    # POIs are authored beside the capture; prefer the packaged copy, fall
+    # back to nav/pois.json copied from the pipeline output above.
+    if (web_src / "pois.json").exists():
+        shutil.copy2(web_src / "pois.json", web / "pois.json")
+    elif (dest / "nav" / "pois.json").exists():
+        shutil.copy2(dest / "nav" / "pois.json", web / "pois.json")
     # the nav/ folder keeps the GPU run's occupancy too (CPU one is sparse-cloud)
     if (web_src / "occupancy.png").exists():
         (dest / "nav").mkdir(parents=True, exist_ok=True)
@@ -209,6 +216,18 @@ def build_web(pipe_out: Path, splat_out: Path, dest: Path,
             splat["present"] = False
         m["sample"] = "decimated copy of the Kaggle pipeline output"
         m["capture"] = web.parent.name
+        poi_path = web / "pois.json"
+        if poi_path.exists():
+            try:
+                poi_doc = json.loads(poi_path.read_text(encoding="utf-8"))
+                m["pois"] = {
+                    "present": True,
+                    "count": len(poi_doc.get("pois", [])),
+                }
+            except ValueError:
+                m["pois"] = {"present": True, "count": None}
+        else:
+            m["pois"] = {"present": False, "count": 0}
         meta_path.write_text(json.dumps(m, indent=2), encoding="utf-8")
     return meta
 

@@ -1,9 +1,11 @@
 /**
- * Minimap: floor outline, occupancy tint, trajectory, and the walker arrow.
- * North-up in world axes (nav x right, nav y down), fixed fit with padding.
+ * Minimap: floor outline, occupancy tint, trajectory, route, POIs, props and
+ * the walker arrow. North-up in world axes (nav x right, nav y down), fixed fit.
+ * Clicking a POI dot selects it (the main app wires the callback).
  */
 
 import { FREE, OBSTACLE, type NavData } from './artifacts';
+import type { Poi } from './pois';
 import type { PropTransform } from './props';
 
 const COLOR_UNKNOWN = [24, 28, 33, 255] as const;
@@ -11,6 +13,7 @@ const COLOR_FREE = [70, 82, 96, 255] as const;
 // Muted brick, not alarm red: obstacles ring a narrow walked corridor, so a
 // saturated fill makes the whole map read as "blocked".
 const COLOR_OBSTACLE = [116, 52, 56, 255] as const;
+const LOGICAL_SIZE = 240;
 
 export class Minimap {
   private ctx: CanvasRenderingContext2D;
@@ -21,11 +24,14 @@ export class Minimap {
   private minY = 0;
   private route: [number, number][] = [];
   private props: PropTransform[] = [];
+  private pois: Poi[] = [];
+  private selectedPoi: string | null = null;
+  private target: [number, number] | null = null;
 
   constructor(canvas: HTMLCanvasElement, nav: NavData, grid: { w: number; h: number; data: Uint8Array }) {
     const dpr = Math.min(window.devicePixelRatio, 2);
-    canvas.width = 240 * dpr;
-    canvas.height = 240 * dpr;
+    canvas.width = LOGICAL_SIZE * dpr;
+    canvas.height = LOGICAL_SIZE * dpr;
     const ctx = canvas.getContext('2d');
     if (!ctx) throw new Error('no 2d context for minimap');
     this.ctx = ctx;
@@ -44,10 +50,10 @@ export class Minimap {
     const spanX = Math.max(...xs) - this.minX;
     const spanY = Math.max(...ys) - this.minY;
     const pad = 14;
-    this.k = Math.min((240 - 2 * pad) / Math.max(spanX, 0.5), (240 - 2 * pad) / Math.max(spanY, 0.5));
+    this.k = Math.min((LOGICAL_SIZE - 2 * pad) / Math.max(spanX, 0.5), (LOGICAL_SIZE - 2 * pad) / Math.max(spanY, 0.5));
     // center the fit
-    this.minX -= ((240 / this.k) - spanX) / 2;
-    this.minY -= ((240 / this.k) - spanY) / 2;
+    this.minX -= ((LOGICAL_SIZE / this.k) - spanX) / 2;
+    this.minY -= ((LOGICAL_SIZE / this.k) - spanY) / 2;
 
     // pre-render occupancy at grid resolution
     this.base = document.createElement('canvas');
@@ -77,9 +83,45 @@ export class Minimap {
     this.props = props;
   }
 
+  setPois(pois: Poi[], selected: string | null = null): void {
+    this.pois = pois;
+    this.selectedPoi = selected;
+  }
+
+  setSelectedPoi(id: string | null): void {
+    this.selectedPoi = id;
+  }
+
+  setTarget(target: [number, number] | null): void {
+    this.target = target;
+  }
+
+  /** Canvas client pixel -> nav world. Used by POI dot clicks. */
+  worldAt(clientX: number, clientY: number): [number, number] {
+    const canvas = this.ctx.canvas;
+    const rect = canvas.getBoundingClientRect();
+    const x = (clientX - rect.left) * (LOGICAL_SIZE / rect.width);
+    const y = (clientY - rect.top) * (LOGICAL_SIZE / rect.height);
+    return [this.minX + x / this.k, this.minY + y / this.k];
+  }
+
+  /** Nearest POI within `maxPx` logical pixels of a click. */
+  poiAt(clientX: number, clientY: number, maxPx = 12): Poi | null {
+    const canvas = this.ctx.canvas;
+    const rect = canvas.getBoundingClientRect();
+    const x = (clientX - rect.left) * (LOGICAL_SIZE / rect.width);
+    const y = (clientY - rect.top) * (LOGICAL_SIZE / rect.height);
+    let best: { poi: Poi; d: number } | null = null;
+    for (const poi of this.pois) {
+      const d = Math.hypot(this.mx(poi.x) - x, this.my(poi.y) - y);
+      if (d <= maxPx && (!best || d < best.d)) best = { poi, d };
+    }
+    return best?.poi ?? null;
+  }
+
   draw(pos: [number, number, number], headingRad: number): void {
     const { ctx, nav } = this;
-    ctx.clearRect(0, 0, 240, 240);
+    ctx.clearRect(0, 0, LOGICAL_SIZE, LOGICAL_SIZE);
 
     const [ox, oy] = nav.origin;
     ctx.imageSmoothingEnabled = false;
@@ -120,6 +162,16 @@ export class Minimap {
       ctx.stroke();
     }
 
+    if (this.target) {
+      const tx = this.mx(this.target[0]);
+      const ty = this.my(this.target[1]);
+      ctx.beginPath();
+      ctx.arc(tx, ty, 5.5, 0, Math.PI * 2);
+      ctx.strokeStyle = '#40ff9a';
+      ctx.lineWidth = 1.6;
+      ctx.stroke();
+    }
+
     // placed sandbox props
     for (const p of this.props) {
       const x = this.mx(p.x), y = this.my(p.y);
@@ -135,6 +187,44 @@ export class Minimap {
         ctx.fill();
       }
       ctx.restore();
+    }
+
+    // POI dots
+    for (const poi of this.pois) {
+      const x = this.mx(poi.x), y = this.my(poi.y);
+      const selected = poi.id === this.selectedPoi;
+      if (selected) {
+        ctx.beginPath();
+        ctx.arc(x, y, 7, 0, Math.PI * 2);
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.9)';
+        ctx.lineWidth = 1.4;
+        ctx.stroke();
+      }
+      ctx.beginPath();
+      ctx.arc(x, y, selected ? 4 : 2.8, 0, Math.PI * 2);
+      ctx.fillStyle = selected ? '#ffffff' : '#7fd4ff';
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(7, 12, 16, 0.9)';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+    }
+    const selectedPoi = this.pois.find((p) => p.id === this.selectedPoi);
+    if (selectedPoi) {
+      const x = this.mx(selectedPoi.x), y = this.my(selectedPoi.y);
+      const label = selectedPoi.name.length > 22 ? `${selectedPoi.name.slice(0, 21)}…` : selectedPoi.name;
+      ctx.font = '600 9px ui-monospace, Consolas, monospace';
+      const w = ctx.measureText(label).width + 8;
+      const lx = Math.min(LOGICAL_SIZE - w - 2, Math.max(2, x - w / 2));
+      const ly = y < 18 ? y + 9 : y - 18;
+      ctx.fillStyle = 'rgba(8, 12, 16, 0.88)';
+      ctx.fillRect(lx, ly, w, 13);
+      ctx.strokeStyle = 'rgba(127, 212, 255, 0.5)';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(lx, ly, w, 13);
+      ctx.fillStyle = '#eef6ff';
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(label, lx + 4, ly + 7);
     }
 
     // walker arrow

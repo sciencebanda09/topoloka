@@ -1,0 +1,170 @@
+{
+  "version": 1,
+  "capture": "metro_v1",
+  "pois": [
+    {
+      "id": "accessible-ramp",
+      "name": "Accessible Ramp",
+      "category": "facility",
+      "x": 7.281,
+      "y": -22.52,
+      "z": 0.0,
+      "radius_m": 1.0,
+      "aliases": [
+        "ramp",
+        "wheelchair",
+        "step free",
+        "handrail",
+        "accessible"
+      ],
+      "description": "Step-free ramp with a continuous handrail, leading down into the tunnel.",
+      "view": {
+        "x": 8.258,
+        "y": -22.677,
+        "z": 1.527,
+        "yaw": 0.9197,
+        "pitch": 0.0
+      }
+    },
+    {
+      "id": "tunnel-walkway",
+      "name": "Tunnel Walkway",
+      "category": "area",
+      "x": 1.422,
+      "y": -11.216,
+      "z": 0.0,
+      "radius_m": 1.6,
+      "aliases": [
+        "tunnel",
+        "walkway",
+        "corridor",
+        "passage"
+      ],
+      "description": "Long, level tiled walkway under the curved ceiling, with tactile paving at the edges.",
+      "view": {
+        "x": 2.393,
+        "y": -11.573,
+        "z": 1.754,
+        "yaw": 0.4418,
+        "pitch": 0.0
+      }
+    },
+    {
+      "id": "emergency-exit",
+      "name": "Emergency Exit",
+      "category": "exit",
+      "x": -0.577,
+      "y": -5.365,
+      "z": 0.0,
+      "radius_m": 1.0,
+      "aliases": [
+        "exit",
+        "emergency",
+        "fire exit",
+        "way out"
+      ],
+      "description": "Overhead green emergency exit sign above the midpoint of the tunnel.",
+      "view": {
+        "x": 0.406,
+        "y": -5.679,
+        "z": 1.744,
+        "yaw": 0.4172,
+        "pitch": 0.18
+      }
+    },
+    {
+      "id": "advertising-panels",
+      "name": "Advertising Panels",
+      "category": "landmark",
+      "x": -5.795,
+      "y": 7.397,
+      "z": 0.0,
+      "radius_m": 1.0,
+      "aliases": [
+        "ads",
+        "posters",
+        "billboards",
+        "screens",
+        "advertising"
+      ],
+      "description": "Backlit advertising panels line the tunnel wall here.",
+      "view": {
+        "x": -3.618,
+        "y": 2.585,
+        "z": 1.762,
+        "yaw": 0.4249,
+        "pitch": 0.0
+      }
+    },
+    {
+      "id": "curved-passage",
+      "name": "Curved Passage",
+      "category": "area",
+      "x": -9.908,
+      "y": 20.196,
+      "z": 0.0,
+      "radius_m": 1.6,
+      "aliases": [
+        "bend",
+        "curve",
+        "corridor",
+        "handrail"
+      ],
+      "description": "The walkway bends around a curved tiled wall with a handrail.",
+      "view": {
+        "x": -8.935,
+        "y": 19.882,
+        "z": 1.71,
+        "yaw": 0.4405,
+        "pitch": 0.0
+      }
+    },
+    {
+      "id": "town-hall-sign",
+      "name": "Town Hall Station Sign",
+      "category": "landmark",
+      "x": -16.438,
+      "y": 29.292,
+      "z": 0.0,
+      "radius_m": 1.2,
+      "aliases": [
+        "town hall",
+        "station sign",
+        "wayfinding",
+        "metro sign"
+      ],
+      "description": "Blue wayfinding sign for Town Hall Station, beside the advertising panels.",
+      "view": {
+        "x": -15.502,
+        "y": 29.025,
+        "z": 1.628,
+        "yaw": 1.2929,
+        "pitch": 0.0
+      }
+    },
+    {
+      "id": "platforms-1-2",
+      "name": "Platforms 1 & 2",
+      "category": "platform",
+      "x": -22.342,
+      "y": 27.873,
+      "z": 0.0,
+      "radius_m": 1.6,
+      "aliases": [
+        "platform",
+        "platform 1",
+        "platform 2",
+        "train",
+        "boarding"
+      ],
+      "description": "The walkway opens toward the platforms and train boarding area.",
+      "view": {
+        "x": -21.507,
+        "y": 28.104,
+        "z": 1.433,
+        "yaw": 1.9061,
+        "pitch": 0.0
+      }
+    }
+  ]
+}
