@@ -13,7 +13,8 @@ All project artifacts, live interactive demonstrators, video footage, and source
 | **Live Web Twin (R2)** | **[https://sciencebanda09.github.io/topoloka/](https://sciencebanda09.github.io/topoloka/)** | Client-side WebGL 3DGS viewer. Default opens **Melbourne Metro — POIs & navigation** with 7 authored POIs, spatial search, and obstacle-aware routes; dropdown switches to **Studio Room**. Runs at 50–60 FPS in any standard browser. |
 | **Source Code Repository** | **[https://github.com/sciencebanda09/topoloka](https://github.com/sciencebanda09/topoloka)** | Complete end-to-end codebase: phone capture SOP, SfM pipeline, depth metricization, 3DGS export, POI validation, and Vite/TypeScript WebGL client. MIT Open Source. |
 | **R2 Feature Branch** | **[https://github.com/sciencebanda09/topoloka/tree/r2-pois-nav](https://github.com/sciencebanda09/topoloka/tree/r2-pois-nav)** | Round 2 branch: POI contract/editor, in-browser spatial+lexical index, search UI, POI routing, overlay pass, and browser QA. |
-| **R2 Evidence Pack** | **[`docs/r2_evidence.md`](https://github.com/sciencebanda09/topoloka/blob/main/docs/r2_evidence.md)** | Measured route evidence, POI inventory, test/QA results, smoke flow, and the R2 demo outline. |
+| **R2 Evidence Pack** | **[`docs/r2_evidence.md`](https://github.com/sciencebanda09/topoloka/blob/main/docs/r2_evidence.md)** | Measured route evidence, POI inventory, test/QA results, smoke flow, and the shipped demo shot map. |
+| **R2 Demo Video (4:11)** | **[https://github.com/sciencebanda09/topoloka/releases/download/r2-demo/topoloka_r2_demo.mp4](https://github.com/sciencebanda09/topoloka/releases/download/r2-demo/topoloka_r2_demo.mp4)** | 1080p/30 H.264+AAC cut from live Pages captures: POI search, explicit jump, obstacle-aware navigation, sandbox reroute, authoring/export, and verification. |
 | **Demo Walkthrough Video (R1 baseline)** | **[https://github.com/sciencebanda09/topoloka/releases/download/r1-demo/topoloka_demo.mp4](https://github.com/sciencebanda09/topoloka/releases/download/r1-demo/topoloka_demo.mp4)** | 1080p/30 H.264+AAC walkthrough of first-person walking, minimap sync, orientation controls, and collision avoidance. |
 | **Technical Abstract (R1 PDF)** | **[`docs/abstract.pdf`](https://github.com/sciencebanda09/topoloka/blob/main/docs/abstract.pdf)** | Formal academic report detailing the mathematical formulation, pipeline architecture, and R1 empirical benchmarks. |
 | **Kaggle Cloud Pipelines** | **[`kaggle/kernels/`](https://github.com/sciencebanda09/topoloka/tree/main/kaggle/kernels)** | Automated GPU scripts executing frame extraction, pycolmap SfM, Depth Anything V2 metric alignment, and splatfacto training ($0.00 total compute cost). |
@@ -95,13 +96,17 @@ Unlike traditional photogrammetry or laser scanning pipelines that require tens 
 ```
 
 ### Mathematical Formulation of Metric Placement
-Topoloka links the raw reconstruction frame ($p_{scene}$) to the navigation coordinate frame ($p_{nav}$) and the Three.js rendering frame ($p_{three}$) through an exact transformation pipeline:
+Topoloka links the raw reconstruction frame (`p_scene`) to the navigation coordinate frame (`p_nav`) and the Three.js rendering frame (`p_three`) through an exact transformation pipeline:
 
-$$p_{nav} = s \cdot R^T (p_{scene} - p_{origin})$$
+```text
+p_nav   = s · Rᵀ · (p_scene − p_origin)
 
-$$p_{three} = A \cdot p_{nav}, \quad A = \begin{bmatrix} 1 & 0 & 0 \\ 0 & 0 & 1 \\ 0 & -1 & 0 \end{bmatrix}$$
+p_three = A · p_nav,    A = [ 1  0  0 ]
+                             [ 0  0  1 ]
+                             [ 0 -1  0 ]
+```
 
-where $s$ is the metric scale factor (meters per unit), $R$ is the orthonormal rotation matrix derived from RANSAC floor detection, and $A$ maps the Z-up navigation frame to the Y-up WebGL world.
+where `s` is the metric scale factor (meters per unit), `R` is the orthonormal rotation matrix derived from RANSAC floor detection, and `A` maps the Z-up navigation frame to the Y-up WebGL world.
 
 ---
 
@@ -155,6 +160,10 @@ client-side on the same static link; there is no backend.
   tests, and a 76-check Playwright pass covering desktop flow, deep links,
   editor/export, sandbox reroute, sample switching, mobile layout/orientation,
   and 980–1280 px responsive layouts.
+- **Demo cut.** The 4:11, 1080p30 release asset is assembled from live browser
+  captures and typographic cards: search, explicit jump, navigation, sandbox
+  reroute, authoring/export, and the verification matrix. Link:
+  <https://github.com/sciencebanda09/topoloka/releases/download/r2-demo/topoloka_r2_demo.mp4>.
 
 ---
 
@@ -187,6 +196,8 @@ R2 additions on the Metro twin:
 | Web unit tests | **50 / 50** (`pois`, `nav`, `navigation`) |
 | Pipeline tests | **21 / 21** |
 | Browser QA | **76 / 76** checks (desktop, mobile, responsive, deep links, sandbox) |
+| Live Pages QA | **27 / 27** checks on the public URL |
+| R2 demo video | **4:11**, 1920×1080 / 30 fps, H.264 + AAC, 51.3 MB release asset |
 
 ---
 

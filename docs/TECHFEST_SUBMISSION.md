@@ -90,6 +90,8 @@
 - [x] **Hosted URL:** [https://sciencebanda09.github.io/topoloka/](https://sciencebanda09.github.io/topoloka/) loads instantly without login.
 - [x] **Sample 1 (Studio Room):** 1.59M 3DGS twin, upright and centered, horizontal walk controls (no up/down drift), interactive orientation panel with Flip 180°, Turn Y, Tilt X, Level, and Copy Link.
 - [x] **Sample 2 (Melbourne Metro):** Accessible from the sample dropdown, featuring full A* route navigation, minimap, and collision avoidance.
-- [x] **Demo Video:** Hosted on GitHub Releases (3:33, 1080p, 41 MB).
+- [x] **Demo Video:** R2 cut on GitHub Releases (4:11, 1080p30, 51.3 MB):
+      <https://github.com/sciencebanda09/topoloka/releases/download/r2-demo/topoloka_r2_demo.mp4>;
+      R1 baseline remains at <https://github.com/sciencebanda09/topoloka/releases/download/r1-demo/topoloka_demo.mp4>.
 - [x] **Technical Abstract:** 5-page PDF compiled with IEEE/ACM formatting guidelines in `docs/abstract.pdf`.
 - [x] **Clean Repository:** All dead links, unverified captures, and private personal captures purged from the public codebase.

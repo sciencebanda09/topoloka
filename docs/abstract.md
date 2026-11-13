@@ -9,7 +9,7 @@
 | **Competition ID** | **NAMM-B3B981411E93** |
 | **Interactive Web Viewer** | [https://sciencebanda09.github.io/topoloka/](https://sciencebanda09.github.io/topoloka/) |
 | **Code Repository** | [https://github.com/sciencebanda09/topoloka](https://github.com/sciencebanda09/topoloka) (MIT License) |
-| **Demonstration Video** | [https://github.com/sciencebanda09/topoloka/releases/download/r1-demo/topoloka_demo.mp4](https://github.com/sciencebanda09/topoloka/releases/download/r1-demo/topoloka_demo.mp4) |
+| **Demonstration Video (R2)** | [https://github.com/sciencebanda09/topoloka/releases/download/r2-demo/topoloka_r2_demo.mp4](https://github.com/sciencebanda09/topoloka/releases/download/r2-demo/topoloka_r2_demo.mp4) (4:11, 1080p30) |
 | **Cloud Execution** | Executed entirely on free Kaggle GPU T4 nodes ($0.00 compute expenditure) |
 
 ---

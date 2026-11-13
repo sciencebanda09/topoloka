@@ -1,0 +1,34 @@
+[
+  {
+    "id": "r2_intro",
+    "text": "Round two of Topoloka turns a free-roam Gaussian-splat twin into a queryable, routable indoor map. Everything you are about to see runs in the browser on the same static GitHub Pages link, with no backend, no database, and no installation. The Round One walkthrough is still here: you can roam with W A S D, look with the mouse, switch between the splat and the point cloud, and open the sandbox."
+  },
+  {
+    "id": "r2_index",
+    "text": "The sample ships seven authored points of interest across five categories, from the accessible ramp and tunnel walkway to the emergency exit, the advertising panels, and platforms one and two. Each POI lives in a versioned JSON contract with a name, category, aliases, description, floor position, radius, and an optional camera view. The pipeline validates the file, rejects duplicates or off-floor coordinates, and copies it beside the navigation grid. At load time the browser builds two indexes: a one-metre spatial bucket grid for proximity, and an inverted token index over names, aliases, and categories. Levenshtein fallback catches typos, and ranking is deterministic, with a bounded proximity tie-breaker."
+  },
+  {
+    "id": "r2_search",
+    "text": "Press slash and search for Town Hall. Results are ranked and grouped by category. The card shows the category, description, live distance, and coordinates. Selecting a result highlights the marker, pulses the ring, and draws it on the minimap, but deliberately leaves the camera still. Browsing never yanks the view away from you. Jump here flies to the authored camera pose only when you ask, and the card distance keeps updating as you move."
+  },
+  {
+    "id": "r2_nav",
+    "text": "Navigation plans on the same five-centimetre costmap used for collision. Unknown and obstacle cells are blocked, the walked path is carved free, and planning adds ten centimetres of clearance. Navigate draws a green chevron ribbon on the floor and on the minimap, with turn-by-turn instruction and remaining distance. The camera auto-turns toward the next waypoint, so W follows the route. The tracker reroutes after one point two metres off course and stops within zero point seven metres of the goal. The ribbon and the POI rings are rendered in an after-splat overlay pass, because the Gaussian renderer otherwise paints over transparent three-dimensional objects."
+  },
+  {
+    "id": "r2_obstacles",
+    "text": "The sandbox makes that costmap editable. Two barriers placed across the metro corridor change the Tunnel Walkway route from thirty-one point six six metres and two waypoints to thirty-one point eight six metres and three waypoints. The new plan bends around both footprints, and the minimap shows the same detour. Remove the props, and the original route returns. This is the live props URL, not a unit-test mock."
+  },
+  {
+    "id": "r2_authoring",
+    "text": "Press E to author a new POI. Click the floor, name it, choose a category, add a description, and save. The camera pose is captured with the tag. Local tags persist in the browser per capture and export as the same versioned POI contract, ready for the pipeline validator and the next build. That closes the loop from field capture to a searchable, routable place."
+  },
+  {
+    "id": "r2_verified",
+    "text": "The Round Two branch ships fifty web unit tests across POIs, navigation, and pathfinding, twenty-one pipeline tests, a strict TypeScript check, and a production build. A seventy-six-check Playwright pass covers the desktop flow, deep links, the editor and export, sandbox reroute, sample switching, mobile layout and orientation, and widths from nine hundred eighty to twelve hundred eighty pixels. The live Pages build serves the same seven POIs and reports QA pass."
+  },
+  {
+    "id": "r2_close",
+    "text": "The live link, source branch, POI contract, and full evidence pack are in the repository. Round three adds on-site QR-fiducial AR tracking. Topoloka: one video in, Google Maps for indoors out."
+  }
+]

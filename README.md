@@ -56,7 +56,7 @@ It opens Melbourne Metro. **View model** switches between the Gaussian splat
 and point cloud; A/D sidesteps around objects. Press `/` to search the POIs,
 click a result to inspect it, and **Navigate** for a route. The Studio Room
 costmap is synthetic all-free space, so it demonstrates rendering and
-orientation, not pathfinding. R2 evidence and the demo script live in
+orientation, not pathfinding. R2 evidence and the shipped demo shot map live in
 [`docs/r2_evidence.md`](docs/r2_evidence.md); the POI contract is
 [`docs/poi.md`](docs/poi.md).
 
@@ -174,7 +174,11 @@ on every reading.
 - [x] R2: A* POI navigation with clearance, smoothing, turn instructions,
       remaining distance/ETA, live reroute, arrival toast, and `?poi`/`?q` links
 - [x] R2 verification: 50 web tests + 21 pipeline tests, typecheck/build pass,
-      `poi_dataset` QA PASS; evidence in `docs/r2_evidence.md`
+      `poi_dataset` QA PASS, 76/76 browser checks, 27/27 live Pages checks;
+      evidence in `docs/r2_evidence.md`
+- [x] R2 demo video (4:11, 1920×1080/30) — live search, jump, navigation,
+      sandbox reroute, authoring/export, and verification:
+      <https://github.com/sciencebanda09/topoloka/releases/download/r2-demo/topoloka_r2_demo.mp4>
 - [ ] AR mode (QR-anchored relocalization, R3)
 
 ## Credit and licences

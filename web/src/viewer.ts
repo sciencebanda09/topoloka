@@ -110,6 +110,9 @@ export class Viewer {
   private pulse = 0;
   private routeTexture: THREE.CanvasTexture | null = null;
   private readonly labelProbe = new THREE.Vector3();
+  private readonly labelEdge = new THREE.Vector3();
+  private readonly labelRight = new THREE.Vector3();
+  private readonly labelUp = new THREE.Vector3();
 
   constructor(canvas: HTMLCanvasElement, renderScale = 1) {
     this.renderScale = Math.min(1, Math.max(0.4, renderScale));
@@ -516,6 +519,9 @@ export class Viewer {
     // target label is shown; otherwise nearby on-screen labels only.
     const cam = this.camera.position;
     const navigating = this.destination !== null;
+    const basis = this.camera.matrixWorld.elements;
+    this.labelRight.set(basis[0], basis[1], basis[2]).normalize();
+    this.labelUp.set(basis[4], basis[5], basis[6]).normalize();
     for (const marker of this.markers.values()) {
       const label = marker.label;
       const distance = Math.hypot(
@@ -524,8 +530,17 @@ export class Viewer {
       const scale = Math.min(2.4, Math.max(0.25, distance / 12));
       label.scale.set(1.9 * scale, 0.475 * scale, 1);
       this.labelProbe.copy(label.position).project(this.camera);
+      // Check the projected sprite bounds, not just its centre, so a wide
+      // label near the viewport edge cannot be clipped mid-word.
+      this.labelEdge.copy(label.position)
+        .addScaledVector(this.labelRight, label.scale.x / 2).project(this.camera);
+      const halfW = Math.abs(this.labelEdge.x - this.labelProbe.x);
+      this.labelEdge.copy(label.position)
+        .addScaledVector(this.labelUp, label.scale.y / 2).project(this.camera);
+      const halfH = Math.abs(this.labelEdge.y - this.labelProbe.y);
       const onScreen = this.labelProbe.z > -1 && this.labelProbe.z < 1
-        && Math.abs(this.labelProbe.x) < 0.92 && Math.abs(this.labelProbe.y) < 0.96;
+        && Math.abs(this.labelProbe.x) + halfW < 0.98
+        && Math.abs(this.labelProbe.y) + halfH < 0.98;
       const focused = navigating && marker.poi.id === this.selectedPoi;
       label.visible = onScreen && distance > 3
         && (focused || (!navigating && distance < 24));

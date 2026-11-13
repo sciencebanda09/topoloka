@@ -10,8 +10,9 @@ the portal is the only place that matters, this file is the defense copy.
 | Repo | https://github.com/sciencebanda09/topoloka | public (MIT), created 2026-10-18 |
 | Viewer (Metro + Studio Room) | https://sciencebanda09.github.io/topoloka/ | live R2 twin: 7 POIs, search, POI routing, sandbox |
 | R2 branch | https://github.com/sciencebanda09/topoloka/tree/r2-pois-nav | POI/search/navigation work |
-| R2 evidence | `docs/r2_evidence.md` in repo | route numbers, inventory, tests, demo outline |
+| R2 evidence | `docs/r2_evidence.md` in repo | route numbers, inventory, tests, demo shot map |
 | Sandbox (R2) | same viewer; press G or append `?sandbox=1` | add and place props in the Metro twin |
+| R2 demo video | https://github.com/sciencebanda09/topoloka/releases/download/r2-demo/topoloka_r2_demo.mp4 | 4:11, 1080p30, 51.3 MB; hosted 2026-11-13 |
 | Demo video (R1 baseline) | https://github.com/sciencebanda09/topoloka/releases/download/r1-demo/topoloka_demo.mp4 | 3:33, 1080p30, 41.0 MB; hosted 2026-10-26 |
 | Abstract PDF | `docs/abstract.pdf` in repo | two captures, 5 pages, 2.48 MB; rebuilt 2026-10-29 |
 
@@ -214,6 +215,17 @@ the portal is the only place that matters, this file is the defense copy.
   and **76/76** Playwright browser checks across desktop, deep links,
   editor/export, sandbox reroute, sample switching, mobile, and 980–1280 px
   layouts. Docs: `docs/poi.md`, `docs/r2_evidence.md`.
+
+- **2026-11-13 — R2 demo cut shipped.** The 4:11, 1920×1080/30 H.264+AAC cut is
+  a release asset (`r2-demo`, 51.3 MB):
+  <https://github.com/sciencebanda09/topoloka/releases/download/r2-demo/topoloka_r2_demo.mp4>.
+  Built from live Pages captures at 1600×900 plus typographic cards, with the
+  generated narration (`docs/demo/audio_r2/`) and a reproducible ffmpeg build
+  (`docs/demo/build_video_r2.py`). The cut covers search, explicit jump,
+  obstacle-aware navigation, sandbox reroute, browser authoring/export, and
+  the 50/21/76/27 verification matrix. Also fixed POI label culling to use the
+  projected sprite bounds, so wide labels near the viewport edge no longer clip
+  mid-word. Docs and the master PDF link the new asset.
 
 ## Engineering decisions worth defending
 

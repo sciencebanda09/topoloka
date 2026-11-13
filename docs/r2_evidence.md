@@ -107,23 +107,37 @@ Runtime smoke test (hardware-accelerated headless Chrome, 1440×900):
 Screenshots: [`fig/pois.png`](fig/pois.png) (search + card + minimap) and
 [`fig/r2_route.png`](fig/r2_route.png) (active route banner).
 
-## Demo video outline (3–5 min)
+## Demo video (shipped)
 
-1. **0:00–0:35** — Open the live link; Metro loads at the concourse. HUD shows
-   `7 POIs` and QA PASS.
-2. **0:35–1:15** — Press `/`, type `curved`, show the ranked hit and 1.7 m
-   distance; click the result (camera stays put); press **Jump here**.
-3. **1:15–2:15** — Search `tunnel`, **Navigate**, walk the corridor; show the
-   banner instruction/distance and the route ribbon/minimap; arrive.
-4. **2:15–3:00** — Press `E`, click the floor, tag and save a local POI, search
-   it, export `pois.json`. Show the validation command and `poi_report.json`.
-5. **3:00–3:45** — Open the two-barrier `?props=` URL; show the route change
-   31.66 → 31.86 m; remove the sandbox; route returns.
-6. **3:45–4:15** — Close on the repo: 50 web tests + 21 pipeline tests, static
-   hosting, and the R3 AR roadmap.
+**4:11 · 1920×1080 / 30 fps · H.264 + AAC · 51.3 MB**
 
-Record on the hosted Pages build in a hardware-accelerated browser
-(ANGLE/D3D11). Software WebGL renders at ~1 fps and freezes movement.
+<https://github.com/sciencebanda09/topoloka/releases/download/r2-demo/topoloka_r2_demo.mp4>
+
+The cut is built from live browser captures on the public Pages build plus
+typographic cards. No mock UI and no invented numbers.
+
+1. **0:00–0:27 — Intro.** Title card, then the live twin: free-roam is intact,
+   the point cloud toggles, and the sandbox opens.
+2. **0:27–1:17 — Contract and index.** The `pois.json` schema, the pipeline
+   gate, the 1 m bucket grid, the inverted token index, and the typo fallback
+   (`tunel` → Tunnel Walkway) in the live search box.
+3. **1:17–1:47 — Search and selection.** `/` → `town`, ranked results, the
+   category/description card, live distance, selection without a camera jump,
+   then explicit **Jump here**.
+4. **1:47–2:31 — Navigation.** Search `exit`, **Navigate**, walk the route,
+   banner instruction/distance, 3D ribbon + minimap, then the failsafe card
+   (1.2 m reroute, 0.7 m stop, 10 cm clearance) and the after-splat overlay.
+5. **2:31–2:59 — Obstacles.** The two-barrier `?props=` capture: 31.66 m /
+   2 waypoints → 31.86 m / 3 waypoints; clear the sandbox and the route returns.
+6. **2:59–3:24 — Authoring.** `E`, click the floor, name/category/description,
+   save, then **Export pois.json** with the local tag visible in the list.
+7. **3:24–3:55 — Verification.** 50 web tests, 21 pipeline tests, strict
+   typecheck, production build, 76 Playwright checks, 27 live Pages checks.
+8. **3:55–4:11 — Close.** Live link, source branch, evidence pack, and the R3
+   QR-fiducial AR roadmap.
+
+Recorded on the hosted Pages build in a hardware-accelerated browser
+(ANGLE/D3D11). The raw captures are 1600×900 VP8; the final cut is 1080p30.
 
 ## Limitations (honest)
 
@@ -140,5 +154,6 @@ Record on the hosted Pages build in a hardware-accelerated browser
 - **Single floor.** The costmap is 2.5D; multi-storey routing is out of scope.
 - **Dynamic obstacles are local/link-shared.** No multi-user sync or backend.
 - **`.splat` is DC-only.** Reflective surfaces remain softer than the floor.
-- **R2 demo video is a scripted outline** until the final hosted recording is
-  uploaded; the R1 cut remains the published baseline.
+- **The tunnel end is under-reconstructed.** The Emergency Exit sequence stops
+  before the auto-turn reaches the worst wall; the demo still shows a dark
+  tunnel end, which is capture data, not a missing texture.
