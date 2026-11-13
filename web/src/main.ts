@@ -351,6 +351,7 @@ async function boot(): Promise<void> {
       controls.setEnabled(!blocking);
       if (blocking) controls.cancelFlight();
     },
+    onCardLayoutChange: (rect) => viewer.setLabelExclusion(rect),
     getPlayer: () => [controls.position[0], controls.position[1]],
     getView: (): PoiView => ({
       x: controls.position[0],

@@ -113,6 +113,7 @@ export class Viewer {
   private readonly labelEdge = new THREE.Vector3();
   private readonly labelRight = new THREE.Vector3();
   private readonly labelUp = new THREE.Vector3();
+  private labelExclusion: { x0: number; y0: number; x1: number; y1: number } | null = null;
 
   constructor(canvas: HTMLCanvasElement, renderScale = 1) {
     this.renderScale = Math.min(1, Math.max(0.4, renderScale));
@@ -389,6 +390,23 @@ export class Viewer {
     }
   }
 
+  /** Keep world labels out of an open UI panel, given in CSS pixels. */
+  setLabelExclusion(rect: { left: number; top: number; right: number; bottom: number } | null): void {
+    if (!rect) {
+      this.labelExclusion = null;
+      return;
+    }
+    const canvas = this.renderer.domElement.getBoundingClientRect();
+    const w = canvas.width || 1;
+    const h = canvas.height || 1;
+    this.labelExclusion = {
+      x0: ((rect.left - canvas.left) / w) * 2 - 1,
+      x1: ((rect.right - canvas.left) / w) * 2 - 1,
+      y0: 1 - ((rect.bottom - canvas.top) / h) * 2,
+      y1: 1 - ((rect.top - canvas.top) / h) * 2,
+    };
+  }
+
   /** Ray-pick a POI label or marker from canvas/client coordinates. */
   pickPoi(clientX: number, clientY: number): Poi | null {
     const rect = this.renderer.domElement.getBoundingClientRect();
@@ -522,6 +540,15 @@ export class Viewer {
     const basis = this.camera.matrixWorld.elements;
     this.labelRight.set(basis[0], basis[1], basis[2]).normalize();
     this.labelUp.set(basis[4], basis[5], basis[6]).normalize();
+    const candidates: {
+      marker: PoiMarker;
+      distance: number;
+      x: number;
+      y: number;
+      halfW: number;
+      halfH: number;
+      focused: boolean;
+    }[] = [];
     for (const marker of this.markers.values()) {
       const label = marker.label;
       const distance = Math.hypot(
@@ -541,9 +568,44 @@ export class Viewer {
       const onScreen = this.labelProbe.z > -1 && this.labelProbe.z < 1
         && Math.abs(this.labelProbe.x) + halfW < 0.98
         && Math.abs(this.labelProbe.y) + halfH < 0.98;
+      // Do not slide a label under the open POI card; it reads as clipped text.
+      const underCard = this.labelExclusion !== null
+        && this.labelProbe.x + halfW > this.labelExclusion.x0
+        && this.labelProbe.x - halfW < this.labelExclusion.x1
+        && this.labelProbe.y + halfH > this.labelExclusion.y0
+        && this.labelProbe.y - halfH < this.labelExclusion.y1;
       const focused = navigating && marker.poi.id === this.selectedPoi;
-      label.visible = onScreen && distance > 3
+      const eligible = onScreen && !underCard && distance > 3
         && (focused || (!navigating && distance < 24));
+      if (!eligible) {
+        label.visible = false;
+        continue;
+      }
+      candidates.push({
+        marker, distance,
+        x: this.labelProbe.x, y: this.labelProbe.y, halfW, halfH, focused,
+      });
+    }
+    // Prefer the selected label, then the nearest one, and drop any label
+    // whose projected box would collide with one already placed.
+    candidates.sort((a, b) => {
+      if (a.focused !== b.focused) return a.focused ? -1 : 1;
+      const aSelected = a.marker.poi.id === this.selectedPoi;
+      const bSelected = b.marker.poi.id === this.selectedPoi;
+      if (aSelected !== bSelected) return aSelected ? -1 : 1;
+      return a.distance - b.distance;
+    });
+    const placed: { x0: number; y0: number; x1: number; y1: number }[] = [];
+    const pad = 0.008;
+    for (const c of candidates) {
+      const box = {
+        x0: c.x - c.halfW - pad, y0: c.y - c.halfH - pad,
+        x1: c.x + c.halfW + pad, y1: c.y + c.halfH + pad,
+      };
+      const collides = placed.some((p) =>
+        box.x0 < p.x1 && box.x1 > p.x0 && box.y0 < p.y1 && box.y1 > p.y0);
+      c.marker.label.visible = !collides;
+      if (!collides) placed.push(box);
     }
   }
 

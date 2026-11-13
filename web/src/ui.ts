@@ -19,6 +19,7 @@ export interface PoiUiCallbacks {
   onDeletePoi: (id: string) => void;
   onExportPois: () => void;
   onInputModeChange: (blocking: boolean) => void;
+  onCardLayoutChange: (rect: { left: number; top: number; right: number; bottom: number } | null) => void;
   getPlayer: () => [number, number];
   getView: () => PoiView;
   toast: (message: string) => void;
@@ -86,6 +87,7 @@ export class PoiUi {
     this.wireNavigation();
     this.wireEditor();
     this.wireGlobalKeys();
+    window.addEventListener('resize', () => this.emitCardRect());
   }
 
   // ---- data --------------------------------------------------------------
@@ -315,6 +317,16 @@ export class PoiUi {
     this.card.classList.remove('hidden');
     this.distanceText = '';
     this.refreshCardDistance();
+    this.emitCardRect();
+  }
+
+  private emitCardRect(): void {
+    if (this.card.classList.contains('hidden')) {
+      this.cb.onCardLayoutChange(null);
+      return;
+    }
+    const r = this.card.getBoundingClientRect();
+    this.cb.onCardLayoutChange({ left: r.left, top: r.top, right: r.right, bottom: r.bottom });
   }
 
   /**
@@ -342,6 +354,7 @@ export class PoiUi {
   hideCard(): void {
     this.currentPoi = null;
     this.card.classList.add('hidden');
+    this.cb.onCardLayoutChange(null);
   }
 
   private wireCard(): void {

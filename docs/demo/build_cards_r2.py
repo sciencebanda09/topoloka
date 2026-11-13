@@ -314,7 +314,7 @@ def card_verified() -> None:
         ("50 / 50", "web unit tests", "POIs · nav · pathfinding"),
         ("21 / 21", "pipeline tests", "schema · grid · packaging"),
         ("strict", "TypeScript check", "tsc --noEmit"),
-        ("953.2 kB", "production JS", "19.6 kB CSS · built"),
+        ("954.6 kB", "production JS", "19.6 kB CSS · built"),
         ("76 / 76", "Playwright checks", "desktop · mobile · sandbox"),
         ("27 / 27", "live Pages checks", "same build, public URL"),
     ]
