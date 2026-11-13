@@ -84,7 +84,7 @@ restores 31.66 m. This is the live `?props=` path, not a unit-test mock.
 |---|---|---|
 | Web unit tests | `cd web && npm test` | **50 / 50 pass** (`pois`, `nav`, `navigation`) |
 | TypeScript | `cd web && npm run typecheck` | pass (`tsc --noEmit`) |
-| Production build | `cd web && npm run build` | pass (952.7 kB JS / 19.6 kB CSS; 249.7 kB JS gzip) |
+| Production build | `cd web && npm run build` | pass (953.2 kB JS / 19.6 kB CSS; 249.8 kB JS gzip) |
 | Pipeline tests | `python -m pytest -s pipeline/tests` | **21 / 21 pass** |
 | POI validation | `python -m namma.cli pois ..\test\metro_v1` | 7 POIs, 5 categories, 0 warnings |
 | Capture QA | `python -m namma.cli qa ..\test\metro_v1` | overall **PASS**, `poi_dataset: 7 POIs across 5 categories` |
