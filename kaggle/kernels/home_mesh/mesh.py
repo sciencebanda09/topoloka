@@ -27,7 +27,8 @@ OUT = WORK / "out"
 CODE = SCRATCH / "code"
 RUN = SCRATCH / "run"
 
-MODEL_ID = "depth-anything/Depth-Anything-V2-Metric-Indoor-Large-hf"
+# Apache 2.0 commercially licensed depth weights
+MODEL_ID = "depth-anything/Depth-Anything-V2-Metric-Indoor-Small-hf"
 DEPTH_W, DEPTH_H = 800, 450
 TEX_W, TEX_H = 1024, 576
 ATLAS_COLS, ATLAS_ROWS = 8, 8

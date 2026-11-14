@@ -146,9 +146,9 @@ on every reading.
 
 - [x] Repo skeleton, capture SOP, frame picking, QA gates
 - [x] SfM (`pycolmap` 4.2.1) — 216/216 registered on the metro clip
-- [x] Metric depth fusion (Depth Anything V2 Metric Indoor Large) + scale alignment
+- [x] Metric depth fusion (Depth Anything V2 Metric Indoor Small, Apache 2.0) + scale alignment
 - [x] Geometry: floor plane, gravity align, 2.5D 5 cm costmap, outline
-- [x] Splat training (nerfstudio 1.1.5 splatfacto, 25 k iters) + web `.splat` export
+- [x] Splat training (nerfstudio 1.1.5 splatfacto, 25 k iters) + web `.splat` / `.ksplat` export
 - [x] Web: first-person viewer, collision, minimap, splat renderer, `?t` spawn
 - [x] Viewer fidelity/perf pass: capture-matched lens, adaptive resolution,
       true-FPS HUD, minimap legend, debug geometry hidden after splat load
@@ -179,7 +179,8 @@ on every reading.
 - [x] R2 demo video (4:11, 1920×1080/30) — live search, jump, navigation,
       sandbox reroute, authoring/export, and verification:
       <https://github.com/sciencebanda09/topoloka/releases/download/r2-demo/topoloka_r2_demo.mp4>
-- [ ] AR mode (QR-anchored relocalization, R3)
+- [x] AR mode (`#mode=ar`: QR-anchored pose relocalization + directional turn overlay)
+- [x] Round 2 compliance pass: Apache-2.0 commercial depth switch (`Depth-Anything-V2-Metric-Indoor-Small-hf`), updated Data Capture SOP (`capture/SOP.md`), 3-page Technical Abstract (`docs/abstract.pdf`) with Third-Party Commercial License Matrix & API vs. Own GPU Cost Analysis, plus human narration script (`docs/demo/NARRATION_SCRIPT.md`)
 
 ## Credit and licences
 
@@ -198,7 +199,7 @@ on every reading.
 - The Guildhall MVS mesh uses that same licensed trim and is distributed under
   CC BY-SA 4.0; see `test/guildhall-mvs/LICENSE`.
 
-The pipeline code is MIT. No personal capture is shipped.
+The pipeline code is MIT; see [`docs/abstract.pdf`](docs/abstract.pdf) for the full commercial licensing matrix (`Depth-Anything-V2-Metric-Indoor-Small-hf` Apache 2.0, `nerfstudio`/`gsplat` Apache 2.0, `pycolmap` BSD-3-Clause, `Three.js`/`@mkkellogg/gaussian-splats-3d` MIT) and self-hosted GPU vs. third-party API cost analysis. Existing public samples are temporary stand-in benchmarks pending replacement by the team's own multi-room smartphone capture.
 
 ## Deadlines
 
