@@ -107,6 +107,10 @@ export class Sandbox {
     this.autoEnable = params.has('sandbox') || !!encoded;
   }
 
+  setSplat(splat: SplatLayer | null): void {
+    this.opts.splat = splat;
+  }
+
   get isEnabled(): boolean {
     return this.enabled;
   }

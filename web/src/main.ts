@@ -171,14 +171,16 @@ async function boot(): Promise<void> {
   const hasSplat = Boolean(meta.splat?.present);
   const requestedModel = params.get('model');
   type Representation = 'mesh' | 'splat' | 'points';
-  let representation: Representation = hasMesh ? 'mesh' : hasSplat ? 'splat' : 'points';
-  if (requestedModel === 'mesh' && hasMesh) representation = 'mesh';
-  else if (requestedModel === 'splat' && hasSplat) representation = 'splat';
-  else if (requestedModel === 'points') representation = 'points';
+  const defaultRepresentation: Representation = hasMesh ? 'mesh' : hasSplat ? 'splat' : 'points';
+  let desiredRepresentation: Representation = defaultRepresentation;
+  if (requestedModel === 'mesh' && hasMesh) desiredRepresentation = 'mesh';
+  else if (requestedModel === 'splat' && hasSplat) desiredRepresentation = 'splat';
+  else if (requestedModel === 'points') desiredRepresentation = 'points';
 
-  // The mesh and point cloud are cheap enough to draw at native CSS resolution;
-  // only the splat starts at the lower GPU budget and adapts from there.
-  let renderScale = MANUAL_SCALE ? INITIAL_SCALE : representation === 'splat' ? INITIAL_SCALE : 1;
+  // Render the fast preview (grid/trajectory/point cloud) immediately at native
+  // resolution so the canvas is never blank while large splat/mesh assets load.
+  let representation: Representation = 'points';
+  let renderScale = MANUAL_SCALE ? INITIAL_SCALE : 1;
 
   const viewer = new Viewer(canvas, renderScale);
   viewer.setNavCamera(nav);
@@ -189,6 +191,12 @@ async function boot(): Promise<void> {
   const spawnParam = params.get('t');
   const spawn = viewer.spawnAt(nav, spawnParam ? Number(spawnParam) : undefined);
   const pivot = new THREE.Vector3(spawn.position[0], spawn.position[2], -spawn.position[1]);
+
+  let splat: SplatLayer | null = null;
+  let nPoints = 0;
+  let cloudDone = false;
+  let meshLoaded = false;
+  let loadingStatus: string | null = 'loading point cloud…';
 
   function applyOrientation(saveUrl = true): void {
     splat?.setExtraTransform(curRx, curRy, curRz, curOy, pivot);
@@ -208,122 +216,24 @@ async function boot(): Promise<void> {
     }
   }
 
-  const cloud = await loadCloud(BASE);
-  const nPoints = cloud ? viewer.addPointCloud(cloud.positions, cloud.colors) : 0;
-
-  // splat, when the pipeline has produced one: render in our scene/camera
-  let splat: SplatLayer | null = null;
-  if (hasSplat && (requestedModel === 'splat' || (!hasMesh && requestedModel !== 'points'))) {
-    try {
-      subtitle.textContent = 'Loading splat...';
-      splat = new SplatLayer(viewer.renderer, viewer.scene, viewer.camera, {
-        alphaThreshold: SPLAT_ALPHA,
-        maxScreenSpaceSplatSize: SPLAT_MAX_PX,
-      });
-      await splat.load(`${BASE}/splat.splat`, nav);
-      viewer.setPointsVisible(false); // splat carries the visuals; P re-shows points
-      viewer.setTrajectoryVisible(false); // minimap keeps the path; the 3D wire is clutter
-      viewer.setDebugVisible(false); // grid/outline show through holes as black seams
-    } catch (err) {
-      console.warn('splat load failed, falling back to points:', err);
-      splat = null;
-    }
-  }
-
   const representationWrap = document.getElementById('representation-picker');
   const representationSelect = document.getElementById('representation-select') as HTMLSelectElement;
   const modelOptions = [...representationSelect.options];
-  for (const option of modelOptions) {
-    option.hidden = (option.value === 'mesh' && !hasMesh)
-      || (option.value === 'splat' && !hasSplat)
-      || (option.value === 'points' && !nPoints);
-  }
-  const availableModels = Number(hasMesh) + Number(hasSplat) + Number(Boolean(nPoints));
-  if (representationWrap) representationWrap.classList.toggle('hidden', availableModels < 2);
-  let meshLoaded = false;
-
-  async function ensureSplat(): Promise<void> {
-    if (splat?.loaded) return;
-    if (!hasSplat) throw new Error('This sample has no Gaussian splat');
-    subtitle.textContent = 'Loading splat...';
-    const next = new SplatLayer(viewer.renderer, viewer.scene, viewer.camera, {
-      alphaThreshold: SPLAT_ALPHA,
-      maxScreenSpaceSplatSize: SPLAT_MAX_PX,
-    });
-    await next.load(`${BASE}/splat.splat`, nav);
-    splat = next;
-  }
-
-  async function activateRepresentation(next: Representation): Promise<void> {
-    if (next === 'mesh') {
-      if (!hasMesh) throw new Error('This sample has no photo-textured mesh');
-      if (!meshLoaded) {
-        subtitle.textContent = 'Loading photo-textured mesh...';
-        await viewer.addTexturedMesh(`${BASE}/mesh.glb`);
-        meshLoaded = true;
-      }
-      viewer.setMeshVisible(true);
-      splat?.setVisible(false);
-      viewer.setPointsVisible(false);
-      viewer.setTrajectoryVisible(false);
-      viewer.setDebugVisible(false);
-      renderScale = MANUAL_SCALE ? INITIAL_SCALE : 1;
-      viewer.setRenderScale(renderScale);
-      representation = 'mesh';
-      applyOrientation(false);
-    } else if (next === 'splat') {
-      await ensureSplat();
-      splat?.setVisible(true);
-      viewer.setMeshVisible(false);
-      viewer.setPointsVisible(false);
-      viewer.setTrajectoryVisible(false);
-      viewer.setDebugVisible(false);
-      renderScale = INITIAL_SCALE;
-      viewer.setRenderScale(renderScale);
-      representation = 'splat';
-      applyOrientation(false);
-    } else {
-      splat?.setVisible(false);
-      viewer.setMeshVisible(false);
-      viewer.setPointsVisible(true);
-      viewer.setTrajectoryVisible(true);
-      viewer.setDebugVisible(true);
-      renderScale = MANUAL_SCALE ? INITIAL_SCALE : 1;
-      viewer.setRenderScale(renderScale);
-      representation = 'points';
-      applyOrientation(false);
+  const hasPointCloud = Boolean(nPoints || meta.cloud_points);
+  function syncRepresentationPicker(): void {
+    const pointsReady = Boolean(nPoints || meta.cloud_points);
+    for (const option of modelOptions) {
+      option.hidden = (option.value === 'mesh' && !hasMesh)
+        || (option.value === 'splat' && !hasSplat)
+        || (option.value === 'points' && !pointsReady);
     }
-    representationSelect.value = representation;
-    const url = new URL(location.href);
-    if (representation === (hasMesh ? 'mesh' : hasSplat ? 'splat' : 'points')) {
-      url.searchParams.delete('model');
-    } else {
-      url.searchParams.set('model', representation);
-    }
-    history.replaceState(null, '', url);
+    const availableModels = Number(hasMesh) + Number(hasSplat) + Number(pointsReady);
+    if (representationWrap) representationWrap.classList.toggle('hidden', availableModels < 2);
   }
-
-  try {
-    await activateRepresentation(representation);
-  } catch (err) {
-    console.warn(`${representation} load failed; using a fallback:`, err);
-    if (representation === 'mesh') {
-      hasMesh = false;
-      const meshOption = representationSelect.querySelector<HTMLOptionElement>('option[value="mesh"]');
-      if (meshOption) meshOption.hidden = true;
-      if (representationWrap) {
-        representationWrap.classList.toggle('hidden', Number(hasMesh) + Number(hasSplat) + Number(Boolean(nPoints)) < 2);
-      }
-    }
-    const fallback: Representation = representation === 'mesh' && hasSplat ? 'splat' : 'points';
-    await activateRepresentation(fallback);
-  }
-  representationSelect.addEventListener('change', () => {
-    void activateRepresentation(representationSelect.value as Representation).catch((err) => {
-      console.warn('could not switch representation:', err);
-      representationSelect.value = representation;
-    });
-  });
+  syncRepresentationPicker();
+  representationSelect.value = hasPointCloud || desiredRepresentation !== 'points'
+    ? desiredRepresentation
+    : 'points';
 
   const controls = new WalkControls(canvas, viewer.camera, costmap, spawn);
   const minimap = new Minimap(minimapCanvas, nav,
@@ -851,16 +761,16 @@ async function boot(): Promise<void> {
   const linkedQuery = params.get('q');
   if (linkedQuery) ui.openSearch(linkedQuery);
 
-  // ---- loop --------------------------------------------------------------
+  // ---- loop & progressive model loading ----------------------------------
   let last = performance.now();
   let fps = 0;
-  let statTimer = 0;
+  let statTimer = 1; // populate statLine() on frame 1
   let adaptTimer = -3; // let the first frames/sorting settle before judging
   const free = grid.data.reduce((s, v) => s + (v === 0 ? 1 : 0), 0);
   const walkable = meta.walkable_area_m2 ?? (free * nav.cell_m * nav.cell_m);
 
   function statLine(): string {
-    const parts = [`${CAPTURE}`];
+    const parts = loadingStatus ? [loadingStatus, CAPTURE] : [CAPTURE];
     if (representation === 'mesh') {
       parts.push('photo-textured mesh');
     } else if (representation === 'splat' && splat?.loaded) {
@@ -876,6 +786,184 @@ async function boot(): Promise<void> {
     if (meta.qa_overall) parts.push(`QA ${meta.qa_overall}`);
     return parts.join(' · ');
   }
+
+  let lastProgressSubtitleMs = 0;
+  function refreshSubtitle(immediate = true): void {
+    const now = performance.now();
+    if (!immediate && now - lastProgressSubtitleMs < 120) return;
+    lastProgressSubtitleMs = now;
+    statTimer = 0;
+    subtitle.textContent = statLine();
+  }
+
+  let modelRequestSeq = 0;
+  let splatAbort: AbortController | null = null;
+
+  function syncModelUrl(active: Representation): void {
+    representationSelect.value = active;
+    const url = new URL(location.href);
+    if (active === defaultRepresentation) {
+      url.searchParams.delete('model');
+    } else {
+      url.searchParams.set('model', active);
+    }
+    history.replaceState(null, '', url);
+  }
+
+  async function ensureSplat(seq: number, signal: AbortSignal): Promise<SplatLayer | null> {
+    if (splat?.loaded) return splat;
+    if (!hasSplat) throw new Error('This sample has no Gaussian splat');
+    const next = new SplatLayer(viewer.renderer, viewer.scene, viewer.camera, {
+      alphaThreshold: SPLAT_ALPHA,
+      maxScreenSpaceSplatSize: SPLAT_MAX_PX,
+    });
+    try {
+      await next.load(`${BASE}/splat.splat`, nav, {
+        signal,
+        onProgress: ({ phase, loadedBytes }) => {
+          if (seq !== modelRequestSeq) return;
+          if (phase === 'downloading') {
+            loadingStatus = `downloaded ${(loadedBytes / 1_048_576).toFixed(1)} MB`;
+            refreshSubtitle(false);
+          } else {
+            loadingStatus = 'building scene, can take ~1 min';
+            refreshSubtitle(true);
+          }
+        },
+      });
+      if (seq !== modelRequestSeq || signal.aborted) {
+        next.dispose();
+        return null;
+      }
+      splat = next;
+      sandbox.setSplat(splat);
+      return splat;
+    } catch (err) {
+      next.dispose();
+      throw err;
+    }
+  }
+
+  async function activateRepresentation(next: Representation, updateUrl = true): Promise<void> {
+    const seq = ++modelRequestSeq;
+    splatAbort?.abort();
+    splatAbort = null;
+
+    if (next === 'mesh') {
+      if (!hasMesh) throw new Error('This sample has no photo-textured mesh');
+      if (!meshLoaded) {
+        loadingStatus = 'loading mesh…';
+        refreshSubtitle(true);
+        await viewer.addTexturedMesh(`${BASE}/mesh.glb`);
+        if (seq !== modelRequestSeq) return;
+        meshLoaded = true;
+      }
+      loadingStatus = null;
+      viewer.setMeshVisible(true);
+      splat?.setVisible(false);
+      viewer.setPointsVisible(false);
+      viewer.setTrajectoryVisible(false);
+      viewer.setDebugVisible(false);
+      renderScale = MANUAL_SCALE ? INITIAL_SCALE : 1;
+      viewer.setRenderScale(renderScale);
+      representation = 'mesh';
+      applyOrientation(false);
+    } else if (next === 'splat') {
+      const controller = new AbortController();
+      splatAbort = controller;
+      loadingStatus = 'downloaded 0.0 MB';
+      refreshSubtitle(true);
+      const ready = await ensureSplat(seq, controller.signal);
+      if (!ready || seq !== modelRequestSeq) return;
+      splatAbort = null;
+      loadingStatus = null;
+      ready.setVisible(true);
+      viewer.setMeshVisible(false);
+      viewer.setPointsVisible(false);
+      viewer.setTrajectoryVisible(false);
+      viewer.setDebugVisible(false);
+      renderScale = INITIAL_SCALE;
+      viewer.setRenderScale(renderScale);
+      adaptTimer = -3;
+      representation = 'splat';
+      applyOrientation(false);
+    } else {
+      loadingStatus = cloudDone ? null : 'loading point cloud…';
+      splat?.setVisible(false);
+      viewer.setMeshVisible(false);
+      viewer.setPointsVisible(true);
+      viewer.setTrajectoryVisible(true);
+      viewer.setDebugVisible(true);
+      renderScale = MANUAL_SCALE ? INITIAL_SCALE : 1;
+      viewer.setRenderScale(renderScale);
+      representation = 'points';
+      applyOrientation(false);
+    }
+    if (updateUrl) syncModelUrl(representation);
+    else representationSelect.value = representation;
+    refreshSubtitle(true);
+  }
+
+  function startModelWithFallback(target: Representation): void {
+    void activateRepresentation(target, false).catch((err) => {
+      if (err instanceof DOMException && err.name === 'AbortError') return;
+      console.warn(`${target} load failed; using a fallback:`, err);
+      loadingStatus = null;
+      if (target === 'mesh') {
+        hasMesh = false;
+        const meshOption = representationSelect.querySelector<HTMLOptionElement>('option[value="mesh"]');
+        if (meshOption) meshOption.hidden = true;
+        syncRepresentationPicker();
+        if (hasSplat) {
+          startModelWithFallback('splat');
+          return;
+        }
+      }
+      if (target === 'splat') {
+        showToast('Gaussian splat unavailable — showing 3D point cloud');
+      }
+      void activateRepresentation('points', false);
+    });
+  }
+
+  let userSelectedModel = false;
+  representationSelect.addEventListener('change', () => {
+    userSelectedModel = true;
+    const chosen = representationSelect.value as Representation;
+    void activateRepresentation(chosen, true).catch((err) => {
+      if (err instanceof DOMException && err.name === 'AbortError') return;
+      console.warn('could not switch representation:', err);
+      loadingStatus = null;
+      representationSelect.value = representation;
+      refreshSubtitle(true);
+    });
+  });
+
+  // Load the fast point cloud first so the 3D scene renders immediately without
+  // competing for bandwidth with the larger splat/mesh download.
+  void loadCloud(BASE)
+    .then((cloud) => {
+      cloudDone = true;
+      nPoints = cloud ? viewer.addPointCloud(cloud.positions, cloud.colors) : 0;
+      syncRepresentationPicker();
+      if (representation === 'points') {
+        viewer.setPointsVisible(true);
+        applyOrientation(false);
+        if (loadingStatus === 'loading point cloud…') loadingStatus = null;
+      }
+      refreshSubtitle(true);
+    })
+    .catch((err) => {
+      cloudDone = true;
+      console.warn('point cloud load failed:', err);
+      if (loadingStatus === 'loading point cloud…') loadingStatus = null;
+      refreshSubtitle(true);
+    })
+    .finally(() => {
+      if (!userSelectedModel && desiredRepresentation !== 'points') {
+        startModelWithFallback(desiredRepresentation);
+      }
+    });
 
   function loop(now: number): void {
     const rawDt = Math.max((now - last) / 1000, 1e-4);

@@ -31,6 +31,81 @@ export interface SplatHit {
   distance: number;
 }
 
+export interface SplatLoadProgress {
+  phase: 'downloading' | 'building';
+  percent: number | null;
+  loadedBytes: number;
+  totalBytes: number;
+}
+
+export interface SplatLoadOptions {
+  signal?: AbortSignal;
+  onProgress?: (progress: SplatLoadProgress) => void;
+  buildTimeoutMs?: number;
+}
+
+/**
+ * Stream a `.splat` response into a Blob while reporting byte progress.
+ * GitHub Pages sends `Content-Encoding: gzip`, so `Content-Length` may reflect
+ * compressed wire bytes while `getReader()` yields decompressed bytes; clamp
+ * streamed percentages at 99% until EOF to avoid >100% glitches.
+ */
+export async function fetchSplatBlob(
+  url: string,
+  signal?: AbortSignal,
+  onProgress?: (progress: SplatLoadProgress) => void,
+): Promise<{ blob: Blob; loadedBytes: number; totalBytes: number }> {
+  const res = await fetch(url, { signal });
+  if (!res.ok) throw new Error(`splat fetch failed: ${res.status} ${res.statusText}`);
+
+  const rawLength = Number(res.headers.get('content-length'));
+  const totalBytes = Number.isFinite(rawLength) && rawLength > 0 ? rawLength : 0;
+
+  if (!res.body) {
+    const bytes = await res.arrayBuffer();
+    const loadedBytes = bytes.byteLength;
+    onProgress?.({ phase: 'downloading', percent: 100, loadedBytes, totalBytes: totalBytes || loadedBytes });
+    return {
+      blob: new Blob([bytes], { type: 'application/octet-stream' }),
+      loadedBytes,
+      totalBytes: totalBytes || loadedBytes,
+    };
+  }
+
+  const reader = res.body.getReader();
+  const chunks: Uint8Array<ArrayBuffer>[] = [];
+  let loadedBytes = 0;
+  let lastReported = -1;
+
+  onProgress?.({ phase: 'downloading', percent: totalBytes ? 0 : null, loadedBytes: 0, totalBytes });
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      if (value && value.byteLength > 0) {
+        chunks.push(new Uint8Array(value));
+        loadedBytes += value.byteLength;
+        const percent = totalBytes > 0
+          ? Math.min(99, Math.round((loadedBytes / Math.max(totalBytes, loadedBytes)) * 100))
+          : null;
+        if (percent !== lastReported || percent === null) {
+          lastReported = percent ?? -1;
+          onProgress?.({ phase: 'downloading', percent, loadedBytes, totalBytes });
+        }
+      }
+    }
+  } finally {
+    reader.releaseLock();
+  }
+
+  onProgress?.({ phase: 'downloading', percent: 100, loadedBytes, totalBytes: Math.max(totalBytes, loadedBytes) });
+  return {
+    blob: new Blob(chunks, { type: 'application/octet-stream' }),
+    loadedBytes,
+    totalBytes: Math.max(totalBytes, loadedBytes),
+  };
+}
+
 interface RawSplatHit {
   origin: THREE.Vector3;
   normal: THREE.Vector3;
@@ -88,7 +163,10 @@ export class SplatLayer {
     return M;
   }
 
-  async load(url: string, nav: NavData): Promise<void> {
+  async load(url: string, nav: NavData, loadOptions: SplatLoadOptions = {}): Promise<void> {
+    const { signal, onProgress, buildTimeoutMs = 120_000 } = loadOptions;
+    if (signal?.aborted) throw new DOMException('Aborted', 'AbortError');
+
     const m = SplatLayer.placementMatrix(nav);
     const position = new THREE.Vector3();
     const rotation = new THREE.Quaternion();
@@ -101,15 +179,19 @@ export class SplatLayer {
     // the *compressed* size -- so the decoded stream overruns it mid-download
     // ("RangeError: Invalid typed array length"). A blob URL carries the exact
     // byte length (or none, in which case the library safely buffers first).
-    const res = await fetch(url);
-    if (!res.ok) throw new Error(`splat fetch failed: ${res.status} ${res.statusText}`);
-    const bytes = await res.arrayBuffer();
-    const blobUrl = URL.createObjectURL(new Blob([bytes], { type: 'application/octet-stream' }));
+    const { blob, loadedBytes, totalBytes } = await fetchSplatBlob(url, signal, onProgress);
+    if (signal?.aborted) throw new DOMException('Aborted', 'AbortError');
+
+    onProgress?.({ phase: 'building', percent: null, loadedBytes, totalBytes });
+    // Yield a macrotask so the DOM paints "building scene..." before SplatBuffer optimization runs.
+    await new Promise<void>((resolve) => setTimeout(resolve, 0));
+    if (signal?.aborted) throw new DOMException('Aborted', 'AbortError');
+    const blobUrl = URL.createObjectURL(blob);
 
     try {
       // The library's custom AbortablePromise ignores rejection callbacks, so a
-      // failed load would hang this await forever; race it against a timeout.
-      await withTimeout(
+      // failed load would hang this await forever; race it against timeout + abort.
+      await withTimeoutAndAbort(
         this.viewer.addSplatScene(blobUrl, {
           format: GaussianSplats3D.SceneFormat.Splat, // blob URLs carry no extension
           showLoadingUI: false,
@@ -118,13 +200,24 @@ export class SplatLayer {
           rotation: rotation.toArray(), // xyzw
           scale: scale.toArray(),
         }) as unknown as Promise<void>,
-        180_000,
+        buildTimeoutMs,
         'splat build timed out',
+        signal,
       );
     } finally {
       URL.revokeObjectURL(blobUrl);
     }
     this.loaded = true;
+  }
+
+  dispose(): void {
+    this.loaded = false;
+    try {
+      const view = this.viewer as unknown as { dispose?: () => Promise<void> | void };
+      void Promise.resolve(view.dispose?.()).catch(() => { /* ignore shutdown errors */ });
+    } catch {
+      /* ignore shutdown errors */
+    }
   }
 
   /**
@@ -198,17 +291,35 @@ export class SplatLayer {
   }
 }
 
-/** Settle `p`, or reject if it takes longer than `ms` (see AbortablePromise note above). */
-function withTimeout<T>(p: Promise<T>, ms: number, message: string): Promise<T> {
+/** Settle `p`, or reject if aborted or taking longer than `ms` (see AbortablePromise note above). */
+function withTimeoutAndAbort<T>(
+  p: Promise<T>,
+  ms: number,
+  message: string,
+  signal?: AbortSignal,
+): Promise<T> {
+  if (signal?.aborted) return Promise.reject(new DOMException('Aborted', 'AbortError'));
   return new Promise<T>((resolve, reject) => {
-    const timer = setTimeout(() => reject(new Error(message)), ms);
+    const cleanup = () => {
+      clearTimeout(timer);
+      signal?.removeEventListener('abort', onAbort);
+    };
+    const onAbort = () => {
+      cleanup();
+      reject(new DOMException('Aborted', 'AbortError'));
+    };
+    const timer = setTimeout(() => {
+      cleanup();
+      reject(new Error(message));
+    }, ms);
+    signal?.addEventListener('abort', onAbort, { once: true });
     p.then(
       (value) => {
-        clearTimeout(timer);
+        cleanup();
         resolve(value);
       },
       (err) => {
-        clearTimeout(timer);
+        cleanup();
         reject(err);
       },
     );
