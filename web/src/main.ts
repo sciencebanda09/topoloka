@@ -16,6 +16,7 @@ import {
   formatDistance, planRoute, RouteTracker, WALK_SPEED_MPS,
   type RoutePlan,
 } from './navigation';
+import { ArModeController, loadAnchors } from './ar';
 import {
   isAtPoi, loadPois, mergePois, normalizePoiFile, type Poi, type PoiView,
 } from './pois';
@@ -119,6 +120,7 @@ interface Meta {
   qa_overall?: string;
   splat?: { present: boolean; gaussians?: number };
   mesh?: { present: boolean; format?: string };
+  anchors?: { present: boolean; count?: number };
 }
 
 async function loadMeta(): Promise<Meta> {
@@ -154,7 +156,12 @@ function writeLocalPois(pois: Poi[]): void {
 
 async function boot(): Promise<void> {
   subtitle.textContent = `${PRODUCT_NAME} · ${PRODUCT_TAGLINE} · fetching ${CAPTURE}…`;
-  const [nav, meta, poiFile] = await Promise.all([loadNav(BASE), loadMeta(), loadPois(BASE)]);
+  const [nav, meta, poiFile] = await Promise.all([
+    loadNav(BASE), loadMeta(), loadPois(BASE),
+  ]);
+  const anchorsFile = meta.anchors?.present
+    ? await loadAnchors(BASE)
+    : { version: 1, anchors: [] };
   const grid = await decodeGrid(nav.grid);
   const costmap = new Costmap(nav, grid);
   let localPois = readLocalPois();
@@ -331,6 +338,7 @@ async function boot(): Promise<void> {
   let activeTarget: Poi | null = null;
   let activePlan: RoutePlan | null = null;
   let tracker: RouteTracker | null = null;
+  let lastRemainingM: number | null = null;
   let lastReroute = 0;
   let routeLabel = '';
   const legendRoute = document.getElementById('legend-route');
@@ -410,6 +418,7 @@ async function boot(): Promise<void> {
     tracker = null;
     activeTarget = null;
     activePlan = null;
+    lastRemainingM = null;
     routeLabel = '';
     viewer.setRoute([]);
     minimap.setRoute(null);
@@ -428,6 +437,7 @@ async function boot(): Promise<void> {
     tracker = new RouteTracker(plan);
     activePlan = plan;
     activeTarget = goal;
+    lastRemainingM = plan.distanceM;
     viewer.setRoute(plan.waypoints, { x: goal.x, y: goal.y });
     minimap.setRoute(plan.waypoints);
     minimap.setTarget([goal.x, goal.y]);
@@ -450,12 +460,12 @@ async function boot(): Promise<void> {
       return;
     }
     let goal = target;
-    let plan = planRoute(costmap, from, target);
+    let plan = planRoute(costmap, from, target, { pois: mergedPois });
     if (!plan) {
       const snapped = costmap.nearestStandable(target.x, target.y, 5);
       if (snapped) {
         goal = { ...target, x: snapped[0], y: snapped[1] };
-        plan = planRoute(costmap, from, goal);
+        plan = planRoute(costmap, from, goal, { pois: mergedPois });
       }
     }
     if (!plan) {
@@ -479,10 +489,10 @@ async function boot(): Promise<void> {
   function refreshActiveRoute(notify = false): void {
     if (!activeTarget) return;
     const from: [number, number] = [controls.position[0], controls.position[1]];
-    let plan = planRoute(costmap, from, activeTarget);
+    let plan = planRoute(costmap, from, activeTarget, { pois: mergedPois });
     if (!plan) {
       const snapped = costmap.nearestStandable(activeTarget.x, activeTarget.y, 5);
-      if (snapped) plan = planRoute(costmap, from, { ...activeTarget, x: snapped[0], y: snapped[1] });
+      if (snapped) plan = planRoute(costmap, from, { ...activeTarget, x: snapped[0], y: snapped[1] }, { pois: mergedPois });
     }
     if (!plan) {
       viewer.setRoute([]);
@@ -575,6 +585,23 @@ async function boot(): Promise<void> {
   if (params.has('route') && routeEnd) startNavigation(routeEnd);
   if (sandbox.autoEnable) sandbox.setEnabled(true);
 
+  const ar = new ArModeController({
+    anchors: anchorsFile.anchors,
+    getPose: () => ({ position: controls.position, yaw: controls.yaw }),
+    getTarget: () => activeTarget ? { name: activeTarget.name, x: activeTarget.x, y: activeTarget.y } : null,
+    getLookahead: () => tracker?.currentLookahead ?? null,
+    getRemainingM: () => lastRemainingM,
+    onRelocalize: (pose) => {
+      controls.teleport(pose);
+      if (activeTarget) refreshActiveRoute(false);
+    },
+    onActiveChange: (on) => {
+      if (on && document.pointerLockElement) document.exitPointerLock();
+    },
+    toast: showToast,
+  });
+  if (params.get('ar') === '1') void ar.setActive(true);
+
   // ---- canvas interaction ------------------------------------------------
   let pointerDown: { x: number; y: number; t: number } | null = null;
   canvas.addEventListener('pointerdown', (e) => {
@@ -642,7 +669,9 @@ async function boot(): Promise<void> {
         const navY = -hit.point.z;
         const navX = hit.point.x;
         const floorZ = hit.point.y;
-        if (Math.abs(floorZ - (controls.position[2] - nav.cam_height_units)) < 1.4) {
+        // Only accept hits actually near the floor plane; wall/handrail hits
+        // should fall back to the metric z=0 ground plane so POIs never float.
+        if (Math.abs(floorZ) <= 0.35) {
           return [navX, navY, Math.max(0, floorZ)];
         }
       }
@@ -746,19 +775,26 @@ async function boot(): Promise<void> {
     applyOrientation(true);
   });
 
+  const orientSection = document.getElementById('orientation-section');
+  const ORIENT_ENABLED = CAPTURE === 'room' || params.has('orient');
+  if (!ORIENT_ENABLED) {
+    orientSection?.classList.add('hidden');
+    curRx = 0; curRy = 0; curRz = 0; curOy = 0;
+  }
+
   const orientControls = document.getElementById('orient-controls');
   const orientToggle = document.getElementById('orient-toggle');
   const setOrientMinimized = (min: boolean): void => {
     orientControls?.classList.toggle('minimized', min);
     if (orientToggle) orientToggle.textContent = min ? '+' : '−';
-    document.body.classList.toggle('orient-expanded', !min);
+    document.body.classList.toggle('orient-expanded', ORIENT_ENABLED && !min);
   };
   orientToggle?.addEventListener('click', () => {
     setOrientMinimized(!orientControls?.classList.contains('minimized'));
   });
   // Phones start with the rotation panel collapsed so the scene and minimap
   // stay visible; the header toggle still opens it on demand.
-  if (window.matchMedia('(max-width: 760px)').matches) setOrientMinimized(true);
+  if (!ORIENT_ENABLED || window.matchMedia('(max-width: 760px)').matches) setOrientMinimized(true);
 
   applyOrientation(false);
 
@@ -778,22 +814,22 @@ async function boot(): Promise<void> {
     if (isTypingTarget(e.target)) return;
     if (e.code === 'KeyP') viewer.setPointsVisible(!viewer.pointsVisible);
     if (e.code === 'KeyM') mapWrap.classList.toggle('hidden');
-    if (e.code === 'KeyO') {
+    if (ORIENT_ENABLED && e.code === 'KeyO') {
       curRx = stepAngle(curRx, 180);
       applyOrientation(true);
       showToast(`Flipped 180° (rx: ${curRx}°)`);
     }
-    if (e.code === 'BracketLeft') {
+    if (ORIENT_ENABLED && e.code === 'BracketLeft') {
       curRy = stepAngle(curRy, -90);
       applyOrientation(true);
       showToast(`Turned left 90° (ry: ${curRy}°)`);
     }
-    if (e.code === 'BracketRight') {
+    if (ORIENT_ENABLED && e.code === 'BracketRight') {
       curRy = stepAngle(curRy, 90);
       applyOrientation(true);
       showToast(`Turned right 90° (ry: ${curRy}°)`);
     }
-    if (e.code === 'Backslash') {
+    if (ORIENT_ENABLED && e.code === 'Backslash') {
       setOrientMinimized(!orientControls?.classList.contains('minimized'));
     }
     if (e.code === 'KeyT' && sandbox.isEnabled) {
@@ -852,6 +888,7 @@ async function boot(): Promise<void> {
     controls.update(dt);
     sandbox.update(dt);
     ui.refreshCardDistance();
+    ar.update();
 
     if (tracker && activePlan) {
       const state = tracker.update(
@@ -860,6 +897,7 @@ async function boot(): Promise<void> {
         dt,
       );
       ui.updateNavigation(state, activePlan);
+      lastRemainingM = state.remainingM;
       routeLabel = `route ${formatDistance(state.remainingM)}`;
       if (state.arrived) {
         const name = activePlan.targetName;
@@ -930,6 +968,10 @@ async function boot(): Promise<void> {
   // A quick first-run hint: the search bar is the headline R2 feature.
   window.setTimeout(() => {
     if (!linkedQuery && !linkedPoiId) {
+      if (CAPTURE === 'room' && poiIndexCount === 0) {
+        showToast('Studio Room (visual benchmark) · switch to Melbourne Metro for POIs & navigation');
+        return;
+      }
       const touches = window.matchMedia('(pointer: coarse)').matches;
       showToast(touches
         ? `${poiIndexCount} POIs · tap Search to explore or Tag to add one`

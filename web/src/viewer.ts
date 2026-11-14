@@ -6,7 +6,6 @@
  */
 
 import * as THREE from 'three';
-import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import type { NavData } from './artifacts';
 import type { Poi } from './pois';
 
@@ -40,17 +39,54 @@ function roundedLabel(text: string, color: number): THREE.Sprite {
   const ctx = canvas.getContext('2d')!;
   ctx.scale(dpr, dpr);
   const css = `#${color.toString(16).padStart(6, '0')}`;
-  ctx.fillStyle = 'rgba(8, 12, 16, 0.82)';
-  ctx.strokeStyle = css;
-  ctx.lineWidth = 2;
-  roundRect(ctx, 4, 25, width - 8, 78, 16);
+
+  // Subtle ambient shadow behind the floating pill
+  ctx.save();
+  ctx.shadowColor = 'rgba(0, 0, 0, 0.65)';
+  ctx.shadowBlur = 14;
+  ctx.shadowOffsetY = 4;
+  ctx.fillStyle = 'rgba(8, 13, 19, 0.88)';
+  roundRect(ctx, 10, 24, width - 20, 76, 38);
   ctx.fill();
+  ctx.restore();
+
+  // Subtle glass top highlight + category accent border
+  const grad = ctx.createLinearGradient(0, 24, 0, 100);
+  grad.addColorStop(0, 'rgba(255, 255, 255, 0.08)');
+  grad.addColorStop(0.45, 'rgba(255, 255, 255, 0.0)');
+  grad.addColorStop(1, 'rgba(0, 0, 0, 0.16)');
+  ctx.fillStyle = grad;
+  roundRect(ctx, 10, 24, width - 20, 76, 38);
+  ctx.fill();
+
+  ctx.strokeStyle = css;
+  ctx.lineWidth = 2.2;
+  roundRect(ctx, 10, 24, width - 20, 76, 38);
   ctx.stroke();
-  ctx.fillStyle = '#eef6ff';
-  ctx.font = '600 34px ui-monospace, Consolas, monospace';
-  ctx.textAlign = 'center';
+
+  const clipped = text.length > 26 ? `${text.slice(0, 25)}…` : text;
+  ctx.font = "600 31px 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif";
+  const textW = ctx.measureText(clipped).width;
+  const dotR = 7;
+  const gap = 14;
+  const groupW = dotR * 2 + gap + textW;
+  const startX = (width - groupW) / 2;
+
+  // Glowing category indicator dot
+  ctx.save();
+  ctx.shadowColor = css;
+  ctx.shadowBlur = 10;
+  ctx.fillStyle = css;
+  ctx.beginPath();
+  ctx.arc(startX + dotR, 62, dotR, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+
+  ctx.fillStyle = '#f2f7fc';
+  ctx.textAlign = 'left';
   ctx.textBaseline = 'middle';
-  ctx.fillText(text.length > 30 ? `${text.slice(0, 29)}…` : text, width / 2, 64);
+  ctx.fillText(clipped, startX + dotR * 2 + gap, 63);
+
   const texture = new THREE.CanvasTexture(canvas);
   texture.colorSpace = THREE.SRGBColorSpace;
   texture.minFilter = THREE.LinearFilter;
@@ -78,10 +114,13 @@ interface PoiMarker {
   poi: Poi;
   group: THREE.Group;
   ring: THREE.Mesh;
+  outerRing: THREE.Mesh;
   dot: THREE.Mesh;
+  stem: THREE.Mesh;
   pick: THREE.Mesh;
   label: THREE.Sprite;
   material: THREE.MeshBasicMaterial;
+  haloMaterial: THREE.MeshBasicMaterial;
   color: number;
 }
 
@@ -118,14 +157,16 @@ export class Viewer {
   constructor(canvas: HTMLCanvasElement, renderScale = 1) {
     this.renderScale = Math.min(1, Math.max(0.4, renderScale));
     this.renderer = new THREE.WebGLRenderer({ canvas, antialias: false, powerPreference: 'high-performance' });
+    this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    this.renderer.toneMappingExposure = 1.05;
     // Draw at CSS resolution (x renderScale), not devicePixelRatio: a 2x
     // retina buffer is 4x the splat fill cost on integrated laptop GPUs.
     this.renderer.setPixelRatio(1);
     this.resizeRenderer();
 
     this.scene = new THREE.Scene();
-    this.scene.background = new THREE.Color(0x0b0d10);
-    this.scene.fog = new THREE.Fog(0x0b0d10, 18, 42);
+    this.scene.background = new THREE.Color(0x080b10);
+    this.scene.fog = new THREE.Fog(0x080b10, 18, 42);
     this.scene.add(this.modelRoot);
     this.poiRoot.name = 'poi-markers';
     this.routeRoot.name = 'navigation-route';
@@ -215,6 +256,7 @@ export class Viewer {
 
   /** Load the photo-textured MVS surface in navigation coordinates (z up). */
   async addTexturedMesh(url: string): Promise<void> {
+    const { GLTFLoader } = await import('three/addons/loaders/GLTFLoader.js');
     const gltf = await new GLTFLoader().loadAsync(url);
     const root = new THREE.Group();
     root.rotation.x = -Math.PI / 2; // nav (x,y,z-up) -> Three.js (x,z,-y)
@@ -326,15 +368,29 @@ export class Viewer {
     group.name = `poi:${poi.id}`;
 
     const material = new THREE.MeshBasicMaterial({
-      color, transparent: true, opacity: 0.9, depthWrite: false, side: THREE.DoubleSide,
+      color, transparent: true, opacity: 0.92, depthWrite: false, side: THREE.DoubleSide,
       toneMapped: false,
     });
-    const ring = new THREE.Mesh(new THREE.RingGeometry(0.27, 0.36, 36), material);
+    const haloMaterial = new THREE.MeshBasicMaterial({
+      color, transparent: true, opacity: 0.34, depthWrite: false, side: THREE.DoubleSide,
+      toneMapped: false,
+    });
+    const ring = new THREE.Mesh(new THREE.RingGeometry(0.25, 0.34, 40), material);
     ring.rotation.x = -Math.PI / 2;
     ring.position.set(poi.x, floorZ + 0.025, -poi.y);
-    const dot = new THREE.Mesh(new THREE.CircleGeometry(0.075, 20), material);
+    const outerRing = new THREE.Mesh(new THREE.RingGeometry(0.41, 0.45, 44), haloMaterial);
+    outerRing.rotation.x = -Math.PI / 2;
+    outerRing.position.set(poi.x, floorZ + 0.023, -poi.y);
+    const dot = new THREE.Mesh(new THREE.CircleGeometry(0.085, 24), material);
     dot.rotation.x = -Math.PI / 2;
     dot.position.set(poi.x, floorZ + 0.028, -poi.y);
+
+    // Subtle vertical beacon pin tying the floor anchor visually to the floating pill
+    const stem = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.008, 0.018, 1.32, 10, 1, true),
+      haloMaterial,
+    );
+    stem.position.set(poi.x, floorZ + 0.70, -poi.y);
 
     // A tall invisible cylinder makes aiming forgiving, especially on mobile.
     const pick = new THREE.Mesh(
@@ -347,11 +403,11 @@ export class Viewer {
     const label = roundedLabel(poi.name, color);
     label.position.set(poi.x, floorZ + 1.55, -poi.y);
 
-    group.add(ring, dot, pick, label);
+    group.add(outerRing, ring, dot, stem, pick, label);
     group.userData.poiId = poi.id;
     this.poiRoot.add(group);
     this.markers.set(poi.id, {
-      poi, group, ring, dot, pick, label, material, color,
+      poi, group, ring, outerRing, dot, stem, pick, label, material, haloMaterial, color,
     });
   }
 
@@ -385,8 +441,10 @@ export class Viewer {
     for (const [markerId, marker] of this.markers) {
       const active = markerId === id;
       marker.material.color.setHex(active ? 0xffffff : marker.color);
-      marker.material.opacity = active ? 1 : 0.86;
-      marker.label.material.opacity = active ? 1 : 0.82;
+      marker.material.opacity = active ? 1 : 0.88;
+      marker.haloMaterial.color.setHex(active ? 0xffffff : marker.color);
+      marker.haloMaterial.opacity = active ? 0.62 : 0.34;
+      marker.label.material.opacity = active ? 1 : 0.86;
     }
   }
 
@@ -481,21 +539,39 @@ export class Viewer {
     }
     if (target) {
       const ringMat = new THREE.MeshBasicMaterial({
-        color: 0x40ff9a, transparent: true, opacity: 0.9, side: THREE.DoubleSide,
+        color: 0x40ff9a, transparent: true, opacity: 0.92, side: THREE.DoubleSide,
         depthWrite: false, toneMapped: false,
       });
-      this.destinationRing = new THREE.Mesh(new THREE.RingGeometry(0.42, 0.5, 40), ringMat);
+      this.destinationRing = new THREE.Mesh(new THREE.RingGeometry(0.42, 0.52, 48), ringMat);
       this.destinationRing.rotation.x = -Math.PI / 2;
-      this.destinationRing.position.set(target.x, 0.035, -target.y);
+      this.destinationRing.position.set(target.x, 0.036, -target.y);
       this.destinationRing.renderOrder = 3;
+
+      const coreMat = new THREE.MeshBasicMaterial({
+        color: 0x40ff9a, transparent: true, opacity: 0.24, side: THREE.DoubleSide,
+        depthWrite: false, toneMapped: false,
+      });
+      const coreDisc = new THREE.Mesh(new THREE.CircleGeometry(0.38, 36), coreMat);
+      coreDisc.rotation.x = -Math.PI / 2;
+      coreDisc.position.set(target.x, 0.034, -target.y);
+      coreDisc.renderOrder = 2;
+
+      const beamMat = new THREE.MeshBasicMaterial({
+        color: 0x40ff9a, transparent: true, opacity: 0.20, side: THREE.DoubleSide,
+        depthWrite: false, toneMapped: false,
+      });
+      const beam = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.12, 1.35, 18, 1, true), beamMat);
+      beam.position.set(target.x, 0.71, -target.y);
+      beam.renderOrder = 2;
+
       this.destination = new THREE.Group();
-      this.destination.add(this.destinationRing);
+      this.destination.add(this.destinationRing, coreDisc, beam);
       this.routeRoot.add(this.destination);
     }
   }
 
   private clearRoute(): void {
-    const disposables = [this.routeMesh, this.routeUnderlay, this.destinationRing];
+    const disposables = [this.routeMesh, this.routeUnderlay];
     for (const object of disposables) {
       if (!object) continue;
       this.routeRoot.remove(object);
@@ -503,7 +579,16 @@ export class Viewer {
       const mats = Array.isArray(object.material) ? object.material : [object.material];
       for (const m of mats) m.dispose();
     }
-    if (this.destination) this.routeRoot.remove(this.destination);
+    if (this.destination) {
+      this.destination.traverse((object) => {
+        if (object instanceof THREE.Mesh) {
+          object.geometry.dispose();
+          const mats = Array.isArray(object.material) ? object.material : [object.material];
+          for (const m of mats) m.dispose();
+        }
+      });
+      this.routeRoot.remove(this.destination);
+    }
     this.routeMesh = null;
     this.routeUnderlay = null;
     this.destinationRing = null;
@@ -523,11 +608,13 @@ export class Viewer {
     if (selected) {
       const s = 1 + 0.18 * Math.sin(this.pulse * 5);
       selected.ring.scale.setScalar(s);
+      selected.outerRing.scale.setScalar(1 + 0.10 * Math.cos(this.pulse * 5));
       selected.dot.scale.setScalar(s);
     } else if (this.markers.size) {
       // reset any previously selected marker scale
       for (const marker of this.markers.values()) {
         marker.ring.scale.setScalar(1);
+        marker.outerRing.scale.setScalar(1);
         marker.dot.scale.setScalar(1);
       }
     }
@@ -609,7 +696,7 @@ export class Viewer {
     }
   }
 
-  /** Build a continuous triangle strip along a polyline (nav x/y). */
+  /** Build a continuous miter-clamped triangle strip along a polyline (nav x/y). */
   private ribbonGeometry(waypoints: [number, number][], width: number): THREE.BufferGeometry {
     const half = width / 2;
     const positions: number[] = [];
@@ -617,13 +704,39 @@ export class Viewer {
     const indices: number[] = [];
     let travelled = 0;
     for (let i = 0; i < waypoints.length; i++) {
-      const prev = waypoints[Math.max(0, i - 1)];
-      const next = waypoints[Math.min(waypoints.length - 1, i + 1)];
-      let dx = next[0] - prev[0], dy = next[1] - prev[1];
-      const len = Math.hypot(dx, dy) || 1;
-      dx /= len; dy /= len;
-      const px = -dy * half, py = dx * half;
       const [x, y] = waypoints[i];
+      let nx = 0, ny = 0;
+      let miterHalf = half;
+      if (i > 0 && i < waypoints.length - 1) {
+        const [px0, py0] = waypoints[i - 1];
+        const [nx0, ny0] = waypoints[i + 1];
+        let dx1 = x - px0, dy1 = y - py0;
+        const l1 = Math.hypot(dx1, dy1) || 1;
+        dx1 /= l1; dy1 /= l1;
+        let dx2 = nx0 - x, dy2 = ny0 - y;
+        const l2 = Math.hypot(dx2, dy2) || 1;
+        dx2 /= l2; dy2 /= l2;
+        const n1x = -dy1, n1y = dx1;
+        const n2x = -dy2, n2y = dx2;
+        nx = n1x + n2x;
+        ny = n1y + n2y;
+        const nl = Math.hypot(nx, ny);
+        if (nl > 1e-4) {
+          nx /= nl; ny /= nl;
+          const cosHalf = Math.max(0.45, nx * n1x + ny * n1y);
+          miterHalf = Math.min(half * 1.65, half / cosHalf);
+        } else {
+          nx = n1x; ny = n1y;
+        }
+      } else {
+        const prev = waypoints[Math.max(0, i - 1)];
+        const next = waypoints[Math.min(waypoints.length - 1, i + 1)];
+        let dx = next[0] - prev[0], dy = next[1] - prev[1];
+        const len = Math.hypot(dx, dy) || 1;
+        dx /= len; dy /= len;
+        nx = -dy; ny = dx;
+      }
+      const px = nx * miterHalf, py = ny * miterHalf;
       if (i > 0) travelled += Math.hypot(x - waypoints[i - 1][0], y - waypoints[i - 1][1]);
       // left and right edges
       positions.push(x + px, 0.045, -(y + py));
@@ -698,29 +811,52 @@ export class Viewer {
   }
 }
 
-/** Chevron stripe texture, repeated along the route. */
+/** Glowing multi-layer chevron stripe texture, repeated along the route. */
 function routeTexture(): THREE.CanvasTexture {
+  const size = 128;
   const canvas = document.createElement('canvas');
-  canvas.width = 64;
-  canvas.height = 64;
+  canvas.width = size;
+  canvas.height = size;
   const ctx = canvas.getContext('2d')!;
-  ctx.clearRect(0, 0, 64, 64);
-  ctx.strokeStyle = '#40ff9a';
-  ctx.lineWidth = 9;
+  ctx.clearRect(0, 0, size, size);
+
+  // Soft luminous emerald edge rails
+  const railGrad = ctx.createLinearGradient(0, 0, 0, size);
+  railGrad.addColorStop(0.0, 'rgba(64, 255, 154, 0.0)');
+  railGrad.addColorStop(0.08, 'rgba(64, 255, 154, 0.42)');
+  railGrad.addColorStop(0.18, 'rgba(64, 255, 154, 0.08)');
+  railGrad.addColorStop(0.82, 'rgba(64, 255, 154, 0.08)');
+  railGrad.addColorStop(0.92, 'rgba(64, 255, 154, 0.42)');
+  railGrad.addColorStop(1.0, 'rgba(64, 255, 154, 0.0)');
+  ctx.fillStyle = railGrad;
+  ctx.fillRect(0, 0, size, size);
+
+  // Soft emerald glow chevron
+  ctx.save();
+  ctx.shadowColor = '#40ff9a';
+  ctx.shadowBlur = 14;
+  ctx.strokeStyle = 'rgba(64, 255, 154, 0.96)';
+  ctx.lineWidth = 14;
   ctx.lineCap = 'round';
   ctx.lineJoin = 'round';
   ctx.beginPath();
-  ctx.moveTo(14, 12);
-  ctx.lineTo(38, 32);
-  ctx.lineTo(14, 52);
+  ctx.moveTo(28, 24);
+  ctx.lineTo(78, 64);
+  ctx.lineTo(28, 104);
   ctx.stroke();
-  ctx.strokeStyle = 'rgba(180, 255, 215, 0.55)';
-  ctx.lineWidth = 3;
+  ctx.restore();
+
+  // Crisp bright white-mint highlight apex
+  ctx.strokeStyle = 'rgba(220, 255, 238, 0.85)';
+  ctx.lineWidth = 5;
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
   ctx.beginPath();
-  ctx.moveTo(19, 16);
-  ctx.lineTo(36, 32);
-  ctx.lineTo(19, 48);
+  ctx.moveTo(36, 30);
+  ctx.lineTo(78, 64);
+  ctx.lineTo(36, 98);
   ctx.stroke();
+
   const texture = new THREE.CanvasTexture(canvas);
   texture.colorSpace = THREE.SRGBColorSpace;
   texture.wrapS = THREE.RepeatWrapping;

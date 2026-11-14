@@ -59,12 +59,14 @@ interface Mats {
   crate: THREE.MeshStandardMaterial;
   tape: THREE.MeshStandardMaterial;
   sign: THREE.MeshStandardMaterial;
+  shadow: THREE.MeshBasicMaterial;
 }
 
 let mats: Mats | null = null;
 let stripeTex: THREE.CanvasTexture | null = null;
 let crateTex: THREE.CanvasTexture | null = null;
 let signTex: THREE.CanvasTexture | null = null;
+let shadowTex: THREE.CanvasTexture | null = null;
 
 function canvasTexture(w: number, h: number, draw: (g: CanvasRenderingContext2D) => void): THREE.CanvasTexture {
   const c = document.createElement('canvas');
@@ -150,6 +152,19 @@ function wetFloor(): THREE.CanvasTexture {
   return signTex;
 }
 
+function contactShadow(): THREE.CanvasTexture {
+  if (shadowTex) return shadowTex;
+  shadowTex = canvasTexture(128, 128, (g) => {
+    const grad = g.createRadialGradient(64, 64, 6, 64, 64, 62);
+    grad.addColorStop(0, 'rgba(0, 0, 0, 0.48)');
+    grad.addColorStop(0.55, 'rgba(0, 0, 0, 0.22)');
+    grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+    g.fillStyle = grad;
+    g.fillRect(0, 0, 128, 128);
+  });
+  return shadowTex;
+}
+
 function materials(): Mats {
   if (mats) return mats;
   mats = {
@@ -160,6 +175,9 @@ function materials(): Mats {
     crate: new THREE.MeshStandardMaterial({ map: cardboard(), roughness: 0.9, metalness: 0.0 }),
     tape: new THREE.MeshStandardMaterial({ color: 0xd8c3a5, roughness: 0.95 }),
     sign: new THREE.MeshStandardMaterial({ map: wetFloor(), roughness: 0.75, metalness: 0.0 }),
+    shadow: new THREE.MeshBasicMaterial({
+      map: contactShadow(), transparent: true, depthWrite: false, toneMapped: false,
+    }),
   };
   return mats;
 }
@@ -207,6 +225,13 @@ export function buildProp(type: PropType, override?: THREE.Material): THREE.Grou
       mesh(group, new THREE.BoxGeometry(0.10, 0.05, 0.42), mat ?? m.dark, x, 0.025, 0);
     }
     mesh(group, new THREE.CylinderGeometry(0.025, 0.025, 0.60, 12), mat ?? m.dark, 0, 0.72, 0, 0, 0, Math.PI / 2);
+  }
+  if (!override) {
+    const def = PROP_DEFS[type];
+    const sx = def.hw * 2.7;
+    const sz = def.hh * 2.7;
+    const shadow = mesh(group, new THREE.PlaneGeometry(sx, sz), m.shadow, 0, 0.004, 0, -Math.PI / 2, 0, 0);
+    shadow.renderOrder = 1;
   }
   return group;
 }

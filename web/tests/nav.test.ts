@@ -185,4 +185,32 @@ describe('Costmap pathfinding', () => {
     expect(Costmap.pathLength([])).toBe(0);
     expect(Costmap.pathLength([[1, 1]])).toBe(0);
   });
+
+  it('prefers corridor-centered routes with high wall clearance and restores static EDT after clearing dynamic obstacles', () => {
+    // 1.6m wide hallway within the 4m x 4m grid: walls at y < 0.4 and y >= 2.0 (cells 0..3 and 20..39)
+    const grid = makeGrid(40, 40, (_x, y) => y < 4 || y >= 20);
+    const costmap = new Costmap(makeNav(), grid);
+    const centered = costmap.findPath([0.6, 0.5], [3.4, 0.5]);
+    expect(centered).not.toBeNull();
+    // Direct chord [0.6,0.5]->[3.4,0.5] sits ~0.2m from wall y=0.35; planner + smooth keeps >= 0.28m margin
+    const mid = centered![Math.floor(centered!.length / 2)];
+    expect(costmap.clearanceAtWorld(0.6, 0.5)).toBeLessThan(0.25);
+    expect(costmap.clearanceAtWorld(mid[0], mid[1])).toBeGreaterThanOrEqual(0.28);
+
+    costmap.setDynamicObstacles([{ x: 2.0, y: 1.2, hw: 0.3, hh: 0.6, rot: 0 }]);
+    expect(costmap.clearanceAtWorld(2.0, 1.2)).toBe(0);
+    costmap.setDynamicObstacles([]);
+    expect(costmap.clearanceAtWorld(2.0, 1.2)).toBeGreaterThan(0.6);
+  });
+
+  it('routes reliably around wide internal barriers on large hierarchical grids', () => {
+    // 14m x 14m grid (140x140 cells) triggers the 4x macro-corridor funnel (>70 cells Manhattan)
+    const nav = { ...makeNav(), origin: [0, 0] as [number, number], outline: [[0, 0], [14, 0], [14, 14], [0, 14]] as [number, number][] };
+    const grid = makeGrid(140, 140, (x, y) => x === 70 && y >= 10 && y <= 115);
+    const costmap = new Costmap(nav, grid);
+    const route = costmap.findPath([2, 6], [12, 6]);
+    expect(route).not.toBeNull();
+    expect(pathStaysClear(costmap, route!)).toBe(true);
+    expect(route![route!.length - 1]).toEqual([12, 6]);
+  });
 });

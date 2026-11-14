@@ -8,12 +8,43 @@ import { FREE, OBSTACLE, type NavData } from './artifacts';
 import type { Poi } from './pois';
 import type { PropTransform } from './props';
 
-const COLOR_UNKNOWN = [24, 28, 33, 255] as const;
-const COLOR_FREE = [70, 82, 96, 255] as const;
+const COLOR_UNKNOWN = [20, 25, 31, 255] as const;
+const COLOR_FREE = [66, 79, 94, 255] as const;
 // Muted brick, not alarm red: obstacles ring a narrow walked corridor, so a
 // saturated fill makes the whole map read as "blocked".
-const COLOR_OBSTACLE = [116, 52, 56, 255] as const;
+const COLOR_OBSTACLE = [118, 52, 58, 255] as const;
 const LOGICAL_SIZE = 240;
+
+const MINIMAP_POI_COLORS: Record<string, string> = {
+  landmark: '#7fd4ff',
+  facility: '#c39bff',
+  exit: '#40ff9a',
+  platform: '#ffb347',
+  area: '#7fd4ff',
+  retail: '#ff8fc7',
+  other: '#9fb0c0',
+};
+
+function drawPill(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+  r: number,
+): void {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
+}
 
 export class Minimap {
   private ctx: CanvasRenderingContext2D;
@@ -154,17 +185,29 @@ export class Minimap {
     }
 
     if (this.route.length >= 2) {
+      ctx.save();
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
       ctx.beginPath();
       ctx.moveTo(this.mx(this.route[0][0]), this.my(this.route[0][1]));
       for (const [x, y] of this.route.slice(1)) ctx.lineTo(this.mx(x), this.my(y));
-      ctx.strokeStyle = 'rgba(64, 224, 138, 0.95)';
-      ctx.lineWidth = 2.5;
+      // Soft emerald outer glow + crisp directional core line
+      ctx.strokeStyle = 'rgba(64, 255, 154, 0.25)';
+      ctx.lineWidth = 6.5;
       ctx.stroke();
+      ctx.strokeStyle = '#40ff9a';
+      ctx.lineWidth = 2.4;
+      ctx.stroke();
+      ctx.restore();
     }
 
     if (this.target) {
       const tx = this.mx(this.target[0]);
       const ty = this.my(this.target[1]);
+      ctx.beginPath();
+      ctx.arc(tx, ty, 8.5, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(64, 255, 154, 0.16)';
+      ctx.fill();
       ctx.beginPath();
       ctx.arc(tx, ty, 5.5, 0, Math.PI * 2);
       ctx.strokeStyle = '#40ff9a';
@@ -193,54 +236,91 @@ export class Minimap {
     for (const poi of this.pois) {
       const x = this.mx(poi.x), y = this.my(poi.y);
       const selected = poi.id === this.selectedPoi;
+      const dotColor = MINIMAP_POI_COLORS[poi.category] ?? MINIMAP_POI_COLORS.other;
       if (selected) {
         ctx.beginPath();
-        ctx.arc(x, y, 7, 0, Math.PI * 2);
+        ctx.arc(x, y, 7.5, 0, Math.PI * 2);
         ctx.strokeStyle = 'rgba(255, 255, 255, 0.9)';
         ctx.lineWidth = 1.4;
         ctx.stroke();
       }
       ctx.beginPath();
-      ctx.arc(x, y, selected ? 4 : 2.8, 0, Math.PI * 2);
-      ctx.fillStyle = selected ? '#ffffff' : '#7fd4ff';
+      ctx.arc(x, y, selected ? 4.2 : 3.0, 0, Math.PI * 2);
+      ctx.fillStyle = selected ? '#ffffff' : dotColor;
       ctx.fill();
-      ctx.strokeStyle = 'rgba(7, 12, 16, 0.9)';
+      ctx.strokeStyle = 'rgba(7, 12, 16, 0.92)';
       ctx.lineWidth = 1;
       ctx.stroke();
     }
     const selectedPoi = this.pois.find((p) => p.id === this.selectedPoi);
     if (selectedPoi) {
       const x = this.mx(selectedPoi.x), y = this.my(selectedPoi.y);
-      const label = selectedPoi.name.length > 22 ? `${selectedPoi.name.slice(0, 21)}…` : selectedPoi.name;
-      ctx.font = '600 9px ui-monospace, Consolas, monospace';
-      const w = ctx.measureText(label).width + 8;
-      const lx = Math.min(LOGICAL_SIZE - w - 2, Math.max(2, x - w / 2));
-      const ly = y < 18 ? y + 9 : y - 18;
-      ctx.fillStyle = 'rgba(8, 12, 16, 0.88)';
-      ctx.fillRect(lx, ly, w, 13);
-      ctx.strokeStyle = 'rgba(127, 212, 255, 0.5)';
+      const label = selectedPoi.name.length > 20 ? `${selectedPoi.name.slice(0, 19)}…` : selectedPoi.name;
+      const dotColor = MINIMAP_POI_COLORS[selectedPoi.category] ?? MINIMAP_POI_COLORS.other;
+      ctx.font = "600 9.5px 'Inter', 'Segoe UI', system-ui, sans-serif";
+      const w = ctx.measureText(label).width + 18;
+      const lx = Math.min(LOGICAL_SIZE - w - 3, Math.max(3, x - w / 2));
+      const ly = y < 22 ? y + 10 : y - 21;
+      ctx.save();
+      ctx.shadowColor = 'rgba(0, 0, 0, 0.55)';
+      ctx.shadowBlur = 6;
+      drawPill(ctx, lx, ly, w, 15, 7.5);
+      ctx.fillStyle = 'rgba(8, 13, 19, 0.92)';
+      ctx.fill();
+      ctx.restore();
+      drawPill(ctx, lx, ly, w, 15, 7.5);
+      ctx.strokeStyle = 'rgba(127, 212, 255, 0.52)';
       ctx.lineWidth = 1;
-      ctx.strokeRect(lx, ly, w, 13);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.arc(lx + 7, ly + 7.5, 2.4, 0, Math.PI * 2);
+      ctx.fillStyle = dotColor;
+      ctx.fill();
       ctx.fillStyle = '#eef6ff';
       ctx.textAlign = 'left';
       ctx.textBaseline = 'middle';
-      ctx.fillText(label, lx + 4, ly + 7);
+      ctx.fillText(label, lx + 12.5, ly + 8);
     }
 
-    // walker arrow
+    // walker FOV cone + dark-rimmed arrow
     const px = this.mx(pos[0]);
     const py = this.my(pos[1]);
     ctx.save();
     ctx.translate(px, py);
     ctx.rotate(headingRad);
+
+    const coneRadius = 30;
+    const coneHalfAngle = 0.58; // ~33 deg half-FOV matching 66 deg viewport
+    const fovGrad = ctx.createRadialGradient(0, 0, 2, 0, 0, coneRadius);
+    fovGrad.addColorStop(0, 'rgba(127, 212, 255, 0.28)');
+    fovGrad.addColorStop(1, 'rgba(127, 212, 255, 0.0)');
     ctx.beginPath();
-    ctx.moveTo(7, 0);
-    ctx.lineTo(-5, 4.6);
-    ctx.lineTo(-2.5, 0);
-    ctx.lineTo(-5, -4.6);
+    ctx.moveTo(0, 0);
+    ctx.arc(0, 0, coneRadius, -coneHalfAngle, coneHalfAngle);
+    ctx.closePath();
+    ctx.fillStyle = fovGrad;
+    ctx.fill();
+
+    ctx.beginPath();
+    ctx.moveTo(7.5, 0);
+    ctx.lineTo(-5.2, 4.8);
+    ctx.lineTo(-2.6, 0);
+    ctx.lineTo(-5.2, -4.8);
     ctx.closePath();
     ctx.fillStyle = '#7fd4ff';
     ctx.fill();
+    ctx.strokeStyle = 'rgba(7, 12, 18, 0.9)';
+    ctx.lineWidth = 1.2;
+    ctx.stroke();
+    ctx.restore();
+
+    // Subtle North indicator pill
+    ctx.save();
+    ctx.font = '700 8.5px ui-monospace, monospace';
+    ctx.fillStyle = 'rgba(159, 176, 192, 0.68)';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'top';
+    ctx.fillText('N ↑', 7, 6);
     ctx.restore();
   }
 }

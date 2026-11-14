@@ -202,4 +202,74 @@ describe('RouteTracker', () => {
     expect(state.instruction?.kind).toBe('left');
     expect(state.distanceToInstructionM).toBeCloseTo(4);
   });
+
+  it('captures gradual multi-vertex curved corridors and suppresses minor obstacle chicanes', () => {
+    // 4 consecutive ~15 deg segments curving 60 deg total (missed by 25 deg single-vertex baseline)
+    const curve: [number, number][] = [];
+    let x = 0, y = 0;
+    curve.push([x, y]);
+    for (let k = 0; k < 5; k++) {
+      const th = (k * 15 * Math.PI) / 180;
+      x += Math.cos(th) * 1.1;
+      y += Math.sin(th) * 1.1;
+      curve.push([x, y]);
+    }
+    const curveInst = buildInstructions(curve, 'Platforms');
+    expect(curveInst.some((inst) => inst.kind === 'left' && inst.text.startsWith('Curve left'))).toBe(true);
+
+    // Minor opposite-sign obstacle dodge (+30 deg left then -30 deg right within 1.8m)
+    const chicane: [number, number][] = [
+      [0, 0],
+      [2, 0],
+      [3.5, 0.86],
+      [5.5, 0.86],
+      [8, 0.86],
+    ];
+    const chicaneInst = buildInstructions(chicane, 'Exit');
+    expect(chicaneInst.map((i) => i.kind)).toEqual(['start', 'arrive']);
+  });
+
+  it('anchors turns to visible landmarks and penalizes wall-occluded POIs', () => {
+    const costmap = makeCostmap((gx, gy) => gx === 30 && gy >= 25 && gy <= 45);
+    const occluded: Poi = { id: 'hidden', name: 'Hidden Closet', category: 'facility', x: 2.5, y: 3.5, z: 0 };
+    const visible: Poi = { id: 'sign', name: 'Town Hall Sign', category: 'landmark', x: 4.5, y: 3.5, z: 0 };
+    const path: [number, number][] = [[4, 0.5], [4, 4.0], [7.5, 4.0]];
+    const inst = buildInstructions(path, 'Concourse', {
+      pois: [occluded, visible],
+      costmap,
+      targetId: 'goal',
+    });
+    const turn = inst.find((i) => i.kind === 'right');
+    expect(turn?.landmarkName).toBe('Town Hall Sign');
+    expect(turn?.text).toBe('Turn right past Town Hall Sign');
+    expect(instructionText(
+      { targetId: 'g', targetName: 'Concourse', waypoints: path, distanceM: 7, etaSeconds: 5, instructions: inst },
+      { instruction: turn!, distanceToInstructionM: 3.5 },
+    )).toBe('In 3.5 m, turn right past Town Hall Sign');
+  });
+
+  it('detects wrong-way heading, adapts pace, and computes Pure-Pursuit corridor lookahead', () => {
+    const p: RoutePlan = {
+      targetId: 'lift',
+      targetName: 'Lift Lobby',
+      waypoints: [[0, 0], [5, 0], [5, 5]],
+      distanceM: 10,
+      etaSeconds: 10 / WALK_SPEED_MPS,
+      instructions: buildInstructions([[0, 0], [5, 0], [5, 5]], 'Lift Lobby'),
+    };
+    const tracker = new RouteTracker(p);
+    // Facing backwards (heading = pi on +X segment)
+    const back = tracker.update([1, 0], Math.PI, 0.05);
+    expect(back.wrongWay).toBe(true);
+    expect(instructionText(p, back)).toBe('Turn around toward Lift Lobby');
+    // Lookahead carrot stays on the corridor waypoints
+    expect(back.lookaheadPoint[0]).toBeGreaterThan(3);
+    expect(back.lookaheadPoint[1]).toBeCloseTo(0);
+
+    // Walking forward faster than default increases paceMps and trims ETA
+    const fwd1 = tracker.update([2.5, 0], 0, 0.5);
+    const fwd2 = tracker.update([4.0, 0], 0, 0.5);
+    expect(fwd1.wrongWay).toBe(false);
+    expect(fwd2.paceMps).toBeGreaterThan(WALK_SPEED_MPS);
+  });
 });

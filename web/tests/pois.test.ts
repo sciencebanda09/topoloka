@@ -136,6 +136,8 @@ describe('PoiIndex search', () => {
     expect(ids('town hall')).toEqual(['town']);
     expect(ids('emrgency')).toEqual(['exit']);
     expect(ids('elevatr')).toEqual(['lift']);
+    expect(ids('twn hall')).toEqual(['town']);
+    expect(ids('emrgency ext')).toEqual(['exit']);
   });
 
   it('does not match unrelated text', () => {
@@ -163,6 +165,16 @@ describe('PoiIndex search', () => {
   it('returns all POIs for an empty query and honours the limit', () => {
     expect(ids('')).toHaveLength(4);
     expect(ids('', { limit: 2 })).toHaveLength(2);
+  });
+
+  it('handles adjacent transpositions, indexed descriptions, and domain synonyms', () => {
+    const rich = new PoiIndex([
+      poi({ id: 't', name: 'Tunnel Approach', description: 'Underground passage with tactile paving', x: 0, y: 0 }),
+      poi({ id: 'a', name: 'Accessible Gate', category: 'facility', description: 'Wheelchair friendly wide gate', x: 5, y: 0 }),
+    ]);
+    expect(rich.search('tunnle')[0]?.poi.id).toBe('t');
+    expect(rich.search('tactile paving')[0]?.poi.id).toBe('t');
+    expect(rich.search('wc')[0]?.poi.id).toBe('a');
   });
 });
 

@@ -88,6 +88,7 @@
           <button id="search-clear" class="hidden" type="button" title="Clear search" aria-label="Clear search">×</button>
           <kbd class="search-kbd" title="Press / to search">/</kbd>
           <button id="tag-button" type="button" title="Tag a POI (E)">＋ Tag</button>
+          <button id="ar-toggle" type="button" title="AR Wayfinding Mode (R3 preview)">AR</button>
         </div>
         <div id="search-facets"></div>
         <div id="search-results" class="hidden" role="listbox" aria-label="Search results"></div>
@@ -208,6 +209,22 @@
         </div>
         <div id="sandbox-hint">
           <b>1–4</b> add · <b>click</b> pick/place · <b>R</b> rotate · <b>Del</b> remove · <b>T</b> route · <b>G</b> exit
+        </div>
+      </div>
+
+      <div id="ar-overlay" class="hidden" aria-label="AR Wayfinding Mode">
+        <video id="ar-video" autoplay playsinline muted></video>
+        <div class="ar-hud-top">
+          <div id="ar-status" class="ar-pill">AR mode ready</div>
+          <div class="ar-controls">
+            <select id="ar-anchor-select" aria-label="QR Anchor"></select>
+            <button id="ar-sim-relocalize" type="button" title="Relocalize onto selected QR anchor">Scan QR</button>
+            <button id="ar-close" type="button" title="Exit AR mode">✕ Exit AR</button>
+          </div>
+        </div>
+        <div class="ar-center">
+          <div id="ar-arrow" class="ar-arrow" aria-hidden="true">▲</div>
+          <div id="ar-target-info" class="ar-target-info">Select a POI or route destination to guide</div>
         </div>
       </div>
     </div>

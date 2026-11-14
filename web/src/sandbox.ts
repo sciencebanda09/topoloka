@@ -375,14 +375,17 @@ export class Sandbox {
       new THREE.Vector3(tx, cam.y + 0.8, tz),
       new THREE.Vector3(0, -1, 0),
     );
-    let floorY = cam.y - this.opts.nav.cam_height_units;
+    const defaultFloorY = Math.max(-0.5, player[2] - this.opts.nav.cam_height_units);
+    let floorY = defaultFloorY;
     let floorOk = true;
     if (down && down.distance < 5) {
-      floorY = down.point.y;
-      // The library's default picker intersects bounding spheres, so its
-      // normal is not a true surface normal. Require the hit to be clearly
-      // below eye level; the nav grid still has the final say.
-      floorOk = floorY < cam.y - 0.35;
+      if (down.point.y < cam.y - 0.35) {
+        floorY = down.point.y;
+      } else if (this.opts.costmap.valueAtWorld(navX, navY) !== FREE) {
+        // Splat BVH bounding spheres near spawn can occlude the floor ray; only
+        // reject when the nav costmap also disagrees that this spot is free floor.
+        floorOk = false;
+      }
     }
 
     const footprint: Footprint = { x: navX, y: navY, hw: def.hw, hh: def.hh, rot: c.rot };

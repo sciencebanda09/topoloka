@@ -21,6 +21,19 @@ export interface RouteInstruction {
   atMeters: number;
   /** Pre-formatted wording, without the distance prefix. */
   text: string;
+  /** Cumulative turn deflection in signed degrees (+left, -right) if a bend. */
+  angleDeg?: number;
+  /** Nearest line-of-sight landmark POI anchoring this decision point. */
+  landmarkName?: string;
+}
+
+export interface InstructionOptions {
+  /** Scene POIs used for visibility-weighted landmark anchoring at turns. */
+  pois?: readonly Poi[];
+  /** Costmap used for wall-occlusion checks when scoring candidate landmarks. */
+  costmap?: Costmap;
+  /** Target POI id excluded from landmark anchoring (already the goal). */
+  targetId?: string;
 }
 
 export interface RoutePlan {
@@ -43,13 +56,21 @@ export interface NavState {
   distanceToInstructionM: number;
   arrived: boolean;
   needsReroute: boolean;
+  /** True when camera heading diverges strongly (>~115 deg) from corridor tangent. */
+  wrongWay: boolean;
+  /** Signed heading error relative to active corridor tangent, degrees. */
+  headingErrorDeg: number;
+  /** Exponential-moving-average walking pace in m/s. */
+  paceMps: number;
+  /** Pure-Pursuit geodesic lookahead point along remaining corridor (nav x/y). */
+  lookaheadPoint: [number, number];
 }
 
 export function planRoute(
   costmap: Costmap,
   from: [number, number],
   target: Poi,
-  opts: { speed?: number } = {},
+  opts: { speed?: number; pois?: readonly Poi[] } = {},
 ): RoutePlan | null {
   const waypoints = costmap.findPath(from, [target.x, target.y]);
   if (!waypoints || waypoints.length < 2) return null;
@@ -61,7 +82,11 @@ export function planRoute(
     waypoints,
     distanceM,
     etaSeconds: distanceM / (opts.speed ?? WALK_SPEED_MPS),
-    instructions: buildInstructions(waypoints, target.name),
+    instructions: buildInstructions(waypoints, target.name, {
+      pois: opts.pois,
+      costmap,
+      targetId: target.id,
+    }),
   };
 }
 
@@ -83,28 +108,254 @@ const normalizeAngle = (a: number): number => {
 const bearing = (a: [number, number], b: [number, number]): number =>
   Math.atan2(b[1] - a[1], b[0] - a[0]);
 
+const LANDMARK_WEIGHT: Record<string, number> = {
+  exit: 1.35,
+  landmark: 1.3,
+  platform: 1.25,
+  retail: 1.15,
+  facility: 1.1,
+  area: 0.9,
+};
+
+interface TurnCluster {
+  startIdx: number;
+  endIdx: number;
+  vertexSpan: number;
+  maxAbs: number;
+  apexIndex: number;
+  atMeters: number;
+  deltaRad: number;
+  isSmoothArc: boolean;
+}
+
+function maxPerpToChord(
+  path: [number, number][],
+  fromIdx: number,
+  toIdx: number,
+  a: [number, number],
+  b: [number, number],
+): number {
+  const dx = b[0] - a[0];
+  const dy = b[1] - a[1];
+  const len = Math.hypot(dx, dy);
+  if (len < 1e-6) return Infinity;
+  let maxD = 0;
+  for (let k = fromIdx; k <= toIdx; k++) {
+    const d = Math.abs((path[k][0] - a[0]) * dy - (path[k][1] - a[1]) * dx) / len;
+    if (d > maxD) maxD = d;
+  }
+  return maxD;
+}
+
+function pointAtArc(path: [number, number][], cum: number[], s: number): [number, number] {
+  if (s <= 0) return path[0];
+  const total = cum[cum.length - 1];
+  if (s >= total) return path[path.length - 1];
+  for (let i = 0; i < cum.length - 1; i++) {
+    if (cum[i + 1] >= s) {
+      const span = cum[i + 1] - cum[i];
+      const t = span > 1e-6 ? (s - cum[i]) / span : 0;
+      return [
+        path[i][0] + (path[i + 1][0] - path[i][0]) * t,
+        path[i][1] + (path[i + 1][1] - path[i][1]) * t,
+      ];
+    }
+  }
+  return path[path.length - 1];
+}
+
+function pickLandmark(
+  path: [number, number][],
+  cum: number[],
+  turnArcM: number,
+  turnPt: [number, number],
+  opts: InstructionOptions | undefined,
+  usedLandmarks: Set<string>,
+): Poi | null {
+  const pois = opts?.pois;
+  if (!pois?.length) return null;
+  const radius = 6.5;
+  const radiusSq = radius * radius;
+  const approachPt = pointAtArc(path, cum, Math.max(0, turnArcM - 1.8));
+  const ax = turnPt[0] - approachPt[0];
+  const ay = turnPt[1] - approachPt[1];
+  const aLen = Math.hypot(ax, ay);
+  const ux = aLen > 1e-4 ? ax / aLen : 0;
+  const uy = aLen > 1e-4 ? ay / aLen : 0;
+
+  let best: Poi | null = null;
+  let bestScore = 0.22;
+  for (const poi of pois) {
+    if (opts?.targetId && poi.id === opts.targetId) continue;
+    const dx = poi.x - turnPt[0];
+    const dy = poi.y - turnPt[1];
+    const dSq = dx * dx + dy * dy;
+    if (dSq > radiusSq) continue;
+    const dist = Math.sqrt(dSq);
+    const catWeight = LANDMARK_WEIGHT[poi.category] ?? 1.0;
+
+    let approachBonus = 1.0;
+    if (aLen > 1e-4) {
+      const vx = poi.x - approachPt[0];
+      const vy = poi.y - approachPt[1];
+      const dot = vx * ux + vy * uy;
+      approachBonus = dot > 0 ? 1.35 : 0.85;
+    }
+
+    let losBonus = 1.0;
+    if (opts?.costmap) {
+      losBonus = opts.costmap.hasLineOfSight(approachPt, [poi.x, poi.y]) ? 1.4 : 0.25;
+    }
+
+    const repeatPenalty = usedLandmarks.has(poi.id) ? 0.45 : 1.0;
+    const score = (catWeight / (1 + 0.55 * dist)) * approachBonus * losBonus * repeatPenalty;
+    if (score > bestScore) {
+      bestScore = score;
+      best = poi;
+    }
+  }
+  if (best) usedLandmarks.add(best.id);
+  return best;
+}
+
 /**
- * Turn instructions at every meaningful corner. Bearing deltas below 25° are
- * treated as straight: the smoothed path intentionally drops grid stair-steps,
- * and a banner that says "turn 3°" is noise.
+ * Visibility-Curvature Cognitive Wayfinding (VCCW):
+ * 1. Computes both vertex turning angles and multi-vertex same-sign curvature
+ *    clusters so smooth curved corridors (multiple 12-22 deg segments summing
+ *    to >= 28 deg) are emitted instead of silently dropped.
+ * 2. Suppresses opposite-sign micro-chicanes (|delta| < 45 deg, net deflection
+ *    < 22 deg within 2.6 m) caused by brief obstacle sidesteps.
+ * 3. Anchors each turn to the highest-salience line-of-sight POI ahead of the
+ *    turn when scene POIs / costmap are provided.
  */
-export function buildInstructions(path: [number, number][], targetName: string): RouteInstruction[] {
+export function buildInstructions(
+  path: [number, number][],
+  targetName: string,
+  opts?: InstructionOptions,
+): RouteInstruction[] {
   const cum = cumulative(path);
   const out: RouteInstruction[] = [
     { kind: 'start', atMeters: 0, text: `Head toward ${targetName}` },
   ];
+  if (path.length < 3) {
+    out.push({ kind: 'arrive', atMeters: cum[cum.length - 1], text: `Arrive at ${targetName}` });
+    return out;
+  }
+
+  const deltas: number[] = new Array(path.length).fill(0);
   for (let i = 1; i < path.length - 1; i++) {
-    const inBearing = bearing(path[i - 1], path[i]);
-    const outBearing = bearing(path[i], path[i + 1]);
-    const delta = normalizeAngle(outBearing - inBearing);
-    if (Math.abs(delta) < (25 * Math.PI) / 180) continue;
+    const inB = bearing(path[i - 1], path[i]);
+    const outB = bearing(path[i], path[i + 1]);
+    deltas[i] = normalizeAngle(outB - inB);
+  }
+
+  const MIN_VERTEX_NOISE = (6 * Math.PI) / 180;
+  const MIN_TURN_RAD = (25 * Math.PI) / 180;
+  const ATOM_MIN_RAD = (15 * Math.PI) / 180;
+  const clusters: TurnCluster[] = [];
+
+  let i = 1;
+  while (i < path.length - 1) {
+    const d = deltas[i];
+    if (Math.abs(d) < MIN_VERTEX_NOISE) {
+      i++;
+      continue;
+    }
+    const sign = d > 0 ? 1 : -1;
+    let sum = d;
+    let maxAbs = Math.abs(d);
+    let apex = i;
+    let j = i + 1;
+    while (j < path.length - 1) {
+      const dj = deltas[j];
+      if (dj * sign <= 0 || Math.abs(dj) < MIN_VERTEX_NOISE) break;
+      if (cum[j] - cum[i] > 4.8) break;
+      sum += dj;
+      if (Math.abs(dj) > maxAbs) {
+        maxAbs = Math.abs(dj);
+        apex = j;
+      }
+      j++;
+    }
+    // Keep candidate atoms down to 15 deg so dipole chicane filtering sees both
+    // the outbound dodge and the return bend before final emission thresholding.
+    const vertexSpan = j - i;
+    if (Math.abs(sum) >= ATOM_MIN_RAD) {
+      // Weighted apex toward the center of curvature mass for multi-vertex bends
+      if (vertexSpan > 1) {
+        const half = Math.abs(sum) * 0.5;
+        let acc = 0;
+        for (let k = i; k < j; k++) {
+          acc += Math.abs(deltas[k]);
+          if (acc >= half) {
+            apex = k;
+            break;
+          }
+        }
+      }
+      clusters.push({
+        startIdx: i,
+        endIdx: j - 1,
+        vertexSpan,
+        maxAbs,
+        apexIndex: apex,
+        atMeters: cum[apex],
+        deltaRad: sum,
+        isSmoothArc: vertexSpan > 1 && maxAbs < MIN_TURN_RAD,
+      });
+    }
+    i = j;
+  }
+
+  // Filter minor opposite-sign obstacle-dodging chicanes via outer-chord lateral
+  // tube gating while preserving genuine >=50 deg S-bends, then apply final turn threshold.
+  const filtered: TurnCluster[] = [];
+  for (let k = 0; k < clusters.length; k++) {
+    const cur = clusters[k];
+    const next = clusters[k + 1];
+    if (
+      next
+      && cur.deltaRad * next.deltaRad < 0
+      && cum[next.endIdx] - cum[cur.startIdx] <= 5.5
+      && Math.abs(cur.deltaRad) < (50 * Math.PI) / 180
+      && Math.abs(next.deltaRad) < (50 * Math.PI) / 180
+      && Math.abs(cur.deltaRad + next.deltaRad) < (26 * Math.PI) / 180
+      && maxPerpToChord(
+        path,
+        cur.startIdx,
+        next.endIdx,
+        path[Math.max(0, cur.startIdx - 1)],
+        path[Math.min(path.length - 1, next.endIdx + 1)],
+      ) < 0.90
+    ) {
+      k++; // skip narrow obstacle swerve pair
+      continue;
+    }
+    const emitThreshold = cur.vertexSpan > 1 ? (28 * Math.PI) / 180 : MIN_TURN_RAD;
+    if (Math.abs(cur.deltaRad) >= emitThreshold) {
+      filtered.push(cur);
+    }
+  }
+
+  const usedLandmarks = new Set<string>();
+  for (const c of filtered) {
+    const isLeft = c.deltaRad > 0;
+    const absDeg = Math.abs((c.deltaRad * 180) / Math.PI);
+    const verb = c.isSmoothArc && absDeg < 75
+      ? (isLeft ? 'Curve left' : 'Curve right')
+      : (isLeft ? 'Turn left' : 'Turn right');
+    const landmark = pickLandmark(path, cum, c.atMeters, path[c.apexIndex], opts, usedLandmarks);
+    const text = landmark ? `${verb} past ${landmark.name}` : verb;
     // Positive delta rotates counter-clockwise in the nav x/y plane: left.
     out.push({
-      kind: delta > 0 ? 'left' : 'right',
-      atMeters: cum[i],
-      text: delta > 0 ? 'Turn left' : 'Turn right',
+      kind: isLeft ? 'left' : 'right',
+      atMeters: c.atMeters,
+      text,
+      angleDeg: Math.round((c.deltaRad * 180) / Math.PI),
+      landmarkName: landmark?.name,
     });
   }
+
   out.push({
     kind: 'arrive',
     atMeters: cum[cum.length - 1],
@@ -114,14 +365,19 @@ export function buildInstructions(path: [number, number][], targetName: string):
 }
 
 /** Wording for the navigation banner at a given travelled distance. */
-export function instructionText(plan: RoutePlan, state: Pick<NavState, 'instruction' | 'distanceToInstructionM'>): string {
+export function instructionText(
+  plan: RoutePlan,
+  state: Pick<NavState, 'instruction' | 'distanceToInstructionM'> & { wrongWay?: boolean },
+): string {
+  if (state.wrongWay) return `Turn around toward ${plan.targetName}`;
   const inst = state.instruction;
   if (!inst) return `Continue to ${plan.targetName}`;
   if (inst.kind === 'arrive') return `Arrive at ${plan.targetName}`;
   if (inst.kind === 'start') return `Head toward ${plan.targetName}`;
   const d = state.distanceToInstructionM;
   if (d <= 1.2) return `${inst.text} now`;
-  return `In ${formatDistance(d)}, ${inst.text.toLowerCase()}`;
+  const lowerLead = inst.text.charAt(0).toLowerCase() + inst.text.slice(1);
+  return `In ${formatDistance(d)}, ${lowerLead}`;
 }
 
 export function formatDistance(m: number): string {
@@ -142,6 +398,8 @@ export function formatEta(seconds: number): string {
  * Tracks a walker along a plan. Progress is monotonic: crossing back over a
  * previous segment (stepping aside) does not reset the distance walked.
  */
+const LOOKAHEAD_M = 2.8;
+
 export class RouteTracker {
   readonly plan: RoutePlan;
   private cum: number[];
@@ -150,18 +408,26 @@ export class RouteTracker {
   private offTimer = 0;
   private arrived = false;
   private done = false;
+  private lastPos: [number, number] | null = null;
+  private paceMps = WALK_SPEED_MPS;
+  private lookahead: [number, number];
 
   constructor(plan: RoutePlan) {
     this.plan = plan;
     this.cum = cumulative(plan.waypoints);
+    const total = this.cum[this.cum.length - 1] ?? 0;
+    this.lookahead = pointAtArc(plan.waypoints, this.cum, Math.min(total, LOOKAHEAD_M));
   }
 
   get finished(): boolean {
     return this.done;
   }
 
+  get currentLookahead(): [number, number] {
+    return this.lookahead;
+  }
+
   update(pos: [number, number], heading: number, dt: number): NavState {
-    void heading;
     const path = this.plan.waypoints;
     let bestDist = Infinity;
     let bestSegment = this.segment;
@@ -184,6 +450,18 @@ export class RouteTracker {
       }
     }
 
+    // Update filtered walking pace from actual motion when moving coherently.
+    if (this.lastPos && dt > 1e-3 && dt <= 1.0) {
+      const instSpeed = Math.hypot(pos[0] - this.lastPos[0], pos[1] - this.lastPos[1]) / dt;
+      if (instSpeed > 0.25 && instSpeed < 5.0) {
+        this.paceMps = this.paceMps * 0.85 + instSpeed * 0.15;
+      } else {
+        // Decay smoothly toward nominal pace when stopped at a glance.
+        this.paceMps = this.paceMps * 0.96 + WALK_SPEED_MPS * 0.04;
+      }
+    }
+    this.lastPos = [pos[0], pos[1]];
+
     // An off-route walker should not "teleport" to 100% progress: only
     // advance while the projection is plausibly on this corridor. Arrival is
     // still measured directly from the goal below.
@@ -196,6 +474,20 @@ export class RouteTracker {
     const goalDist = Math.hypot(pos[0] - goal[0], pos[1] - goal[1]);
     const remainingM = Math.max(0, this.plan.distanceM - progressM);
 
+    // Pure-Pursuit geodesic lookahead point along remaining route corridor.
+    this.lookahead = pointAtArc(
+      path,
+      this.cum,
+      Math.min(this.cum[this.cum.length - 1] ?? 0, progressM + LOOKAHEAD_M),
+    );
+
+    // Corridor tangent vs camera heading alignment.
+    const segIdx = Math.min(path.length - 2, bestSegment);
+    const tangentAngle = segIdx >= 0 ? bearing(path[segIdx], path[segIdx + 1]) : heading;
+    const headingErr = normalizeAngle(tangentAngle - heading);
+    const headingErrorDeg = Math.round((headingErr * 180) / Math.PI);
+    const wrongWay = remainingM > 1.5 && Math.cos(headingErr) < -0.45;
+
     if (!this.arrived && (goalDist <= ARRIVAL_RADIUS_M
       || (remainingM <= 0.4 && goalDist <= ARRIVAL_RADIUS_M * 1.6))) {
       this.arrived = true;
@@ -206,16 +498,29 @@ export class RouteTracker {
     if (deviationM > OFF_ROUTE_RADIUS_M) this.offTimer += dt;
     else this.offTimer = Math.max(0, this.offTimer - dt * 2);
 
+    // Add realistic slowdown (~0.55s) per upcoming significant turn ahead.
+    let turnPenaltyS = 0;
+    for (const inst of this.plan.instructions) {
+      if ((inst.kind === 'left' || inst.kind === 'right') && inst.atMeters > progressM) {
+        const deg = Math.abs(inst.angleDeg ?? 45);
+        if (deg >= 40) turnPenaltyS += 0.55;
+      }
+    }
+
     const next = this.nextInstruction(progressM);
     return {
       remainingM,
-      etaSeconds: remainingM / WALK_SPEED_MPS,
+      etaSeconds: remainingM / Math.max(0.5, this.paceMps) + turnPenaltyS,
       deviationM,
       progress: Math.max(0, Math.min(1, this.plan.distanceM ? progressM / this.plan.distanceM : 0)),
       instruction: next.instruction,
       distanceToInstructionM: next.distance,
       arrived: this.arrived,
       needsReroute: !this.arrived && this.offTimer > 0.8,
+      wrongWay,
+      headingErrorDeg,
+      paceMps: this.paceMps,
+      lookaheadPoint: this.lookahead,
     };
   }
 

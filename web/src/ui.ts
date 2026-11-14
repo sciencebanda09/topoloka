@@ -372,24 +372,27 @@ export class PoiUi {
   showNavigation(plan: RoutePlan): void {
     this.navShown = true;
     this.navBanner.classList.remove('hidden');
+    document.body.classList.add('nav-active');
     el<HTMLSpanElement>('nav-target').textContent = plan.targetName;
     this.navBanner.style.setProperty('--progress', '0%');
   }
 
   updateNavigation(state: NavState, plan: RoutePlan): void {
     const icon = el<HTMLSpanElement>('nav-icon');
-    icon.textContent = state.instruction?.kind === 'left' ? '↰'
-      : state.instruction?.kind === 'right' ? '↱'
-        : state.instruction?.kind === 'arrive' ? '◎' : '↑';
+    icon.textContent = state.wrongWay ? '↶'
+      : state.instruction?.kind === 'left' ? '↰'
+        : state.instruction?.kind === 'right' ? '↱'
+          : state.instruction?.kind === 'arrive' ? '◎' : '↑';
     el<HTMLDivElement>('nav-instruction').textContent = instructionText(plan, state);
     el<HTMLSpanElement>('nav-remaining').textContent = `${formatDistance(state.remainingM)} left`;
-    el<HTMLSpanElement>('nav-eta').textContent = `${formatEta(state.etaSeconds)} at 1.4 m/s`;
+    el<HTMLSpanElement>('nav-eta').textContent = `${formatEta(state.etaSeconds)} at ${state.paceMps.toFixed(1)} m/s`;
     this.navBanner.style.setProperty('--progress', `${Math.round(state.progress * 100)}%`);
   }
 
   hideNavigation(): void {
     this.navShown = false;
     this.navBanner.classList.add('hidden');
+    document.body.classList.remove('nav-active');
   }
 
   private wireNavigation(): void {
