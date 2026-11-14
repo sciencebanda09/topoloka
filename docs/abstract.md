@@ -1,6 +1,6 @@
 # Topoloka: An Automated Monocular Pipeline for Metric 3D Gaussian Splats and Indoor Navigation
 
-**Techfest 2026-27, IIT Bombay (Namma Space Competition - Round 1 Technical Abstract)**
+**Techfest 2026-27, IIT Bombay (Namma Space Competition - Round 2 Technical Abstract)**
 
 | Submission Details | Information |
 |---|---|

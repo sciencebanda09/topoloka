@@ -1,12 +1,15 @@
 Project: Topoloka — Indoor Twins in a Link
 Competition: Namma Space — Techfest 2026-27 (IIT Bombay)
-Deliverable: Demonstration Video (3 to 5 minutes)
+Deliverable: Round 2 Demonstration Video (3 to 5 minutes)
 
-Direct Video Stream / Download URL:
+Direct Video Stream / Download URL (R2):
+https://github.com/sciencebanda09/topoloka/releases/download/r2-demo/topoloka_r2_demo.mp4
+
+Baseline R1 Video URL:
 https://github.com/sciencebanda09/topoloka/releases/download/r1-demo/topoloka_demo.mp4
 
-Specifications:
-- Duration: 3 minutes 33 seconds (3:33) — strictly within the 3–5 minute requirement.
+Specifications (R2):
+- Duration: 4 minutes 11 seconds (4:11) — within the 3–5 minute requirement.
 - Resolution: Full HD (1920x1080), 30 FPS.
-- Format: H.264 video with AAC audio (41.0 MB).
-- Content: Explains project scope, smartphone capture SOP, SfM + depth metricization pipeline, live 3D web walkthrough, minimap synchronization, orientation controls, and obstacle-avoidance routing.
+- Format: H.264 video with AAC audio.
+- Content: Live GitHub Pages captures demonstrating Melbourne Metro default load, 7 authored POIs, spatial & fuzzy search, explicit jump, A* obstacle-aware navigation, interactive sandbox barrier rerouting (31.66 m -> 31.86 m), in-browser POI authoring/JSON export, and Studio Room orientation controls.

@@ -7,7 +7,7 @@ https://github.com/sciencebanda09/topoloka
 
 Specifications:
 - Open-source codebase (MIT License).
-- Contains full setup instructions in README.md for reconstructing models.
-- End-to-end pipeline: smartphone capture SOP, pycolmap SfM, Depth Anything V2 metric scaling, nerfstudio 3DGS, costmap generation, and WebGL viewer.
-- Includes sample data placed inside the `test/` directory (`test/metro_v1/`, `test/guildhall-v1/`) with preview frames, SfM poses, metric nav metadata, and point clouds.
-- 100% free-tier cloud execution tooling under `kaggle/`.
+- Contains full setup instructions in README.md and pipeline/README.md for reconstructing twins.
+- End-to-end Python pipeline: frame extraction + EIS/IMU validation (`imu.py`), pycolmap SfM, Depth Anything V2 metric scaling, nerfstudio 3DGS, 5 cm costmap + connected corridor carving, QR anchor pose solver (`anchors.py`), POI validation (`pois.py`), QA gating (`qa.py`), and bundle packaging (`package.py`).
+- Static TypeScript/Three.js WebGL client (`web/`) with Vitest unit tests, A* router, spatial POI search, sandbox physics, and R3 AR preview (`ar.ts`).
+- Includes reproducible sample artifacts in `test/` (`test/metro_v1/`, `test/guildhall-v1/`) and Kaggle GPU kernels under `kaggle/kernels/`.

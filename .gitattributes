@@ -1,0 +1,19 @@
+# Normalize line endings across Windows/Linux
+* text=auto eol=lf
+*.ps1 text eol=crlf
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# Binary artifacts
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.webp binary
+*.mp3 binary
+*.mp4 binary
+*.mov binary
+*.pdf binary
+*.ply binary
+*.splat binary
+*.glb binary
+*.npz binary

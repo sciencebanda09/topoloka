@@ -1,14 +1,15 @@
 Project: Topoloka — Indoor Twins in a Link
 Competition: Namma Space — Techfest 2026-27 (IIT Bombay)
-Deliverable: Proof of Concept & Web Viewer Link
+Deliverable: Proof of Concept & Web Viewer Link (Round 2)
 
 Working Web Viewer URL:
 https://sciencebanda09.github.io/topoloka/
 
 Features:
-- Free-roaming first-person walkthrough with WASD keyboard controls and mouse look (pointer lock).
-- Mobile support with virtual on-screen touch joystick.
-- Interactive HUD toolbar for dynamic scene orientation (Flip 180°, Turn Y, Tilt X, Level, Height offset).
-- 2.5D metric occupancy minimap with live player synchronization.
-- Obstacle-aware collision avoidance and A* pathfinding.
-- Sub-50MB zero-install static WebGL payload running at 50–60 FPS.
+- Default opens Melbourne Metro (`metro_v1`) with 7 authored POIs across 5 categories; dropdown switches to Studio Room (`room`).
+- Multi-word fuzzy + spatial POI search (`/`) and category filter chips.
+- Click-to-select 3D POI pins and minimap markers with explicit "Navigate" (A* pathfinding with turn-by-turn guidance) and "Jump" actions.
+- Interactive Sandbox (`G`) to place physical barriers that immediately block the costmap and trigger live route recalculation.
+- In-browser POI tagging/editing (`E`) with `pois.json` export.
+- R3 AR Wayfinding Preview (`AR` button) supporting live camera feed + QR-anchor (`anchors.json`) relocalization.
+- Sub-50 MB zero-install static WebGL payload running at 50–60 FPS on desktop and mobile.
