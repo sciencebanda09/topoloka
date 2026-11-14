@@ -5,7 +5,9 @@
   "cloud_points": 250000,
   "splat": {
     "present": true,
-    "bytes": 14631072,
+    "format": "ksplat",
+    "file": "splat.ksplat",
+    "bytes": 11003244,
     "gaussians": 457221
   },
   "pois": {

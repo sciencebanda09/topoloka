@@ -1,0 +1,120 @@
+{
+  "version": 1,
+  "capture": "playroom",
+  "pois": [
+    {
+      "id": "timber-playhouse",
+      "name": "Timber Playhouse",
+      "category": "landmark",
+      "x": 0.55,
+      "y": 3.45,
+      "z": 0.0,
+      "radius_m": 1.1,
+      "aliases": [
+        "playhouse",
+        "loft",
+        "wooden house",
+        "cabin"
+      ],
+      "description": "Two-level wooden playhouse loft anchored along the north wall.",
+      "view": {
+        "x": 0.55,
+        "y": 1.9,
+        "z": 1.45,
+        "yaw": 0.0,
+        "pitch": -0.05
+      }
+    },
+    {
+      "id": "red-play-table",
+      "name": "Red Activity Table",
+      "category": "facility",
+      "x": -2.35,
+      "y": 1.85,
+      "z": 0.0,
+      "radius_m": 1.0,
+      "aliases": [
+        "table",
+        "crimson desk",
+        "kids table",
+        "west bay"
+      ],
+      "description": "Bright crimson activity table and play station in the west bay.",
+      "view": {
+        "x": -0.8,
+        "y": 1.6,
+        "z": 1.45,
+        "yaw": 1.41,
+        "pitch": -0.12
+      }
+    },
+    {
+      "id": "east-gallery-wall",
+      "name": "East Gallery Display",
+      "category": "area",
+      "x": 3.6,
+      "y": -0.2,
+      "z": 0.0,
+      "radius_m": 1.2,
+      "aliases": [
+        "east wall",
+        "display",
+        "shelves"
+      ],
+      "description": "Sunlit east wall shelving and floor play zone.",
+      "view": {
+        "x": 2.0,
+        "y": -0.2,
+        "z": 1.45,
+        "yaw": -1.57,
+        "pitch": -0.05
+      }
+    },
+    {
+      "id": "south-archway",
+      "name": "South Archway Exit",
+      "category": "exit",
+      "x": 0.75,
+      "y": -4.2,
+      "z": 0.0,
+      "radius_m": 1.1,
+      "aliases": [
+        "exit",
+        "doorway",
+        "archway",
+        "hallway"
+      ],
+      "description": "Main entry doorway leading toward the adjoining hallway.",
+      "view": {
+        "x": 0.65,
+        "y": -2.6,
+        "z": 1.45,
+        "yaw": 3.08,
+        "pitch": -0.04
+      }
+    },
+    {
+      "id": "reading-corner",
+      "name": "Northeast Corner Desk",
+      "category": "retail",
+      "x": 2.65,
+      "y": 3.25,
+      "z": 0.0,
+      "radius_m": 1.0,
+      "aliases": [
+        "desk",
+        "corner",
+        "nook",
+        "northeast"
+      ],
+      "description": "Corner worktable overlooking the main playroom floor.",
+      "view": {
+        "x": 1.65,
+        "y": 2.15,
+        "z": 1.45,
+        "yaw": -0.74,
+        "pitch": -0.08
+      }
+    }
+  ]
+}

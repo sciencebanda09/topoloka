@@ -99,12 +99,19 @@ def run_package(capture_dir: Path) -> dict:
     nav_xyz = _apply_align(xyz, nav["align"])
     _write_ply(out / "cloud.ply", nav_xyz, rgb)
 
-    splat_src = capture_dir / "splat" / "splat.splat"
+    ksplat_src = capture_dir / "splat" / "splat.ksplat"
+    splat_src = ksplat_src if ksplat_src.exists() else (capture_dir / "splat" / "splat.splat")
     splat = {"present": False}
     if splat_src.exists():
-        shutil.copy2(splat_src, out / "splat.splat")
+        shutil.copy2(splat_src, out / splat_src.name)
         rep = capture_dir / "splat" / "splat_convert_report.json"
-        splat = {"present": True, "bytes": splat_src.stat().st_size}
+        splat_fmt = "ksplat" if splat_src.suffix == ".ksplat" else "splat"
+        splat = {
+            "present": True,
+            "format": splat_fmt,
+            "file": splat_src.name,
+            "bytes": splat_src.stat().st_size,
+        }
         if rep.exists():
             r = json.loads(rep.read_text(encoding="utf-8"))
             splat["gaussians"] = r.get("gaussians_out")

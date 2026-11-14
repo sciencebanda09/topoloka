@@ -27,7 +27,7 @@ jobs:
       - name: Stage committed sample captures
         working-directory: .
         run: |
-          for name in metro_v1; do
+          for name in metro_v1 playroom; do
             d="test/$name/web"
             if [ -d "$d" ]; then
               echo "staging $name"

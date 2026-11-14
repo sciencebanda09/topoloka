@@ -1,0 +1,25 @@
+{
+  "capture": "playroom",
+  "created": "2026-11-14 10:56:03",
+  "source": "Deep Blending Playroom (dylanebert/3dgs)",
+  "cloud_source": "playroom-7k.splat",
+  "cloud_points": 180000,
+  "splat": {
+    "present": true,
+    "format": "ksplat",
+    "file": "splat.ksplat",
+    "bytes": 10105376,
+    "gaussians": 420000
+  },
+  "pois": {
+    "present": true,
+    "count": 5
+  },
+  "anchors": {
+    "present": true,
+    "count": 3
+  },
+  "scale_source": "ransac-floor-metric",
+  "walkable_area_m2": 69.51,
+  "qa_overall": "PASS"
+}

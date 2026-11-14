@@ -18,7 +18,7 @@ import numpy as np
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-from namma.geometry import CHEST_HEIGHT_M, FREE, OBSTACLE, UNKNOWN, align_scene, build_costmap  # noqa: E402
+from namma.geometry import CHEST_HEIGHT_M, FREE, OBSTACLE, align_scene, build_costmap  # noqa: E402
 
 
 def _scene(cam_z: float, seed: int = 3):

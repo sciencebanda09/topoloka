@@ -7,7 +7,7 @@
  * minimap mirrors it, and R2 adds POI search, fly-to, and POI navigation.
  */
 
-import { decodeGrid, loadCloud, loadNav, type NavData } from './artifacts';
+import { decodeGrid, loadCloud, loadNav } from './artifacts';
 import { PRODUCT_NAME, PRODUCT_TAGLINE } from './brand';
 import { WalkControls } from './controls';
 import { Minimap } from './minimap';
@@ -32,7 +32,7 @@ let curRy = Number(params.get('ry')) || 0;
 let curRz = Number(params.get('rz')) || 0;
 let curOy = Number(params.get('oy')) || 0;
 const DEFAULT_CAPTURE = 'metro_v1';
-const AVAILABLE_CAPTURES = new Set(['metro_v1', 'room']);
+const AVAILABLE_CAPTURES = new Set(['metro_v1', 'playroom', 'room']);
 const requestedCapture = params.get('capture');
 const cleanCapture = requestedCapture && /^[a-zA-Z0-9_-]+$/.test(requestedCapture)
   ? requestedCapture
@@ -118,7 +118,7 @@ interface Meta {
   cloud_points?: number;
   walkable_area_m2?: number;
   qa_overall?: string;
-  splat?: { present: boolean; gaussians?: number };
+  splat?: { present: boolean; format?: 'ksplat' | 'splat'; file?: string; gaussians?: number };
   mesh?: { present: boolean; format?: string };
   anchors?: { present: boolean; count?: number };
 }
@@ -813,12 +813,15 @@ async function boot(): Promise<void> {
   async function ensureSplat(seq: number, signal: AbortSignal): Promise<SplatLayer | null> {
     if (splat?.loaded) return splat;
     if (!hasSplat) throw new Error('This sample has no Gaussian splat');
+    const splatFile = meta.splat?.file ?? (meta.splat?.format === 'ksplat' ? 'splat.ksplat' : 'splat.splat');
+    const splatFormat = meta.splat?.format ?? (splatFile.endsWith('.ksplat') ? 'ksplat' : 'splat');
     const next = new SplatLayer(viewer.renderer, viewer.scene, viewer.camera, {
       alphaThreshold: SPLAT_ALPHA,
       maxScreenSpaceSplatSize: SPLAT_MAX_PX,
     });
     try {
-      await next.load(`${BASE}/splat.splat`, nav, {
+      await next.load(`${BASE}/${splatFile}`, nav, {
+        format: splatFormat,
         signal,
         onProgress: ({ phase, loadedBytes }) => {
           if (seq !== modelRequestSeq) return;
