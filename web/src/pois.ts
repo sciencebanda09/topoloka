@@ -703,10 +703,6 @@ export class PoiIndex {
     if (!best && proximityOnly) return null;
     return best;
   }
-
-  private bucketKey(x: number, y: number): string {
-    return `${Math.floor(x / this.bucketSize)},${Math.floor(y / this.bucketSize)}`;
-  }
 }
 
 /** Fetch and validate `pois.json`; a missing file is an empty dataset. */

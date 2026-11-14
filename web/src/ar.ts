@@ -9,7 +9,6 @@
  * so they can be unit-tested in Vitest.
  */
 
-import type { Poi } from './pois';
 import type { WalkPose } from './controls';
 import { formatDistance } from './navigation';
 
@@ -338,8 +337,4 @@ export class ArModeController {
       this.targetEl.textContent = `${target.name} · ${formatDistance(g.distanceM)} · ${g.label}`;
     }
   }
-}
-
-export function anchorFromPoiFallback(poi: Poi): Anchor {
-  return { id: poi.id, x: poi.x, y: poi.y, z: poi.z ?? 1.2 };
 }

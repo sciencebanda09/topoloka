@@ -15,5 +15,6 @@
 *.pdf binary
 *.ply binary
 *.splat binary
+*.ksplat binary
 *.glb binary
 *.npz binary

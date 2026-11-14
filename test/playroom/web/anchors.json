@@ -1,0 +1,31 @@
+{
+  "version": 1,
+  "capture": "playroom",
+  "marker_size_m": 0.2,
+  "anchors": [
+    {
+      "id": "qr-playroom-entry",
+      "x": 0.4,
+      "y": -3.1,
+      "z": 1.35,
+      "yaw": 0.0,
+      "marker_size_m": 0.2
+    },
+    {
+      "id": "qr-playroom-center",
+      "x": -0.5,
+      "y": 0.4,
+      "z": 1.35,
+      "yaw": -0.5,
+      "marker_size_m": 0.2
+    },
+    {
+      "id": "qr-playroom-loft",
+      "x": 1.8,
+      "y": 2.1,
+      "z": 1.35,
+      "yaw": 2.4,
+      "marker_size_m": 0.2
+    }
+  ]
+}

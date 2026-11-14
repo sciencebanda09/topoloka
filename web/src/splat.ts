@@ -38,10 +38,18 @@ export interface SplatLoadProgress {
   totalBytes: number;
 }
 
+export type SplatFileFormat = 'ksplat' | 'splat';
+
 export interface SplatLoadOptions {
+  format?: SplatFileFormat;
   signal?: AbortSignal;
   onProgress?: (progress: SplatLoadProgress) => void;
   buildTimeoutMs?: number;
+}
+
+export function inferSplatFormat(url: string, explicit?: SplatFileFormat): SplatFileFormat {
+  if (explicit) return explicit;
+  return url.split('?')[0].toLowerCase().endsWith('.ksplat') ? 'ksplat' : 'splat';
 }
 
 /**
@@ -164,8 +172,12 @@ export class SplatLayer {
   }
 
   async load(url: string, nav: NavData, loadOptions: SplatLoadOptions = {}): Promise<void> {
-    const { signal, onProgress, buildTimeoutMs = 120_000 } = loadOptions;
+    const { format, signal, onProgress, buildTimeoutMs = 120_000 } = loadOptions;
     if (signal?.aborted) throw new DOMException('Aborted', 'AbortError');
+    const resolvedFormat = inferSplatFormat(url, format);
+    const sceneFormat = resolvedFormat === 'ksplat'
+      ? GaussianSplats3D.SceneFormat.KSplat
+      : GaussianSplats3D.SceneFormat.Splat;
 
     const m = SplatLayer.placementMatrix(nav);
     const position = new THREE.Vector3();
@@ -173,8 +185,8 @@ export class SplatLayer {
     const scale = new THREE.Vector3(1, 1, 1);
     if (m) m.decompose(position, rotation, scale);
 
-    // Fetch the .splat ourselves and hand the library a blob: URL.
-    // GitHub Pages serves .splat with Content-Encoding: gzip, and the library
+    // Fetch the splat ourselves and hand the library a blob: URL.
+    // Static hosts serve .splat/.ksplat with Content-Encoding: gzip, and the library
     // sizes its staging buffer from the Content-Length header -- which is then
     // the *compressed* size -- so the decoded stream overruns it mid-download
     // ("RangeError: Invalid typed array length"). A blob URL carries the exact
@@ -183,7 +195,7 @@ export class SplatLayer {
     if (signal?.aborted) throw new DOMException('Aborted', 'AbortError');
 
     onProgress?.({ phase: 'building', percent: null, loadedBytes, totalBytes });
-    // Yield a macrotask so the DOM paints "building scene..." before SplatBuffer optimization runs.
+    // Yield a macrotask so the DOM paints "building scene..." before SplatBuffer init runs.
     await new Promise<void>((resolve) => setTimeout(resolve, 0));
     if (signal?.aborted) throw new DOMException('Aborted', 'AbortError');
     const blobUrl = URL.createObjectURL(blob);
@@ -193,7 +205,7 @@ export class SplatLayer {
       // failed load would hang this await forever; race it against timeout + abort.
       await withTimeoutAndAbort(
         this.viewer.addSplatScene(blobUrl, {
-          format: GaussianSplats3D.SceneFormat.Splat, // blob URLs carry no extension
+          format: sceneFormat, // blob URLs carry no extension
           showLoadingUI: false,
           splatAlphaRemovalThreshold: this.options.alphaThreshold,
           position: position.toArray(),

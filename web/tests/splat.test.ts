@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { fetchSplatBlob, SplatLayer, type SplatLoadProgress } from '../src/splat';
+import { fetchSplatBlob, inferSplatFormat, SplatLayer, type SplatLoadProgress } from '../src/splat';
 import type { NavData } from '../src/artifacts';
 
 afterEach(() => {
@@ -40,6 +40,15 @@ describe('fetchSplatBlob', () => {
   it('rejects cleanly when the HTTP request fails', async () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(null, { status: 404, statusText: 'Not Found' })));
     await expect(fetchSplatBlob('/missing.splat')).rejects.toThrow('splat fetch failed: 404 Not Found');
+  });
+});
+
+describe('inferSplatFormat', () => {
+  it('detects .ksplat and .splat ignoring query parameters and honoring explicit override', () => {
+    expect(inferSplatFormat('/artifacts/metro_v1/splat.ksplat')).toBe('ksplat');
+    expect(inferSplatFormat('/artifacts/metro_v1/splat.ksplat?v=2')).toBe('ksplat');
+    expect(inferSplatFormat('/artifacts/room/splat.splat')).toBe('splat');
+    expect(inferSplatFormat('blob:https://example.com/1234', 'ksplat')).toBe('ksplat');
   });
 });
 
