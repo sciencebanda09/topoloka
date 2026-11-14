@@ -11,7 +11,7 @@
 | **Live Web App (Free Roam)** | [https://sciencebanda09.github.io/topoloka/](https://sciencebanda09.github.io/topoloka/) |
 | **GitHub Repository** | [https://github.com/sciencebanda09/topoloka](https://github.com/sciencebanda09/topoloka) |
 | **Demo Video (1080p MP4)** | [https://github.com/sciencebanda09/topoloka/releases/download/r1-demo/topoloka_demo.mp4](https://github.com/sciencebanda09/topoloka/releases/download/r1-demo/topoloka_demo.mp4) |
-| **Technical Abstract (PDF)** | [`docs/abstract.pdf`](https://github.com/sciencebanda09/topoloka/blob/main/docs/abstract.pdf) (5 pages, fully referenced) |
+| **Technical Abstract (PDF)** | [`docs/abstract.pdf`](https://github.com/sciencebanda09/topoloka/blob/main/docs/abstract.pdf) (3 pages, <=5 page cap) |
 | **Compute Cost** | **$0.00** (Executed exclusively on free Kaggle GPU T4 nodes; no paid services) |
 | **License** | Open Source (MIT License) |
 
@@ -47,7 +47,7 @@
 
 ### Q2: What is the novelty and technical highlight?
 > 1. **Dual-Representation Architecture:** Simultaneously produces photorealistic 3D Gaussian Splats for human visual immersion AND a 2.5D metric costmap (5 cm resolution) for robotic/pedestrian collision and pathfinding.
-> 2. **Foundation Metric Scaling without Sensors:** Uses Depth Anything V2 Indoor Large to anchor scale without hardware LiDAR or IMU markers.
+> 2. **Foundation Metric Scaling without Sensors:** Uses Depth Anything V2 Metric Indoor Small (Apache 2.0 commercial license) to anchor scale without hardware LiDAR or IMU markers.
 > 3. **In-Browser Dynamic Orientation & Anchor:** Features live Three.js matrix decomposition with pivot-anchored transforms, allowing users to flip, rotate (yaw/pitch/roll), and level models live in WebGL while synchronizing state to URL query parameters (`?rx=&ry=&rz=&oy=`).
 > 4. **Adaptive Fill-Rate Management:** Automatically tunes rendering buffers between 0.6x and 1.0x to guarantee consistent 50–60 FPS on low-power devices.
 
@@ -59,13 +59,13 @@
 > [Kaggle Cloud Pipeline]
 >    ├─ Frame Extraction & Blur Filter (Laplacian variance)
 >    ├─ Structure-from-Motion (pycolmap 4.2.1)
->    ├─ Metric Depth Fusion (Depth Anything V2 Metric Large)
+>    ├─ Metric Depth Fusion (Depth Anything V2 Metric Indoor Small, Apache 2.0)
 >    ├─ Gravity Alignment & Floor Detection (RANSAC Plane Fitting)
 >    ├─ 2.5D Metric Costmap (5 cm occupancy grid)
 >    └─ 3D Gaussian Splatting (nerfstudio splatfacto 30k)
 >            │
 >            ▼
-> [Artifact Bundle: splat.splat + nav.json + meta.json]
+> [Artifact Bundle: splat.ksplat + nav.json + meta.json (+ pois.json, anchors.json)]
 >            │
 >            ▼
 > [Client-Side WebGL Viewer (GitHub Pages)]
@@ -93,5 +93,6 @@
 - [x] **Demo Video:** R2 cut on GitHub Releases (4:11, 1080p30, 51.3 MB):
       <https://github.com/sciencebanda09/topoloka/releases/download/r2-demo/topoloka_r2_demo.mp4>;
       R1 baseline remains at <https://github.com/sciencebanda09/topoloka/releases/download/r1-demo/topoloka_demo.mp4>.
-- [x] **Technical Abstract:** 5-page PDF compiled with IEEE/ACM formatting guidelines in `docs/abstract.pdf`.
+- [x] **Technical Abstract:** 3-page PDF (`<= 5`-page limit) compiled cleanly in `docs/abstract.pdf` covering Capture SOP, commercial tool licensing matrix, and API vs. Own GPU cost analysis.
+- [ ] **Self-Captured Multi-Room Twin & Human Voiceover (Pending Team Capture):** Stand-in public scenes will be replaced once the team supplies the raw multi-room phone capture video and own-voice audio narration (`docs/demo/NARRATION_SCRIPT.md`).
 - [x] **Clean Repository:** All dead links, unverified captures, and private personal captures purged from the public codebase.

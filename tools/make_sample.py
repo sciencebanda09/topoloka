@@ -25,6 +25,7 @@ from __future__ import annotations
 import argparse
 import json
 import shutil
+import subprocess
 import sys
 import zipfile
 from pathlib import Path
@@ -49,6 +50,7 @@ COPY_FROM_PIPELINE = [
     ("nav.json", "nav/nav.json"),
     ("nav_report.json", "nav/nav_report.json"),
     ("pois.json", "nav/pois.json"),
+    ("anchors.json", "nav/anchors.json"),
     ("occupancy.png", "nav/occupancy.png"),
 ]
 COPY_FROM_SPLAT = [
@@ -61,6 +63,7 @@ COPY_FROM_SPLAT = [
     # metric poses); it must overwrite the CPU run's sparse-cloud nav
     ("nav.json", "nav/nav.json"),
     ("nav_report.json", "nav/nav_report.json"),
+    ("anchors.json", "nav/anchors.json"),
 ]
 
 
@@ -200,6 +203,30 @@ def build_web(pipe_out: Path, splat_out: Path, dest: Path,
         kept = prune_splat_to_box(web / "splat.splat", nav_doc, xyz.min(0), xyz.max(0))
         meta["splat_gaussians"] = kept
         meta["splat_bytes"] = int((web / "splat.splat").stat().st_size)
+        meta["splat_format"] = "splat"
+        meta["splat_file"] = "splat.splat"
+
+        # Compress to .ksplat when Node + convert_to_ksplat.mjs are available
+        converter = ROOT / "web" / "tools" / "convert_to_ksplat.mjs"
+        node = shutil.which("node")
+        if node and converter.exists() and (ROOT / "web" / "node_modules").is_dir():
+            ksplat_path = web / "splat.ksplat"
+            res = subprocess.run(
+                [node, str(converter), str(web / "splat.splat"), str(ksplat_path),
+                 "--max-gaussians", str(min(max_gaussians, 600_000))],
+                cwd=str(ROOT / "web"),
+                capture_output=True,
+                text=True,
+            )
+            if res.returncode == 0 and ksplat_path.exists():
+                (web / "splat.splat").unlink(missing_ok=True)
+                meta["splat_bytes"] = int(ksplat_path.stat().st_size)
+                meta["splat_format"] = "ksplat"
+                meta["splat_file"] = "splat.ksplat"
+
+    anchors_src = dest / "nav" / "anchors.json"
+    if anchors_src.exists():
+        shutil.copy2(anchors_src, web / "anchors.json")
 
     # keep web/meta.json honest about what the sample actually ships
     meta_path = web / "meta.json"
@@ -207,9 +234,12 @@ def build_web(pipe_out: Path, splat_out: Path, dest: Path,
         m = json.loads(meta_path.read_text(encoding="utf-8"))
         m["cloud_points"] = int(len(xyz))
         splat = m.setdefault("splat", {})
-        if (web / "splat.splat").exists():
+        active_splat = web / meta.get("splat_file", "splat.splat")
+        if active_splat.exists():
             splat["present"] = True
-            splat["bytes"] = int((web / "splat.splat").stat().st_size)
+            splat["format"] = meta.get("splat_format", "splat")
+            splat["file"] = active_splat.name
+            splat["bytes"] = int(active_splat.stat().st_size)
             if "splat_gaussians" in meta:
                 splat["gaussians"] = int(meta["splat_gaussians"])
         else:
@@ -301,8 +331,8 @@ point cloud behind the splat. (Internal refreshes from fresh kernel outputs:
   frame into metres (scale source + rotation + origin).
 - `web/cloud.ply` -- the same geometry in the nav frame; open it in any
   viewer to check that "up" is up and a metre is a metre.
-- `web/splat.splat` -- the Gaussian-splat twin exactly as the web viewer
-  loads it (32 bytes per gaussian).
+- `web/splat.ksplat` (or `web/splat.splat`) -- the Gaussian-splat twin exactly as
+  the web viewer loads it.
 - `sfm/`, `depth/`, `capture_qa.*` -- the honest paper trail: every quality
   number the pipeline measured, including the ones that did not pass.
 """
@@ -359,9 +389,9 @@ def main() -> None:
 
     total = sum(p.stat().st_size for p in args.dest.rglob("*") if p.is_file())
     print(f"done: {args.dest} ({total/1e6:.1f} MB)")
-    splat = args.dest / "web" / "splat.splat"
-    if splat.exists() and splat.stat().st_size > 40e6:
-        print(f"WARNING: splat.splat is {splat.stat().st_size/1e6:.1f} MB -- "
+    splat_file = args.dest / "web" / meta.get("splat_file", "splat.splat")
+    if splat_file.exists() and splat_file.stat().st_size > 40e6:
+        print(f"WARNING: {splat_file.name} is {splat_file.stat().st_size/1e6:.1f} MB -- "
               "too big for git; lower --max-gaussians")
     print(json.dumps(meta, indent=2))
 

@@ -1,6 +1,6 @@
 """Kaggle GPU Kernel: Hybrid (1 + 2) 3D Gaussian Splatting for Indoor Kitchen.
 
-Stage 1: Foundation Metric Surface Priors (Depth-Anything-V2-Large metric depth & normal unprojection).
+Stage 1: Foundation Metric Surface Priors (Depth-Anything-V2-Metric-Indoor-Small Apache-2.0 depth & normal unprojection).
 Stage 2 & 3: 2DGS Planar Surfel & Scale Regularization with MCMC-style floater pruning.
 Output: /kaggle/working/out/ containing splat.splat, meta.json, and pipeline_stats.json.
 """
@@ -103,7 +103,7 @@ def main():
     log("=== [3/5] Foundation Metric Surface Seeding (Stage 1) ===")
     from transformers import AutoImageProcessor, AutoModelForDepthEstimation
 
-    depth_model_id = "depth-anything/Depth-Anything-V2-Metric-Indoor-Large-hf"
+    depth_model_id = "depth-anything/Depth-Anything-V2-Metric-Indoor-Small-hf"  # Apache 2.0
     log(f"Loading foundation metric depth model: {depth_model_id}...")
     processor = AutoImageProcessor.from_pretrained(depth_model_id)
     depth_model = AutoModelForDepthEstimation.from_pretrained(depth_model_id).to("cuda").eval()

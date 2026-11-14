@@ -27,7 +27,9 @@ from pathlib import Path
 import cv2
 import numpy as np
 
-MODEL_ID = "depth-anything/Depth-Anything-V2-Metric-Indoor-Large-hf"
+# Depth-Anything-V2-Metric-Indoor-Small-hf uses Apache 2.0 (commercial use permitted);
+# Large/Base upstream weights are CC-BY-NC-4.0.
+MODEL_ID = "depth-anything/Depth-Anything-V2-Metric-Indoor-Small-hf"
 DEPTH_MAX_M = 12.0     # beyond this the model is unreliable indoors
 DEPTH_MIN_M = 0.15
 PIXEL_STRIDE = 3       # fuse every 3rd pixel
