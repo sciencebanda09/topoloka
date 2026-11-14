@@ -9,7 +9,7 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
-from . import depth, frames, geometry, metricize, package, pois, qa, sfm, splat_convert
+from . import anchors, depth, frames, geometry, metricize, package, pois, qa, sfm, splat_convert
 
 
 def main() -> None:
@@ -57,6 +57,12 @@ def main() -> None:
     pz.add_argument("--source", type=Path, default=None,
                     help="exported pois.json to import (default: nav/pois.json)")
 
+    an = sub.add_parser("anchors", help="detect QR anchors and export nav/anchors.json (R3)")
+    an.add_argument("capture_dir", type=Path, help="capture working dir")
+    an.add_argument("--marker-size", type=float, default=anchors.DEFAULT_MARKER_SIZE_M,
+                    help="physical QR data square side in meters (default 0.15)")
+    an.add_argument("--max-frames", type=int, default=300)
+
     pk = sub.add_parser("package", help="assemble the web artifact bundle (<capture>/web/)")
     pk.add_argument("capture_dir", type=Path, help="capture working dir")
 
@@ -93,6 +99,9 @@ def main() -> None:
         metricize.run_metricize(args.capture_dir)
     elif args.stage == "pois":
         pois.run_pois(args.capture_dir, source=args.source)
+    elif args.stage == "anchors":
+        anchors.run_anchors(args.capture_dir, marker_size_m=args.marker_size,
+                            max_frames=args.max_frames)
     elif args.stage == "package":
         package.run_package(args.capture_dir)
 

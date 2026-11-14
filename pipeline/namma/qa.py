@@ -20,7 +20,7 @@ from dataclasses import dataclass, asdict
 from pathlib import Path
 from typing import Any
 
-from . import pois
+from . import imu, pois
 
 PASS, WARN, FAIL, SKIP = "PASS", "WARN", "FAIL", "SKIP"
 
@@ -122,6 +122,51 @@ def run_qa(capture_dir: Path) -> list[Check]:
         checks.append(Check(
             "poi_dataset", SKIP, "nav/pois.json not found",
             "tag POIs in the viewer and export them to nav/pois.json"))
+
+    # 5 -- IMU / EIS checks (Sensor Logger + capture_info.json)
+    imu_summary = imu.load_imu(capture_dir)
+    if imu_summary and imu_summary.eis_enabled is not None:
+        eis = imu_summary.eis_enabled
+        checks.append(Check(
+            "video_stabilization", FAIL if eis else PASS,
+            "EIS ON (non-rigid warps break SfM)" if eis else "EIS OFF",
+            "disable video stabilization and recapture" if eis else "rigid projection verified"))
+    else:
+        checks.append(Check(
+            "video_stabilization", SKIP, "capture_info.json EIS flag not present"))
+
+    if imu_summary and imu_summary.motion_blur_px_p90 is not None:
+        blur_px = imu_summary.motion_blur_px_p90
+        ok = PASS if blur_px <= 4.0 else WARN if blur_px <= 8.0 else FAIL
+        checks.append(Check(
+            "imu_motion_blur", ok,
+            f"p90 gyro blur {blur_px:.2f} px (threshold 4.0 px)",
+            "walk slower with deliberate turns (~30 deg/s) in brighter light",
+            value=blur_px))
+    else:
+        checks.append(Check(
+            "imu_motion_blur", SKIP, "sensors.csv / Gyroscope.csv not found"))
+
+    # 6 -- R3 QR anchors (nav/anchors.json)
+    anchors_path = capture_dir / "nav" / "anchors.json"
+    if anchors_path.exists():
+        anchors_doc = _read_json(anchors_path)
+        items = (anchors_doc or {}).get("anchors")
+        if isinstance(items, list) and len(items) > 0:
+            checks.append(Check(
+                "qr_anchors", PASS,
+                f"{len(items)} QR anchor(s) localized",
+                "staged for AR relocalization",
+                value=float(len(items))))
+        else:
+            checks.append(Check(
+                "qr_anchors", WARN,
+                "anchors.json has 0 localized QR markers",
+                "show each A4 QR marker for >= 3 s per SOP section 3.4"))
+    else:
+        checks.append(Check(
+            "qr_anchors", SKIP, "nav/anchors.json not found",
+            "run `namma anchors` when QR markers are recorded for R3 AR"))
 
     return checks
 

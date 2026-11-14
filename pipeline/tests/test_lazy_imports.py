@@ -33,9 +33,11 @@ def main() -> None:
             del sys.modules[mod]
     sys.meta_path.insert(0, Blocker())
 
+    import namma.anchors  # noqa: F401
     import namma.cli  # noqa: F401
     import namma.depth  # noqa: F401
     import namma.geometry  # noqa: F401
+    import namma.imu  # noqa: F401
     import namma.package  # noqa: F401
     import namma.pois  # noqa: F401
     import namma.qa  # noqa: F401

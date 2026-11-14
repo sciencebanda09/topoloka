@@ -70,6 +70,16 @@ def run_package(capture_dir: Path) -> dict:
     shutil.copy2(nav_path, out / "nav.json")
     poi_meta = pois.stage_pois(capture_dir, out)
 
+    anchors_src = capture_dir / "nav" / "anchors.json"
+    anchors_meta = {"present": False, "count": 0}
+    if anchors_src.exists():
+        shutil.copy2(anchors_src, out / "anchors.json")
+        try:
+            a_doc = json.loads(anchors_src.read_text(encoding="utf-8"))
+            anchors_meta = {"present": True, "count": len(a_doc.get("anchors") or [])}
+        except ValueError:
+            anchors_meta = {"present": True, "count": 0}
+
     occ = capture_dir / "nav" / "occupancy.png"
     if occ.exists():
         shutil.copy2(occ, out / "occupancy.png")
@@ -111,6 +121,7 @@ def run_package(capture_dir: Path) -> dict:
         "cloud_points": int(len(nav_xyz)),
         "splat": splat,
         "pois": poi_meta,
+        "anchors": anchors_meta,
         "scale_source": nav.get("scale_source"),
         "walkable_area_m2": None,
         "qa_overall": qa,

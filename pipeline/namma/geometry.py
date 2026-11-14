@@ -33,7 +33,8 @@ CELL_M = 0.05            # costmap cell size in meters
 OBSTACLE_Z = (0.15, 1.60)  # point heights counted as obstacles above the floor
 FLOOR_BAND = 0.15        # points within this height count as floor evidence
 CHEST_HEIGHT_M = 1.35    # assumed phone height above the floor -> metric scale
-TRAJ_FREE_RADIUS_M = 0.15
+TRAJ_FREE_RADIUS_M = 0.40
+TRAJ_UNKNOWN_RADIUS_M = 0.85
 MAX_POINT_DIST_M = 30.0
 RANSAC_ITERS = 800
 RANSAC_TOL_M = 0.06      # scene units (=m after scaling; before scaling it's relative)
@@ -122,35 +123,97 @@ def load_camera_centers(poses_path: Path) -> tuple[np.ndarray, np.ndarray, list[
 # floor + alignment
 
 def ransac_plane(points: np.ndarray, seed: int = 17,
-                 iters: int = RANSAC_ITERS, tol: float = RANSAC_TOL_M):
-    """Best (plane, inlier_mask) by inlier count. Plane = unit normal + offset."""
+                 iters: int = RANSAC_ITERS, tol: float = RANSAC_TOL_M,
+                 max_sample: int = 16000,
+                 up_prior: np.ndarray | None = None,
+                 min_alignment: float = 0.85):
+    """Best (plane, inlier_mask) by inlier count using vectorized batch RANSAC.
+
+    Searches on a stratified subsample of <= `max_sample` points in vectorized BLAS
+    batches for O(iters * M) throughput without Python loop overhead. When `up_prior`
+    is provided, only hypotheses matching `|n . up_prior| >= min_alignment` are scored,
+    preventing dominant vertical walls from starving horizontal floor detection.
+    """
     rng = np.random.default_rng(seed)
     n = len(points)
-    best_count, best = 0, None
-    for _ in range(iters):
-        idx = rng.choice(n, 3, replace=False)
-        p0, p1, p2 = points[idx]
-        normal = np.cross(p1 - p0, p2 - p0)
-        norm = np.linalg.norm(normal)
-        if norm < 1e-9:
-            continue
-        normal = normal / norm
-        d = -float(normal @ p0)
-        dist = np.abs(points @ normal + d)
-        count = int((dist < tol).sum())
-        if count > best_count:
-            best_count, best = count, (normal.copy(), d)
-    if best is None:
+    if n < 3:
         return None, None
-    normal, d = best
-    dist = np.abs(points @ normal + d)
+    pts = np.asarray(points, dtype=np.float32)
+    pts_s = pts if n <= max_sample else pts[rng.choice(n, max_sample, replace=False)]
+    ns = len(pts_s)
+    up_u = None
+    if up_prior is not None:
+        up_norm = float(np.linalg.norm(up_prior))
+        if up_norm > 1e-9:
+            up_u = (np.asarray(up_prior, dtype=np.float32) / up_norm)
+
+    # Collect up to `iters` non-degenerate (and optionally gravity-aligned) triangles vectorized.
+    draw_batch = iters * (4 if up_u is not None else 1)
+    cand_normals: list[np.ndarray] = []
+    cand_ds: list[np.ndarray] = []
+    collected = 0
+    for _ in range(5):
+        tri = rng.integers(0, ns, size=(draw_batch, 3))
+        p0 = pts_s[tri[:, 0]]
+        normals = np.cross(pts_s[tri[:, 1]] - p0, pts_s[tri[:, 2]] - p0)
+        norms = np.linalg.norm(normals, axis=1)
+        valid = norms > 1e-7
+        if not valid.any():
+            continue
+        normals = normals[valid] / norms[valid, None]
+        p0 = p0[valid]
+        if up_u is not None:
+            align_ok = np.abs(normals @ up_u) >= min_alignment
+            if not align_ok.any():
+                continue
+            normals = normals[align_ok]
+            p0 = p0[align_ok]
+        ds = -np.einsum("ij,ij->i", normals, p0)
+        cand_normals.append(normals)
+        cand_ds.append(ds)
+        collected += len(normals)
+        if collected >= iters:
+            break
+
+    if not cand_normals:
+        return None, None
+
+    all_n = np.vstack(cand_normals)[:iters]
+    all_d = np.concatenate(cand_ds)[:iters]
+    pts_s_t = pts_s.T  # (3, ns)
+
+    best_count, best_idx = 0, -1
+    chunk = 64
+    for start in range(0, len(all_n), chunk):
+        cn = all_n[start:start + chunk]
+        cd = all_d[start:start + chunk, None]
+        dist = np.abs(cn @ pts_s_t + cd)
+        counts = (dist < tol).sum(axis=1)
+        local_i = int(np.argmax(counts))
+        local_c = int(counts[local_i])
+        if local_c > best_count:
+            best_count = local_c
+            best_idx = start + local_i
+
+    if best_idx < 0:
+        return None, None
+    normal = all_n[best_idx].astype(np.float64)
+    d = float(all_d[best_idx])
+
+    dist = np.abs(pts @ normal.astype(np.float32) + np.float32(d))
     mask = dist < tol
-    # refit on inliers (one least-squares polish step)
-    inl = points[mask]
+    if not mask.any():
+        return None, None
+    # refit on inliers (one least-squares polish step, capped at 100k pts for SVD speed)
+    inl = pts[mask].astype(np.float64)
+    if len(inl) > 100_000:
+        inl = inl[rng.choice(len(inl), 100_000, replace=False)]
     centroid = inl.mean(axis=0)
     _, _, vt = np.linalg.svd(inl - centroid, full_matrices=False)
     normal = vt[-1]
     d = -float(normal @ centroid)
+    dist = np.abs(pts @ normal.astype(np.float32) + np.float32(d))
+    mask = dist < tol
     return (normal, d), mask
 
 
@@ -212,11 +275,18 @@ def align_scene(points: np.ndarray, cam_centers: np.ndarray, down: np.ndarray,
     # a plane closer than this to the camera mean is degenerate (units unknown)
     extent = float(np.linalg.norm(cam_centers.max(axis=0) - cam_centers.min(axis=0)))
     min_floor_drop = 1e-3 * max(extent, 1e-9)
+    tol = RANSAC_TOL_M if fixed_scale is not None else max(0.015, min(0.15, 0.008 * max(extent, 1.0)))
 
     best = None
     rng = np.random.default_rng(17)
-    for _ in range(6):  # several RANSAC restarts, keep the best floor-consistent plane
-        (normal, d), mask = ransac_plane(cand, seed=int(rng.integers(1 << 30)))
+    for _ in range(3):  # vectorized gravity-guided RANSAC restarts
+        (normal, d), mask = ransac_plane(
+            cand,
+            seed=int(rng.integers(1 << 30)),
+            tol=tol,
+            up_prior=down,
+            min_alignment=0.85,
+        )
         if normal is None:
             continue
         alignment = float(abs(normal @ down))
@@ -304,11 +374,32 @@ def build_costmap(points_m: np.ndarray, traj_m: np.ndarray, cell: float = CELL_M
     if len(band):
         gy, gx = cells_of(band)
         grid[gy, gx] = OBSTACLE
-    # trajectory -> free (last word: the person walked there)
+    # trajectory -> free (last word: the person walked there).
+    # Draw continuous capsules between consecutive trajectory poses (<= 4 m gap)
+    # via OpenCV C++ rasterization so strided frames keep corridors connected.
     ty, tx = cells_of(traj_m)
-    rad = max(1, int(round(TRAJ_FREE_RADIUS_M / cell)))
-    for y, x in zip(ty, tx):
-        grid[max(0, y - rad):y + rad + 1, max(0, x - rad):x + rad + 1] = FREE
+    rad_clear = max(1, int(math.floor(TRAJ_FREE_RADIUS_M / cell + 1e-9)))
+    rad_unk = max(rad_clear, int(math.floor(TRAJ_UNKNOWN_RADIUS_M / cell + 1e-9)))
+    unk_mask = np.zeros((h, w), np.uint8)
+    clr_mask = np.zeros((h, w), np.uint8)
+
+    pts_px = []
+    for p in traj_m:
+        px = int(math.floor((float(p[0]) - float(lo[0])) / cell))
+        py = int(math.floor((float(p[1]) - float(lo[1])) / cell))
+        pts_px.append((px, py, float(p[0]), float(p[1])))
+
+    for idx_t, (px, py, wx, wy) in enumerate(pts_px):
+        cv2.circle(unk_mask, (px, py), rad_unk, 255, -1)
+        cv2.circle(clr_mask, (px, py), rad_clear, 255, -1)
+        if idx_t > 0:
+            ppx, ppy, pwx, pwy = pts_px[idx_t - 1]
+            if math.hypot(wx - pwx, wy - pwy) <= 4.0:
+                cv2.line(unk_mask, (ppx, ppy), (px, py), 255, rad_unk * 2 + 1)
+                cv2.line(clr_mask, (ppx, ppy), (px, py), 255, rad_clear * 2 + 1)
+
+    grid[(unk_mask > 0) & (grid == UNKNOWN)] = FREE
+    grid[clr_mask > 0] = FREE
     return grid, lo, cell
 
 
@@ -377,6 +468,25 @@ def run_geometry(capture_dir: Path, cloud_path: Path | None = None) -> NavReport
     centers, _fwd, poses_frames = load_camera_centers(poses_path)
 
     down = estimate_down_from_poses(poses_frames)
+    try:
+        from . import imu
+        imu_summary = imu.load_imu(capture_dir)
+        if imu_summary and imu_summary.gravity_down_dir:
+            imu_cam_down = np.asarray(imu_summary.gravity_down_dir, dtype=np.float64)
+            # Align sign against pose camera-Y prior and map into scene world via mean R^T.
+            acc = np.zeros(3, dtype=np.float64)
+            for fr in poses_frames:
+                R_w2c = np.asarray(fr["w2c"], dtype=np.float64)[:3, :3]
+                acc += R_w2c.T @ imu_cam_down
+            if np.linalg.norm(acc) > 1e-6:
+                cand_down = acc / np.linalg.norm(acc)
+                if float(cand_down @ down) < 0:
+                    cand_down = -cand_down
+                if float(cand_down @ down) > 0.7:
+                    down = cand_down
+                    report.down_axis_source = f"imu-{imu_summary.source}"
+    except Exception:
+        pass
     R, origin, scale, floor_info = align_scene(xyz, centers, down, fixed_scale=fixed_scale)
     report.floor_inliers = floor_info["floor_inliers"]
     report.camera_height_units = round(floor_info["cam_height_units"], 3)
