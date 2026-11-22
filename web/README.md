@@ -8,18 +8,15 @@ artifacts/<capture>/
   nav.json        costmap (png+base64), outline, trajectory, align transform,
                   and the capture camera intrinsics (`camera`)
   pois.json       authored POI dataset (optional; validated by the pipeline)
-  cloud.ply       point cloud in the nav frame (fallback / debug view, key: P)
-  splat.splat     gaussian splat (optional; placed via nav.json.align)
+  cloud.ply       point cloud in the nav frame (instant preview / debug view, key: P)
+  splat.ksplat    compressed Level-1 gaussian splat (or splat.splat; placed via nav.json.align)
+  anchors.json    QR fiducial poses for R3 AR relocalization (optional)
   mesh.glb        photo-textured MVS mesh (optional; preferred when present)
   occupancy.png   debug grid image
   meta.json       capture summary shown in the HUD
 ```
 
-The hosted viewer currently serves the Melbourne Metro sample with its 10
-authored POIs. **VIEW MODEL** switches between its Gaussian splat and point
-cloud; **VIEW SAMPLE** switches to the Studio Room visual benchmark (its
-costmap is synthetic all-free space, so it is not a navigation demo). The
-default public URL opens Metro.
+The hosted viewer opens our self-captured 3-room twin (`test/home_v1/`, `11.55 MB` `.ksplat`, `9` validated POIs, `22.21 m²` walkable). **VIEW MODEL** switches between Gaussian splats and the metric point cloud.
 
 ## Develop
 
@@ -71,7 +68,7 @@ ranking table are in [`../docs/poi.md`](../docs/poi.md).
 Tests (Node 20+):
 
 ```powershell
-npm test          # 50 Vitest tests: pois, nav, navigation
+npm test          # 63 Vitest tests: pois, nav, navigation, splat, ar
 npm run typecheck # tsc --noEmit
 npm run build     # strict TS + Vite production build
 ```

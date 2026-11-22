@@ -13,8 +13,6 @@ web/node_modules/
 web/dist/
 web/public/artifacts/*
 !web/public/artifacts/README.md
-!web/public/artifacts/room/
-!web/public/artifacts/room/**
 
 # kaggle tooling
 kaggle/staging/

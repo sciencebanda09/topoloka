@@ -1,0 +1,16 @@
+{
+  "id": "shashankdev09/namma-sfm-home-v1",
+  "title": "namma sfm home v1",
+  "code_file": "namma_sfm_gpu.py",
+  "language": "python",
+  "kernel_type": "script",
+  "is_private": true,
+  "enable_gpu": true,
+  "enable_internet": true,
+  "dataset_sources": [
+    "shashankdev09/topoloka-code-v2",
+    "shashankdev09/namma-home-v1-video"
+  ],
+  "competition_sources": [],
+  "kernel_sources": []
+}

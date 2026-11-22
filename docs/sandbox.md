@@ -1,7 +1,7 @@
 # Sandbox: pick-and-place props
 
 The sandbox is an **additive** layer on the hosted viewer. It is off by
-default and runs on the hosted Melbourne Metro sample.
+default and runs on our deployed self-captured 3-room twin (`home_v1`).
 
 **Preview link:**
 <https://sciencebanda09.github.io/topoloka/?sandbox=1>
@@ -47,10 +47,12 @@ removing it restores the old path. If the route is severed, the tube and
 minimap line disappear and the HUD says `route: no path`.
 
 This is the R2-relevant part: the twin is not just a picture, it is a navigable
-model whose obstacles can be edited. Measured example: two barriers across the
-Metro corridor move the **Tunnel Walkway** POI route from 31.66 m (2 waypoints)
-to 31.86 m (3 waypoints); clearing them restores 31.66 m. See
-[`r2_evidence.md`](r2_evidence.md).
+model whose obstacles can be edited. Measured on `home_v1`: placing three
+barriers across the **Wooden Wardrobe** corridor dynamically reroutes
+**Central Hall → Bedroom Alcove & Beds** from **6.5 m** to **7.7 m** (and
+**Bedroom Entry → Bedroom Alcove** from **2.4 m** to **5.4 m**) around the
+opposite **Dressing Mirror** leg of the Master Bedroom loop; clearing them
+restores the shorter leg. See [`r2_evidence.md`](r2_evidence.md).
 
 ## What is and is not being picked up
 
@@ -86,7 +88,7 @@ primitives and canvas textures.
 ## Verification
 
 - `cd web && npm run build` — TypeScript strict + Vite production build.
-- `cd web && npm test` — 50 Vitest tests, including dynamic obstacle
+- `cd web && npm test` — 63 Vitest tests, including dynamic obstacle
   footprints and route invalidation.
 - Browser QA (76 checks): sandbox placement, reroute around placed barriers,
   share-link round-trip, and route restoration after clearing.
@@ -96,7 +98,7 @@ primitives and canvas textures.
   and rendering path are unchanged. The extra hidden DOM is inert.
 - Deployed Pages build checked over HTTPS: the viewer HTML contains the hidden
   sandbox panel, the JS bundle contains the sandbox and splat-raycast code, and
-  `nav.json` / `pois.json` / `splat.splat` return 200 for `metro_v1`.
+  `nav.json` / `pois.json` / `splat.ksplat` return 200.
 
 ## Not in this pass
 

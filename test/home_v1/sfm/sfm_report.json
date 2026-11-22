@@ -1,0 +1,26 @@
+{
+  "stage": "sfm",
+  "status": "ok",
+  "backend": "disk+lightglue+pycolmap",
+  "pycolmap_version": "4.2.1",
+  "matcher": "disk_lightglue_seq18_loop12",
+  "extract_strategy": "kornia.DISK(depth, max_kpts=2048) + CameraMode.SINGLE",
+  "match_strategy": "kornia.LightGlue(disk) -> 5246/10136 pairs",
+  "map_strategy": "pycolmap.incremental_mapping",
+  "frames_in": 375,
+  "models_found": 3,
+  "model_sizes": [
+    296,
+    70,
+    32
+  ],
+  "frames_registered": 296,
+  "registered_fraction": 0.789,
+  "points3d": 51304,
+  "mean_reprojection_error_px": 1.515,
+  "median_reprojection_error_px": 1.569,
+  "timing_seconds": 1945.5,
+  "warnings": [
+    "3 models [296, 70, 32]; kept largest"
+  ]
+}

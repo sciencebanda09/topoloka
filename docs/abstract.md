@@ -6,37 +6,37 @@
 |---|---|
 | **Author / Lead** | Shashank Dev (`coderperson043@gmail.com`) |
 | **Team / Competition ID** | `TM-60A7F03511D` · `NAMM-B3B981411E93` |
-| **Interactive Web Viewer** | [https://sciencebanda09.github.io/topoloka/](https://sciencebanda09.github.io/topoloka/) |
+| **Interactive Web Viewer** | [https://sciencebanda09.github.io/topoloka/](https://sciencebanda09.github.io/topoloka/) (serves team capture `home_v1`) |
 | **Source Repository** | [https://github.com/sciencebanda09/topoloka](https://github.com/sciencebanda09/topoloka) (MIT License) |
-| **Raw Capture & Narrated Video** | `[To be updated with self-captured raw video & human-narrated walkthrough links]` |
+| **Raw Capture & Narrated Video** | `[Raw video home_v1_raw_full.mp4 & own-voice R2 walkthrough links — see Google Drive folder]` |
 
 ---
 
 ## 1. Problem & Objectives
 
-Outdoor environments rely on GPS and street-view imagery, yet indoor venues (campuses, hostels, transit corridors, retail halls) remain unmapped for browser-based exploration. Existing indoor scanning approaches face three barriers:
-1. **Hardware Cost:** Professional LiDAR scanners cost $4,000–$25,000.
+Outdoor spaces benefit from GPS and street-view imagery, yet indoor environments remain unmapped for browser-based exploration. Existing indoor scanning workflows face three bottlenecks:
+1. **Hardware Cost:** Dedicated LiDAR scanners cost $4,000–$25,000.
 2. **Payload & Latency:** Heavy 300–800 MB textured meshes stall browser downloads and mobile WebGL GPUs.
-3. **Lack of Navigation Semantics:** Passive 3D viewers lack calibrated floor height, collision walls, spatial POI search, and walkable paths.
+3. **Lack of Navigation Semantics:** Passive 3D viewers lack metric floor calibration, wall collision, spatial POI search, and dynamic walking paths.
 
-**Topoloka** converts a single continuous smartphone video into a **hybrid metric twin** — combining photorealistic **compressed 3D Gaussian Splats (`.ksplat`)** with a **5 cm metric 2.5D occupancy costmap** — deployed as a zero-backend static web application running at 50–60 FPS in desktop and mobile browsers.
+**Topoloka** converts a single continuous smartphone video into a **hybrid metric digital twin** — pairing photorealistic **compressed 3D Gaussian Splats (`.ksplat`)** with a **5 cm metric 2.5D occupancy costmap** — deployed as a zero-backend static web application running at **~51.5 FPS** in hardware-accelerated browsers.
 
 ---
 
 ## 2. Standardized Data Capture SOP (Reproducible Field Protocol)
 
-Reconstruction fidelity and zero-floater geometry are enforced at capture time via `capture/SOP.md`:
+Reconstruction fidelity and clean floor alignment are codified in [`capture/SOP.md`](../capture/SOP.md) so different operators reproduce consistent captures:
 
 | Parameter | Specification | Engineering Rationale |
 |---|---|---|
-| **Device & App** | Consumer smartphone (Android/iOS, 1× wide lens; team unit: OnePlus) running native camera or **Sensor Logger** (`sensors.csv` IMU + MP4) | Single-lens intrinsics keep `pycolmap` `CameraMode.SINGLE` exact; optional IMU enables rotational blur checks. |
-| **Video Settings** | **4K / 30 fps** (1080p fallback), **Landscape (16:9)**, **EIS / Stabilization OFF**, **AE & AF Locked**, Flash OFF | Disabling EIS prevents non-rigid frame warps that elevate SfM reprojection error above `1.0 px`. |
-| **Lighting** | All overhead lights ON + daylight curtains open; avoid direct window/mirror glare | Uniform diffuse illumination avoids dark shadow noise and specular floaters. |
-| **Distance & Pace** | Walk **`0.4 m/s`** (`0.3 m/s` through doorways/stairs), **`1.2 – 2.0 m` stand-off** from walls (centerline in narrow halls), max turn rate **`≤ 30°/s`** | Sustains **`60–70%` overlap** at 2.5 Hz keyframe sampling with low stride/pan motion blur. |
-| **Multi-Room / Floor Sequence** | One unbroken take starting in largest room (`5 s` stationary start hold): **Pass 1** (`+10°` up-tilt for walls/ceilings) → **Pass 2** (`-20°` down-tilt for floors/furniture/QR anchors) → **`5 s` stationary loop closure** back at origin. | Still ends anchor SfM loop closure; dual-tilt captures both upper structure and floor collision seams. |
-| **Every-Corner & Doorway Rule** | Pivot around each corner in a `1 m` arc keeping **corner seam + floor junction centered for `≥ 3 s`** across `45°–60°` angles; cross doorways straight-on with `±25°` exit pan; traverse stairwells at `0.25–0.35 m/s` keeping handrails & steps overlapping. | Eliminates blind corners and maintains continuous SfM feature tracks across rooms and floors. |
-| **Optional 2D Plan & Scale Photos** | If pairing an architectural 2D plan: flat orthographic overhead photo under diffuse light (`0°` tilt, full corners + scale bar). For manual metric cross-check: 3 square photos (`±15°`) of a **`≥ 2.00 m`** tape measure laid across a doorway. | Enables independent sub-centimeter verification of the monocular scale factor `s`. |
-| **Automated QA Gate** | `python -m namma.cli qa` verifies Laplacian sharpness `p10 ≥ 100`, registered views `≥ 60%`, reprojection `≤ 1.0 px`, EIS OFF, coverage `≥ 80%`, gyro blur `p90 ≤ 4 px`. | Rejects blurry or drifted takes before spending GPU training budget. |
+| **Device & App** | Consumer smartphone (Android/iOS, 1× wide main lens) using native camera or **Sensor Logger** (`sensors.csv` IMU + MP4) | Single-lens intrinsics keep `pycolmap` `CameraMode.SINGLE` exact; optional IMU enables rotational blur checks. |
+| **Video Settings** | **4K / 30 fps** (1080p/720p landscape fallback), **Landscape**, **EIS / Stabilization OFF**, **AE & AF Locked**, Flash OFF | Disabling EIS prevents non-rigid frame warps that degrade epipolar geometry; locking exposure prevents wall flicker. |
+| **Lighting** | All overhead lights ON + curtains open; avoid direct sun/mirror glare | Uniform diffuse lighting (> 150 lux) reduces shadow noise and specular floaters. |
+| **Distance & Pace** | Walk **`0.4 m/s`** (`0.3 m/s` at doorways/stairs), **`1.2 – 2.0 m`** wall stand-off (centerline in narrow corridors), turn rate **`≤ 30°/s`** | Sustains **`60–70%` overlap** at 2.5–5 Hz keyframe sampling with minimal motion blur. |
+| **Multi-Room / Floor Sequence** | One unbroken loop starting in primary room (`5 s` stationary start hold): **Pass 1** (`+10°` tilt for walls/ceilings) → **Pass 2** (`-20°` tilt for floors/furniture/QR anchors) → **`5 s` loop-closure hold** at start. | Still ends anchor loop closure; dual-tilt captures both upper room structure and walkable floor seams. |
+| **Every-Corner & Doorway Rule** | Pivot around each corner in a `1 m` arc holding the **corner seam + floor junction centered for `≥ 3 s`** across `45°–60°`; cross doorways straight-on with `±25°` exit pan; traverse stairs at `0.25–0.35 m/s` keeping steps + handrails overlapping. | Eliminates blind corners and maintains unbroken SfM feature tracks across tight room transitions. |
+| **Optional 2D Plan & Scale Photos** | Architectural 2D plan: flat overhead photo (`0°` tilt, full corners + scale bar). Optional manual metric verification: 3 square photos (`±15°`) of a **`≥ 2.00 m`** tape measure across a doorway. | Enables independent sub-centimeter validation of the monocular scale factor `s`. |
+| **Automated QA Gate** | `python -m namma.cli qa` checks Laplacian sharpness `p10 ≥ 100`, registered views `≥ 60%`, reproj. `≤ 1.0 px`, floor outline, geometry warnings, POI dataset, EIS/IMU. | Surfaces every quality metric transparently in `capture_qa.json` (never hidden or patched). |
 
 ---
 
@@ -44,65 +44,73 @@ Reconstruction fidelity and zero-floater geometry are enforced at capture time v
 
 <div class="figure-block">
 <img src="fig/pipeline.png" alt="Figure 1: Topoloka End-to-End Reconstruction Pipeline" />
-<div class="figure-caption">Figure 1: Modular stages from raw phone video to compressed web `.ksplat`, metric occupancy costmap, spatial POI index, and AR QR anchors.</div>
+<div class="figure-caption">Figure 1: End-to-end Apache-2.0 / MIT pipeline from handheld smartphone video to compressed <code>.ksplat</code>, 5 cm metric costmap, validated POIs, and static web viewer.</div>
 </div>
 
-1. **Stride-Adaptive Blur Filtering (`frames.py`):** Extracts frames at `2.5 Hz` selecting the local sharpest frame inside each stride window via Laplacian variance.
-2. **Structure-from-Motion (`sfm.py`):** Incremental triangulation via `pycolmap` (`CameraMode.SINGLE`), exporting registered camera poses and sparse 3D points.
-3. **Commercially Licensed Metric Depth Fusion (`depth.py`):** Estimates dense metric depth maps per registered view using `Depth-Anything-V2-Metric-Indoor-Small-hf` (**Apache 2.0**), fusing masked points within `0.15 – 12.0 m` (`3 cm` voxel grid) and solving global scale via pairwise median ratio against sparse SfM camera depth:
+1. **Stride-Adaptive Sharpest Frame Picking (`frames.py`):** Extracts keyframes at `5.0 Hz` (`stride = 6` at `30 fps`, or `2.5 Hz` for long halls) choosing the local sharpest frame in each window via Laplacian variance.
+2. **Learned Wide-Baseline GPU SfM (`sfm.py`, `--features disk_lightglue`):** Narrow residential doorways and painted walls fragment classical SIFT (`35/225 = 15.6%` across 10 sub-models on `home_v1`). Switching to commercially licensed **Kornia `DISK` + `LightGlue`** (**Apache 2.0**, `max_kpts=2048`, `seq_window=18`, `loop_topk=12`) paired with `pycolmap 4.2.1` (`CameraMode.SINGLE`) lifted continuous registration to **`296/375` (`78.9%`)** with **`51,304` 3D points** and an unbroken **293-frame 3-room loop** (`00:00–00:58.4`).
+3. **Commercially Licensed Metric Depth Fusion (`depth.py`, `metricize.py`):** Predicts metric depth per registered view via **`Depth-Anything-V2-Metric-Indoor-Small-hf`** (**Apache 2.0**), fuses `24.27 M` raw points into `648,579` voxels (`3 cm`), and solves metric scale via pairwise median ratio against sparse SfM camera depth:
 
 <div class="math-box">
 s = median( D_metric(u, v) / Z_sfm(u, v) ),    p_nav = s · R^T · (p_scene - p_origin)
 </div>
 
-4. **Vectorized RANSAC Gravity Alignment & Costmap (`geometry.py`):** Fits the dominant horizontal floor plane with RANSAC, derives an orthonormal right-handed rotation matrix `R` (`det(R) = +1`, `floor_z = 0.0 m`), rasterizes a **5 cm 2.5D occupancy grid** (`free`, `obstacle`, `unknown`) with continuous corridor carving between camera poses, and encodes **Vectorized Clearance-Cost Weighting (VCCW)** via Euclidean Distance Transform (EDT) so planned paths naturally favor wide aisle centers.
-5. **3D Gaussian Splatting & `.ksplat` Compression (`splat_convert.py`, `convert_to_ksplat.mjs`):** Trains float-pruned 3DGS (`nerfstudio splatfacto` / `gsplat`, **Apache 2.0**), strips spherical-harmonic bands above DC for compact web streaming, and packs spatial-grid sorted **Level-1 `.ksplat`** (~`10–11.5 MB`, ~`75%` smaller than raw `.splat`), eliminating browser-side partitioning stalls.
-6. **In-Browser Interactive Viewer (`web/src/`):** Streams an instant colored 3D `cloud.ply` preview alongside live progress telemetry (`downloaded X.X MB` → `building scene`), then swaps seamlessly into `50–60 FPS` Three.js WebGL `.ksplat` rendering with:
-   - **First-person walkthrough & wall collision** (`WASD` / pointer lock / mobile touch stick) synced to the live **2D minimap (`M`)** and **view model switcher** (`Gaussian splats` / `Point cloud`).
-   - **Spatial + Fuzzy POI Search & Turn-by-Turn A\* Navigation:** 1 m spatial bucket + inverted token + Levenshtein index (`/`), explicit `Jump here`, `Navigate`, Pure-Pursuit lookahead + auto-rerouting, and **in-browser POI floor tagging (`E`)** with `localStorage` persistence and JSON export.
-   - **Interactive Sandbox (`G`) & Orientation HUD:** Place/rotate dynamic props (`Cone`, `Barrier`, `Crate`, `Sign`) that carve live obstacles into the A* router; adjust `rx/ry/rz/oy` or `Flip 180°` into shareable URLs.
-   - **QR Anchor AR Mode:** Relocalizes onto `anchors.json` QR fiducials (`namma anchors`) and displays directional AR turn guidance.
+4. **Gravity-Prior Floor RANSAC & 5 cm Metric Costmap (`geometry.py`):** Restricts floor-plane RANSAC candidates below camera height (`h ≥ max(0.80, min_cam_z - 0.10)`) so mid-height beds/tables never hijack floor fitting (`floor_z = 0.0 m`, `camera_height = 0.868 m`, `0` warnings), rasterizes a **5 cm 2.5D occupancy grid** with continuous corridor carving + **Vectorized Clearance-Cost Weighting (VCCW)** via Euclidean Distance Transform (EDT), and exports exact captured `trajectory_yaws` / `trajectory_pitches` + lens intrinsics (`nav.json`).
+5. **3DGS Training, Floater/Spike Pruning & Level-1 `.ksplat` (`splat_convert.py`, `convert_to_ksplat.mjs`):** Trains `nerfstudio splatfacto` (**Apache 2.0**, 25k iters, `915,558` raw splats), strips high-order SH bands, prunes `154,867` low-alpha splats (`α < 0.02`), `396` oversized fog-floaters (`max_scale > 0.35 m`, `α < 0.35`) & spiky needles (aspect `> 25`), and `32,953` ceiling/outlier spikes (`z > 1.11 m`), then packs spatial-grid sorted **Level-1 `.ksplat`** (`11.55 MB`, `480,000` Gaussians).
+6. **In-Browser Walkthrough, Spatial POI Index, A\* & Sandbox (`web/src/`):** Clamps vertical FOV to the captured smartphone lens shell (`23.9°` for `1280×576`) to eliminate unobserved ceiling voids, streams an instant `cloud.ply` preview before swapping to `.ksplat`, and runs 1 m spatial-bucket + inverted-token + Levenshtein (`≤ 2`) POI search (`/`), click-to-select markers with proximity decluttering, explicit **Jump here**, VCCW/EDT A\* floor routing with landmark-anchored turn-by-turn banners, click-floor POI tagging (`E`), dynamic prop Sandbox (`G`), and R3 QR-anchor AR mode (`AR`).
 
 ---
 
-## 4. Team Capture & Verification Slot
+## 4. Self-Captured Multi-Room Evaluation (`home_v1`)
 
-*Self-captured multi-room dataset metrics (`my_space`, following Section 2 SOP) will be populated here once reconstruction completes:*
+All third-party and public datasets (`room`, `playroom`, `guildhall-*`, `metro_v1`) were purged. The deployed twin (`test/home_v1/`) is reconstructed strictly from our team's handheld 3-room flat walkthrough (`home_v1_raw_full.mp4`, `98.6 s` → `75.0 s` clean indoor trim at `1280×576 @ 30 fps` covering **Entry Study Room**, **Central Hall**, and a full closed loop around the **Master Bedroom**):
 
-| Verification Metric | Target Gate | Measured (`my_space`) |
+<div class="figure-block">
+<img src="fig/home_v1_showcase.png" alt="Figure 2: Reconstructed 3-room home_v1 twin, fuzzy search, A* navigation, sandbox reroute, and metric occupancy map" />
+<div class="figure-caption">Figure 2: Verified <code>home_v1</code> Chrome hardware-WebGL outputs — (a) 6.5 m Central Hall → Bedroom A* route, (b) live Sandbox barrier reroute (6.5 m → 7.7 m around opposite bedroom loop leg), (c) typo-tolerant fuzzy POI search ('wardobe' → Wooden Wardrobe), and (d) 5 cm metric occupancy map (22.21 m² walkable) with all 9 validated POIs.</div>
+</div>
+
+| Verification Metric | Measured (`home_v1`) | Evidence / Honest Analysis |
 |---|---|---|
-| Raw Capture & Rooms Covered | Multi-room continuous loop (`≥ 90 s`, EIS OFF) | `[Pending user video]` |
-| SfM Registration / Reproj. Error | `≥ 60%` registered · `≤ 1.0 px` median | `[From capture_qa.json]` |
-| Metric Scale MAD | `≤ 10%` median absolute deviation | `[From depth_report.json]` |
-| Compressed `.ksplat` Payload & FPS | `≤ 15 MB` `.ksplat` · `≥ 50 FPS` WebGL | `[From meta.json + Chrome E2E]` |
+| **SfM Ablation: SIFT vs. DISK+LightGlue** | SIFT 3 Hz: `35/225` (`15.6%`, 10 models) · SIFT 6 Hz: `132/450` (`29.3%`, 7 models) · SIFT 4 Hz relaxed exhaustive (`134 min`): `279/282` (`98.9%`) *but suffered 4 false-match teleports (`5.2–20.5 m`)* → **DISK+LightGlue 5 Hz (`32.4 min`): `296/375` (`78.9%`, 293-frame continuous 3-room loop, 0 teleports)** | `test/home_v1/sfm/sfm_report.json` (`51,304` 3D pts). Learned features solved doorway fragmentation and false wall-tile matches in 4× less time. |
+| **Honest QA Paper Trail** | `PASS`: Frame count (`375`), Floor outline (`69 pts`, `22.21 m²`), Geometry warnings (`0`), POI dataset (`9 POIs / 4 cats`). `WARN`: `78.9%` reg. `FAIL`: Sharpness `p10 = 26`, Reproj. `1.569 px`. | `test/home_v1/capture_qa.json` — unedited. `1.569 px` is expected for 8px-stride CNN `DISK` grids vs. sub-pixel SIFT; `p10 = 26` reflects `1280×576` video over plain painted walls. |
+| **Apache-2.0 Metric Depth Scale** | `scale = 0.65836 m/unit`, `MAD = 11.88%` (`55,274` samples), `296/296` fused (`648,579` voxels), `camera_height = 0.868 m` | `depth_report.json` & `nav_report.json`; `0.868 m` matches actual handheld waist/basin-rim height (`~0.90 m`). |
+| **Compressed `.ksplat` & Live FPS** | `11.55 MB` Level-1 `.ksplat` (`480,000` splats) · **`51.5 FPS`** @ `1440×810` Chrome D3D11 · `0` console/HTTP errors | `web/meta.json` + Playwright E2E; `17.12 MB` total committed bundle (`test/home_v1/`). |
+| **POIs, Fuzzy Search & Multi-Room A\*** | **9 POIs** across 3 rooms (`0` warnings) · `"wardobe"` → `Wooden Wardrobe` (#1 hit) · **Entry Study Desk → Bedroom Alcove: `9.8 m`** (*"In 3.9 m, turn left past Refrigerator"*) | `test/home_v1/nav/pois.json` + live Playwright E2E verification. |
+| **Dynamic Sandbox Loop Reroute** | Blocking Wooden Wardrobe corridor with 3 barriers reroutes **Central Hall → Bedroom Alcove** from **`6.5 m` → `7.7 m`** (and **Bedroom Entry → Alcove** from **`2.4 m` → `5.4 m`**) around the Dressing Mirror leg | Verified live in Chrome (`?props=...`); obstacle layer dynamically updates A* in real time. |
 
 ---
 
-## 5. Third-Party Tools, Services & Licensing Compliance
+## 5. Original Contributions & Third-Party Commercial Licensing
 
-All pipeline models, libraries, and frontend engines permit **commercial use** under permissive open-source licenses; no proprietary/non-commercial (`CC-BY-NC`) model weights are used in production:
+**Original Team Work (MIT):** Deterministic multi-room Capture SOP (`capture/SOP.md`), 6-gate QA & IMU blur analyzer (`qa.py`, `imu.py`), Apache-2.0 `DISK+LightGlue` GPU SfM integration (`sfm.py`, `namma_sfm_gpu.py`), pairwise median SfM-to-depth metric scale fusion (`depth.py`, `metricize.py`), bed-rejecting gravity-prior RANSAC floor aligner & continuous corridor-carved 5 cm costmap (`geometry.py`), fog-floater/needle & ceiling-spike pruner (`splat_convert.py`), QR fiducial solver (`anchors.py`), POI contract (`pois.py`), and the complete static TypeScript/WebGL engine (`web/src/`: captured-VFOV shell clamping, spatial/fuzzy POI index, proximity marker decluttering, VCCW/EDT A* router, Pure-Pursuit tracker, dynamic obstacle sandbox, minimap, and AR HUD).
+
+**Third-Party Open-Source Libraries & Services:** Every runtime and reconstruction dependency permits **commercial use**; zero non-commercial (`CC-BY-NC`) weights are used:
 
 | Component | Purpose | License | Commercial Use |
 |---|---|---|---|
-| **pycolmap** (`colmap/pycolmap`) | Incremental Structure-from-Motion & camera poses | BSD 3-Clause | Permitted |
-| **Depth Anything V2 Metric Indoor Small** | Monocular metric depth & scale anchor (`depth.py`) | Apache 2.0 | Permitted |
+| **pycolmap** (`colmap/pycolmap 4.2.1`) | Incremental Structure-from-Motion & bundle adjustment | BSD 3-Clause | Permitted |
+| **Kornia (`DISK` + `LightGlue`)** | Learned wide-baseline indoor keypoint extraction & matching | Apache 2.0 | Permitted |
+| **Depth Anything V2 Metric Indoor Small** | Monocular metric depth & global scale anchor (`depth.py`) | Apache 2.0 | Permitted |
 | **Nerfstudio (`splatfacto`) & `gsplat`** | CUDA-accelerated 3D Gaussian Splatting training | Apache 2.0 | Permitted |
-| **OpenCV (`opencv-python-headless`) & NumPy / SciPy** | Sharpness QA, RANSAC alignment, EDT costmap carving | Apache 2.0 / BSD | Permitted |
-| **Three.js & `@mkkellogg/gaussian-splats-3d`** | WebGL rendering, `.ksplat` decompression, first-person HUD | MIT | Permitted |
-| **Vite / TypeScript / Vitest / Pytest** | Frontend bundling, typechecking, unit tests | MIT | Permitted |
-| **GitHub Pages & Kaggle Compute (Build-Time)** | Static CDN hosting & build-time T4 training (`$0` runtime API) | Service Terms | Static delivery free |
+| **PyTorch & Hugging Face `transformers`** | Deep learning runtime & weight loading | BSD 3-Clause / Apache 2.0 | Permitted |
+| **OpenCV, NumPy & SciPy** | Sharpness QA, RANSAC floor alignment, EDT costmap carving | Apache 2.0 / BSD | Permitted |
+| **Three.js & `@mkkellogg/gaussian-splats-3d`** | WebGL rendering, Level-1 `.ksplat` decompression, first-person HUD | MIT | Permitted |
+| **Vite / TypeScript / Vitest / Pytest** | Frontend bundling, typechecking, automated unit tests (`93/93` pass) | MIT | Permitted |
+| **FFmpeg** (build-time CLI) | Container normalization & human-voice submission MP4 muxing | LGPL / GPL CLI | Permitted (external CLI) |
+| **GitHub Pages & Kaggle Compute (Build-Time)** | Static CDN hosting & build-time T4 prototyping (`$0` runtime API) | Service Terms | Migrate Kaggle → own/cloud GPU in prod |
 
 ---
 
 ## 6. Third-Party API vs. Own GPU Infrastructure Cost Analysis
 
-Because Topoloka performs **100% of reconstruction on open-source weights and delivers static `.ksplat` files**, inference incurs **$0 per-view or per-API-call runtime cost**. Below is a unit-economics comparison for processing 3D indoor spaces at increasing scale:
+Because Topoloka runs **100% on commercially licensed open-source weights and serves static `.ksplat` files**, browser viewing incurs **$0 per-view or per-API-call runtime cost**. Based on our measured `home_v1` runtime (`32.4 min` DISK+LightGlue SfM + `62.6 min` Depth + 25k `splatfacto` = **`95 min` on a single T4**, or `~40 min` on an L4 / `~22 min` on an RTX 4070):
 
 | Deployment Model | Compute Unit & Assumptions | Cost / Scene | 100 Scenes | 1,000 Scenes | Notes / Scalability |
 |---|---|---|---|---|---|
-| **Commercial 3D APIs** *(SaaS scan/photogrammetry APIs)* | Typical managed processing (`$2.00–$5.00`/scan) + hosted viewer (`$49–$99/mo` seat/storage) | **`$2.50 – $5.50`** | `$840+` *(incl. 1 yr SaaS)* | `$3,200 – $6,000+` | Per-minute/per-scan billing scales linearly; vendor lock-in & data egress limits. |
-| **Self-Hosted Cloud GPU** *(On-demand NVIDIA L4 `$0.75/hr` or T4 `$0.35/hr`)* | ~25 min L4 (`$0.31`) or ~40 min T4 (`$0.23`) per multi-room `.ksplat` + static GitHub/S3 CDN (`~$0.01/scene/mo`) | **`$0.25 – $0.35`** | **`~$31`** | **`~$320`** | Auto-scales horizontally on spot GPUs; **~88% cheaper** than managed APIs with zero runtime server cost. |
-| **Owned GPU Workstation** *(e.g. RTX 4070 `$600` amortized over 3 yrs + `$0.12/kWh` power)* | ~15 min @ 220W (`$0.007` electricity/scene) + hardware capex (`$600`) | **`$0.01` marginal** *(`$0.61` @ 1k)* | `$607` *(incl. GPU capex)* | **`$607` total** *(`$0.61/scene`)* | Breaks even against `$3/scene` commercial APIs at **~200 scenes**; ideal for offline privacy-sensitive venues. |
-| **Competition Tier (Current)** | Free Kaggle T4 GPU quota (`30 hr/wk`) + static GitHub Pages | **`$0.00`** | `$0.00` *(batched)* | N/A *(quota bound)* | Zero spend during prototyping; seamless migration to self-hosted L4 workers for commercial load. |
+| **Commercial 3D APIs** *(SaaS photogrammetry / splat APIs)* | Managed scan processing (`$2.00–$5.00`/scan) + hosted viewer seat/storage (`$49–$99/mo`) | **`$2.50 – $5.50`** | `$840+` *(incl. 1 yr SaaS)* | `$3,200 – $6,000+` | Linear per-scan/per-view fees; vendor lock-in & egress caps. |
+| **Self-Hosted Cloud GPU** *(NVIDIA T4 `$0.35/hr` or L4 `$0.75/hr`)* | `1.58 hr` T4 (`$0.55`) or `0.67 hr` L4 (`$0.50`) per multi-room `.ksplat` + static S3/Pages CDN (`~$0.01/scene/mo`) | **`$0.50 – $0.56`** | **`~$53`** | **`~$530`** | Horizontally auto-scaled batch queues; **~82–90% cheaper** than commercial APIs with `$0` viewing cost. |
+| **Owned GPU Workstation** *(RTX 4070 `$600` amortized + `$0.12/kWh`)* | `~22 min` @ `220 W` (`$0.01` power/scene) + hardware capex (`$600`) | **`$0.01` marginal** *(`$0.61` @ 1k)* | `$601` *(incl. capex)* | **`$610` total** *(`$0.61/scene`)* | Breaks even against `$3/scene` APIs at **~200 scenes**; fully offline for privacy-sensitive venues. |
+| **Competition Tier (Measured `home_v1`)** | Free Kaggle T4 GPU quota (`30 hr/wk`) + static GitHub Pages | **`$0.00`** | `$0.00` *(batched)* | N/A *(quota bound)* | Zero competition spend; identical pipeline containers deploy directly to cloud/owned GPUs for commercial scale. |
 
-**Takeaway:** Running open Apache-2.0 / MIT models on owned or spot L4 GPUs paired with static `.ksplat` CDN delivery eliminates per-visitor API fees completely and achieves **~8–12× lower cost per reconstructed space** above 200 captures compared to commercial reconstruction APIs.
+**Takeaway:** Running open Apache-2.0 / MIT models (`DISK+LightGlue`, `Depth-Anything-V2-Metric-Indoor-Small`, `splatfacto`) on self-hosted or owned GPUs with static `.ksplat` delivery eliminates per-visitor API fees completely and achieves **~6–10× lower cost per space** at scale compared to commercial 3D reconstruction APIs.

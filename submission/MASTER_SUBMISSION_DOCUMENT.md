@@ -1,76 +1,53 @@
 # TOPOLOKA: Master Submission Document and Supplementary Materials
 
-**Techfest 2026-27, IIT Bombay — Namma Space Competition (Round 2 Official Deliverable)**
+**Techfest 2026–27, IIT Bombay — Namma Space Competition (Round 2 Official Deliverable)**
 
 | Submission Details | Verification & Access |
 |---|---|
 | **Author / Lead** | **Shashank Dev** (`coderperson043@gmail.com`) |
-| **Team ID** | **TM-60A7F03511D** |
-| **Competition ID** | **NAMM-B3B981411E93** |
+| **Team / Competition ID** | `TM-60A7F03511D` · `NAMM-B3B981411E93` |
 | **Official Google Drive Folder** | [Google Drive Submission Folder](https://drive.google.com/drive/folders/1vY_eKNKpsiaX1dGYe3TORipPhjcY-D5I?usp=sharing) |
-| **Live Free-Roam Web Twin (R2)** | [https://sciencebanda09.github.io/topoloka/](https://sciencebanda09.github.io/topoloka/) |
-| **Source Code Repository** | [https://github.com/sciencebanda09/topoloka](https://github.com/sciencebanda09/topoloka) (MIT License) |
+| **Live Web App (R2 — `home_v1`)** | [https://sciencebanda09.github.io/topoloka/](https://sciencebanda09.github.io/topoloka/) |
+| **Source Code Repository** | [https://github.com/sciencebanda09/topoloka](https://github.com/sciencebanda09/topoloka) (`main` & synced `r2-pois-nav`, MIT License) |
+| **Technical Abstract & SOP (PDF)** | [`Technical_Abstract_Topoloka.pdf`](Technical_Abstract_Topoloka.pdf) (4 pages, ≤ 5-page limit; mirrors `docs/abstract.pdf`) |
 | **R2 Evidence Pack** | [`docs/r2_evidence.md`](https://github.com/sciencebanda09/topoloka/blob/main/docs/r2_evidence.md) |
-| **Demo Walkthrough Video (R2)** | [topoloka_r2_demo.mp4](https://github.com/sciencebanda09/topoloka/releases/download/r2-demo/topoloka_r2_demo.mp4) (4:11, 1080p30) |
-| **Demo Walkthrough Video (R1)** | [topoloka_demo.mp4](https://github.com/sciencebanda09/topoloka/releases/download/r1-demo/topoloka_demo.mp4) (3:33, 1080p30) |
-| **Technical Abstract (PDF)** | [`submission/Technical_Abstract_Topoloka.pdf`](Technical_Abstract_Topoloka.pdf) (IEEE/ACM format) |
-| **Kaggle Cloud Pipelines** | [`kaggle/kernels/`](https://github.com/sciencebanda09/topoloka/tree/main/kaggle/kernels) ($0.00 compute expenditure) |
+| **Raw Capture Video (SOP Proof)** | `home_v1_raw_full.mp4` (`98.6 s`, `1280×576 @ 30 fps` — see Google Drive folder) |
+| **Own-Voice Demo Video (R2, 3–5 min)** | `[Own-voice 1080p30 walkthrough of home_v1 — see Google Drive folder]` |
 
 ---
 
-## 1. Master Links and Supplementary Drive Index
+## 1. Executive Summary & Technical Stack
 
-All project deliverables, interactive web demonstrators, video recordings, and source code are consolidated in the master index below:
+**Topoloka** (*τόπος* [place] + *लोक* [world]) converts a single continuous smartphone walkthrough video into a **hybrid metric 3D digital twin** — combining photorealistic compressed **3D Gaussian Splats (`.ksplat`)** with a **5 cm metric 2.5D occupancy costmap** — deployed as a zero-backend static web application running at **~51.5 FPS** in desktop and mobile browsers.
 
-| Deliverable | Resource / Access URL | Description |
+All third-party and public datasets (`room`, `playroom`, `guildhall-*`, `metro_v1`) have been purged. The sole deployed scene (`test/home_v1/`) is reconstructed strictly from our team's self-captured 3-room flat walkthrough (`Entry Study Room`, `Central Hall`, and a closed loop around the `Master Bedroom`).
+
+### Key Round 2 Capabilities
+- **Deterministic Multi-Room Capture SOP (`capture/SOP.md`):** Specifies device, 4K/30 landscape (1080p/720p fallback), EIS OFF, AE/AF lock, lighting, `0.4 m/s` pace, `1.2–2.0 m` wall stand-off, dual-tilt passes (`+10°` / `-20°`), 3 s corner arc sweeps, doorway/stairwell crossings, optional 2D plan & 2.00 m scale photos, and an automated QA analyzer (`namma qa`).
+- **Commercially Licensed Reconstruction Pipeline (`pipeline/namma/`):** Uses **Kornia `DISK + LightGlue` (Apache 2.0)** + `pycolmap 4.2.1` (`CameraMode.SINGLE`), **`Depth-Anything-V2-Metric-Indoor-Small-hf` (Apache 2.0 — zero `CC-BY-NC` weights)**, bed-rejecting gravity-prior RANSAC floor alignment, continuous corridor-carved 5 cm costmaps, `nerfstudio splatfacto` 3DGS (Apache 2.0), fog-floater / needle / ceiling-spike pruning (`splat_convert.py`), and Level-1 `.ksplat` compression (`11.55 MB`, `480,000` splats).
+- **Browser Walkthrough & Live 2D Minimap (`web/src/`):** Captured-lens vertical FOV clamping (`23.9°`), instant colored `cloud.ply` preview before swapping seamlessly into `.ksplat`, WASD/mouse/touch free-roam with wall collision, live 2D minimap (`M`), and `Gaussian splats` / `Point cloud` switcher (`P`).
+- **Spatial + Fuzzy POI Search & VCCW/EDT A\* Navigation:** Versioned `pois.json` contract (`9` POIs across 3 rooms, `0` warnings), 1 m spatial bucket + inverted token + Levenshtein `≤ 2` index (`/`), proximity-decluttered 3D & minimap markers without camera jumps, explicit **Jump here** (`?poi=`), clearance-weighted A\* floor routing with landmark-anchored turn-by-turn banners, ETA, off-route rerouting, and click-floor POI tagging (`E`) with JSON export.
+- **Interactive Sandbox (`G`) & R3 AR Bonus (`AR`):** Pick-and-place physical props (`Cone`, `Barrier`, `Crate`, `Sign`) that dynamically carve obstacles into the live A\* router (`6.5 m → 7.7 m` bedroom loop reroute verified live); optional WebRTC camera + QR fiducial relocalization (`anchors.json`).
+
+---
+
+## 2. Original Contributions, Licensing & Cost Economics
+
+- **Original Team Code (MIT):** Capture SOP, 6-gate QA & IMU blur analyzer, Apache-2.0 `DISK+LightGlue` GPU SfM integration, pairwise median metric scale fusion, bed-rejecting gravity RANSAC floor aligner & continuous corridor costmap, fog-floater/needle/spike pruner, QR fiducial solver, POI validator, and the complete static TypeScript/WebGL viewer, spatial/fuzzy index, VCCW A\* router, and dynamic sandbox.
+- **Commercial-Use Open-Source Stack:** `pycolmap 4.2.1` (BSD 3-Clause), `Kornia DISK + LightGlue` (Apache 2.0), `Depth-Anything-V2-Metric-Indoor-Small-hf` (Apache 2.0), `nerfstudio`/`gsplat` (Apache 2.0), `PyTorch` (BSD 3-Clause), `transformers` (Apache 2.0), `OpenCV`/`NumPy`/`SciPy` (Apache 2.0 / BSD), `Three.js`/`@mkkellogg/gaussian-splats-3d` (MIT), `Vite`/`TypeScript`/`Vitest`/`Pytest` (MIT), `FFmpeg` (CLI).
+- **Third-Party API vs. Own GPU Cost Analysis:** Static `.ksplat` delivery incurs **$0/view** runtime fees. Based on our measured `home_v1` runtime (`95 min` T4 / `40 min` L4), self-hosted cloud GPUs cost **`$0.50–$0.56/scene`** (`$530` / 1,000 scenes) vs. **`$2.50–$5.50/scene`** (`$3,200–$6,000+` / 1,000 scenes) for managed commercial 3D APIs (**82–90% savings**); an owned RTX 4070 workstation (`$600` capex) breaks even at **~200 scenes**. See [`Technical_Abstract_Topoloka.pdf`](Technical_Abstract_Topoloka.pdf) for the full breakdown.
+
+---
+
+## 3. Verified Code Health & Team Capture Results (`home_v1`)
+
+- **Automated Verification:** **30/30** pipeline `pytest` tests + **63/63** web `vitest` tests + strict `tsc --noEmit` + Vite static production build + live Chrome D3D11 Playwright E2E (`51.5 FPS`, `0` console/HTTP errors) all passing.
+
+| Metric | Measured (`home_v1`) | Evidence |
 |---|---|---|
-| **Live Free-Roam Web Twin (R2)** | [https://sciencebanda09.github.io/topoloka/](https://sciencebanda09.github.io/topoloka/) | WebGL 3DGS viewer. Default opens **Melbourne Metro (`metro_v1`)** with 7 authored POIs, spatial+fuzzy search, A* navigation, interactive sandbox, and R3 QR-AR preview; dropdown switches to **Studio Room (`room`)**. Runs at 50–60 FPS. |
-| **Source Code Repository** | [https://github.com/sciencebanda09/topoloka](https://github.com/sciencebanda09/topoloka) | End-to-end codebase: capture SOP, IMU QA, SfM pipeline, depth metricization, 3DGS export, QR anchor solver, POI contract, and Vite/TypeScript WebGL client. MIT Open Source. |
-| **Demo Walkthrough Video (R2)** | [topoloka_r2_demo.mp4](https://github.com/sciencebanda09/topoloka/releases/download/r2-demo/topoloka_r2_demo.mp4) | 4:11 1080p30 H.264+AAC walkthrough of POI search, explicit jump, obstacle-aware navigation, sandbox barrier rerouting (31.66 m to 31.86 m), POI authoring/JSON export, and verification. |
-| **Demo Walkthrough Video (R1 baseline)** | [topoloka_demo.mp4](https://github.com/sciencebanda09/topoloka/releases/download/r1-demo/topoloka_demo.mp4) | 3:33 1080p30 walkthrough of baseline first-person roaming, minimap synchronization, and Studio Room orientation controls. |
-| **Technical Abstract (PDF)** | [`submission/Technical_Abstract_Topoloka.pdf`](Technical_Abstract_Topoloka.pdf) | Formal IEEE/ACM report detailing mathematical formulation, pipeline architecture, POI/navigation stack, and empirical benchmarks. |
-| **Kaggle Cloud Pipelines** | [`kaggle/kernels/`](https://github.com/sciencebanda09/topoloka/tree/main/kaggle/kernels) | Automated GPU scripts executing frame extraction, pycolmap SfM, Depth Anything V2 metric alignment, and splatfacto training ($0.00 total compute cost). |
-| **Supplementary Artifacts** | [`web/public/artifacts/`](https://github.com/sciencebanda09/topoloka/tree/main/web/public/artifacts) | Pre-computed Gaussian splat binaries (`splat.splat`), camera trajectory matrices (`nav.json`), POIs (`pois.json`), and metadata logs (`meta.json`). |
-
----
-
-## 2. Executive Summary
-
-### Overview
-**Topoloka** (*topos* [place] + *loka* [world]) is a spatial intelligence engine that converts a standard smartphone walk-through video into an interactive, metric 3D digital twin delivered as a lightweight, zero-install web link.
-
-Unlike traditional photogrammetry or laser scanning pipelines that require expensive proprietary LiDAR hardware, Topoloka achieves sub-decimeter metric fidelity directly from consumer video. The Round 2 system adds structured Points of Interest (`pois.json`), multi-word spatial+fuzzy search, A* obstacle-aware turn-by-turn wayfinding, an interactive physics/costmap sandbox (`G`), in-browser POI authoring/export (`E`), IMU/EIS capture validation, and Round 3 QR-anchor AR wayfinding foundations.
-
-### Key Capabilities
-- **Consumer Monocular Video Input:** Uses ordinary 4K/1080p video recorded on any modern smartphone following our capture SOP (`capture/SOP.md`).
-- **Metric Scaling via Foundation AI:** Integrates Depth Anything V2 Metric Indoor Large to infer true real-world scale (meters per scene unit) without LiDAR or stereo cameras.
-- **Sub-50 MB Static Web Payload:** Delivers 3D Gaussian Splats (`1.59M` Gaussians in `room`, `457k` in `metro_v1`) over static GitHub Pages with adaptive resolution scaling.
-- **Built-in 2.5D Obstacle Costmap & A\* Navigation:** Outputs a metric 5 cm occupancy grid with trajectory corridor clearing, preventing wall pass-through and computing live turn-by-turn paths (`31.66 m` end-to-end Metro route; `31.86 m` around user-placed barriers).
-- **Spatial POI Search & In-Browser Authoring:** Supports versioned `pois.json` (`test/` + live UI authoring/export), multi-word Levenshtein + token search, category chips, and explicit click-to-jump / navigate cards.
-- **R3 AR Mode Preview (`AR`):** Supports WebRTC camera feed, Web `BarcodeDetector` QR scanning / simulated anchor relocalization against `anchors.json` (`namma anchors`), and real-time directional HUD arrow guidance.
-
----
-
-## 3. Measured Benchmarks and Empirical Performance
-
-| Performance Metric | Studio Room Twin (`room`) | Melbourne Metro Benchmark (`metro_v1`) |
-|---|---|---|
-| **Gaussian Splats** | **1,593,376** (30,000 iterations) | **457,221** (25,000 iterations) |
-| **Walkable Area** | **73.30 m²** | **315.05 m²** |
-| **Registration Rate** | 100% full coverage | **216 / 216 frames (100.0%)** |
-| **Reprojection Error** | Sub-pixel | **0.403 px median** (0.613 px mean) |
-| **Metric Scale Accuracy** | Calibrated indoor benchmark | **6.2505 m/unit (7.54% MAD)** |
-| **Authored POIs & Route** | Optional authoring via `E` | **7 POIs (5 categories) · 31.66 m route** |
-| **Total Artifact Payload** | 48.6 MB (Binary Splat + Nav) | 18.4 MB (Splat + Cloud + Nav + POIs) |
-| **Desktop / Mobile FPS** | **48–60 FPS** | **51–60 FPS** |
-| **Total Cloud GPU Cost** | **$0.00** (Kaggle Free Tier) | **$0.00** (Kaggle Free Tier) |
-
----
-
-## 4. Google Drive Submission Folder Structure
-
-1. **`MASTER_SUBMISSION_DOCUMENT.pdf`**: This master document compiling all supplementary links and benchmarks.
-2. **`Technical_Abstract_Topoloka.pdf`**: Formal IEEE/ACM technical abstract (`docs/abstract.pdf`).
-3. **`Proof_of_Concept_Web_Viewer_Link.txt`**: Direct URL and feature summary for the live hosted WebGL twin.
-4. **`Demonstration_Video_Link.txt`**: Direct URLs for the R2 (4:11) and R1 (3:33) 1080p walkthrough videos.
-5. **`Code_Repository_Link.txt`**: Direct URL and overview of the MIT-licensed GitHub repository.
+| Raw Capture & Rooms Covered | 3 rooms (Entry Study Room, Central Hall, Master Bedroom loop); `98.6 s` → `75.0 s` indoor trim (`1280×576 @ 30 fps`) | `home_v1_raw_full.mp4`, `frames_meta.json` |
+| SfM Ablation & Registration | SIFT 3 Hz `15.6%` → **DISK+LightGlue 5 Hz `296/375` (`78.9%`, 293-frame continuous 3-room loop, `51,304` 3D pts)** | `test/home_v1/sfm/sfm_report.json` |
+| Metric Scale (Apache-2.0 Depth Small) | `scale = 0.65836 m/unit` · `MAD = 11.88%` (`55,274` samples) · `camera_height = 0.868 m` | `depth_report.json`, `nav_report.json` |
+| `.ksplat` Payload, Walkable Area & FPS | **`11.55 MB`** Level-1 `.ksplat` (`480,000` splats) · **`22.21 m²`** walkable (`0` geom warnings) · **`51.5 FPS`** | `web/meta.json`, Playwright E2E |
+| Authored POIs & Live Sandbox Reroute | **9 POIs** (`0` warnings) · `"wardobe"` → `Wooden Wardrobe` · 3-room A\* `9.8 m` · Sandbox barrier reroute **`6.5 m` → `7.7 m`** (`2.4 m` → `5.4 m` from Bedroom Entry) | `nav/pois.json`, Playwright E2E |
+| Honest QA Paper Trail | `PASS` (frame count, floor outline, geom warnings, POIs); `WARN` (78.9% reg); `FAIL` (p10=26 soft walls, 1.569 px CNN DISK grid) | `test/home_v1/capture_qa.md` |

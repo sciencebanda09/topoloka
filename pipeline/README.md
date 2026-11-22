@@ -20,13 +20,14 @@ went wrong and what the pipeline did about it ("report, never lie").
 |---|---|---|---|
 | frames | `python -m namma.cli frames <video> <capture> --target-rate 2.5 --max-width 1600` | Kaggle CPU | keeps the sharpest frame per stride window (footfall shake removal) |
 | sfm | `python -m namma.cli sfm <capture>` | Kaggle CPU | pycolmap SIFT + matching + incremental mapping; exports poses, PLY, transforms.json |
-| depth | `python -m namma.cli depth <capture>` | **GPU** | Depth Anything V2 (metric indoor); aligns metric depth to arbitrary-scale SfM via `median(depth_m / sparse_camera_z)`; fuses a dense 3 cm cloud in meters |
-| geometry | `python -m namma.cli geometry <capture>` | Kaggle CPU | gravity from camera up-axis mean → RANSAC floor plane → z-up metric frame → 5 cm 2.5D costmap → floor outline polygon |
-| qa | `python -m namma.cli qa <capture>` | anywhere | capture QA table (sharpness, registration, reprojection, footprint, POIs) |
+| depth | `python -m namma.cli depth <capture>` | **GPU** | `Depth-Anything-V2-Metric-Indoor-Small-hf` (Apache 2.0); aligns metric depth to arbitrary-scale SfM via `median(depth_m / sparse_camera_z)`; fuses a dense 3 cm cloud in meters |
+| geometry | `python -m namma.cli geometry <capture>` | Kaggle CPU | gravity from camera up-axis mean → vectorized RANSAC floor plane → z-up metric frame → 5 cm 2.5D costmap (with continuous corridor carving) → floor outline polygon |
+| qa | `python -m namma.cli qa <capture>` | anywhere | capture QA table (sharpness, registration, reprojection, footprint, POIs, IMU/EIS, QR anchors) |
 | pois | `python -m namma.cli pois <capture>` | anywhere | validates `nav/pois.json`: schema, unique ids, in-bounds coordinates, on free floor, radius, camera view |
-| splat training | `kaggle/kernels/namma_splat` | **GPU** | nerfstudio splatfacto (auto-orient/center/scale disabled — the nav frame is the contract) |
-| splat-convert | `python -m namma.cli splat-convert <ply> <out.splat>` | anywhere | 3DGS PLY → 32-byte-per-gaussian web format (DC colors) |
-| package | `python -m namma.cli package <capture>` | Kaggle | assembles `web/` (nav.json, pois.json, cloud.ply in nav frame, splat.splat, meta.json) |
+| anchors | `python -m namma.cli anchors <capture>` | anywhere | detects printed A4 QR markers (`150 mm`) and writes `nav/anchors.json` for R3 AR relocalization |
+| splat training | `kaggle/kernels/namma_splat` | **GPU** | nerfstudio splatfacto (Apache 2.0; auto-orient/center/scale disabled — the nav frame is the contract) |
+| splat-convert | `python -m namma.cli splat-convert <ply> <out.splat>` | anywhere | 3DGS PLY → 32-byte-per-gaussian web format (DC colors + low-alpha, fog-floater & needle-splat pruning) |
+| package | `python -m namma.cli package <capture>` | Kaggle | assembles `web/` (nav.json, pois.json, anchors.json, cloud.ply in nav frame, splat.ksplat/.splat, meta.json) |
 
 ## Frame conventions (the part that bites)
 
@@ -54,4 +55,4 @@ powershell -File web\tools\sync_artifacts.ps1 -Kernel namma_splat
 
 Environment variables a kernel honors: `NM_TARGET_RATE` (default 2.5 kept
 frames/s), `NM_MAX_W` (default 1600 px), `NM_ITERS` (splat iterations, default
-15000).
+25000).

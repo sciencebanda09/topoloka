@@ -268,7 +268,11 @@ def align_scene(points: np.ndarray, cam_centers: np.ndarray, down: np.ndarray,
     elif fixed_scale is None:
         cand = points[h > 0]
     else:
-        cand = points[(h >= min_cam_z - 0.5) & (h <= max_cam_z)]
+        # Prefer candidates at true floor depth (>= 0.80 m below camera) so
+        # mid-height horizontal furniture (beds, tables, counters at ~0.4-0.6 m
+        # below waist/chest height) cannot hijack RANSAC floor detection.
+        deep = points[(h >= max(0.80, min_cam_z - 0.10)) & (h <= max_cam_z)]
+        cand = deep if len(deep) >= 2000 else points[(h >= min_cam_z - 0.5) & (h <= max_cam_z)]
     if len(cand) < 50:
         cand = points
 
@@ -465,7 +469,7 @@ def run_geometry(capture_dir: Path, cloud_path: Path | None = None) -> NavReport
     report.scale_source = scale_source
     xyz, rgb = load_cloud(cloud_path)
     report.points_in = len(xyz)
-    centers, _fwd, poses_frames = load_camera_centers(poses_path)
+    centers, fwd, poses_frames = load_camera_centers(poses_path)
 
     down = estimate_down_from_poses(poses_frames)
     try:
@@ -494,6 +498,11 @@ def run_geometry(capture_dir: Path, cloud_path: Path | None = None) -> NavReport
 
     pts_m = (((xyz - origin) @ R) * scale).astype(np.float64)
     traj_m = (((centers - origin) @ R) * scale).astype(np.float64)
+    fwd_nav = (fwd @ R).astype(np.float64)
+    fwd_norms = np.maximum(np.linalg.norm(fwd_nav, axis=1, keepdims=True), 1e-9)
+    fwd_nav = fwd_nav / fwd_norms
+    traj_yaws = [round(float(math.atan2(-f[0], f[1])), 4) for f in fwd_nav]
+    traj_pitches = [round(float(max(-0.85, min(0.35, math.asin(max(-1.0, min(1.0, float(f[2]))))))), 4) for f in fwd_nav]
     report.points_used = len(pts_m)
 
     # floats: height of cameras should now be ~CHEST_HEIGHT_M
@@ -529,6 +538,8 @@ def run_geometry(capture_dir: Path, cloud_path: Path | None = None) -> NavReport
                  "data_b64": base64.b64encode(png.tobytes()).decode("ascii")},
         "outline": outline,
         "trajectory": [[round(float(x), 3) for x in p] for p in traj_m],
+        "trajectory_yaws": traj_yaws,
+        "trajectory_pitches": traj_pitches,
         "scale_m_per_unit": report.scale_m_per_unit,
         "scale_source": report.scale_source,
         "cam_height_units": report.camera_height_units,

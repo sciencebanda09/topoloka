@@ -1,0 +1,220 @@
+{
+  "version": 1,
+  "capture": "home_v1",
+  "pois": [
+    {
+      "id": "study-desk",
+      "name": "Entry Study Desk",
+      "category": "area",
+      "aliases": [
+        "study room",
+        "desk",
+        "table",
+        "front room",
+        "entry"
+      ],
+      "description": "Front study room with wooden work table and doorway leading into the hallway passage.",
+      "x": -0.823,
+      "y": -4.103,
+      "z": 0.0,
+      "radius_m": 0.9,
+      "view": {
+        "x": -1.155,
+        "y": -4.215,
+        "z": 0.617,
+        "yaw": -1.246,
+        "pitch": -0.227
+      }
+    },
+    {
+      "id": "hallway-passage",
+      "name": "Hallway Passage",
+      "category": "exit",
+      "aliases": [
+        "corridor",
+        "doorway",
+        "passage",
+        "kitchen counter",
+        "entry corridor"
+      ],
+      "description": "Connecting doorway with blue curtains and appliance counter between the study room and central hall.",
+      "x": 0.895,
+      "y": -2.651,
+      "z": 0.0,
+      "radius_m": 0.8,
+      "view": {
+        "x": 0.661,
+        "y": -2.911,
+        "z": 0.863,
+        "yaw": -0.732,
+        "pitch": -0.201
+      }
+    },
+    {
+      "id": "central-hall",
+      "name": "Central Hall",
+      "category": "area",
+      "aliases": [
+        "lobby",
+        "hallway",
+        "living hall",
+        "center"
+      ],
+      "description": "Tiled central hall hub connecting the front study room, washbasin, utility alcove, and master bedroom.",
+      "x": 1.506,
+      "y": -1.847,
+      "z": 0.0,
+      "radius_m": 1.0,
+      "view": {
+        "x": 1.387,
+        "y": -2.176,
+        "z": 0.966,
+        "yaw": -0.346,
+        "pitch": -0.237
+      }
+    },
+    {
+      "id": "refrigerator",
+      "name": "Refrigerator",
+      "category": "facility",
+      "aliases": [
+        "fridge",
+        "freezer",
+        "cooler",
+        "appliance"
+      ],
+      "description": "Upright silver refrigerator positioned along the central hall wall.",
+      "x": 1.826,
+      "y": -0.945,
+      "z": 0.0,
+      "radius_m": 0.8,
+      "view": {
+        "x": 1.876,
+        "y": -1.291,
+        "z": 1.023,
+        "yaw": 0.143,
+        "pitch": -0.27
+      }
+    },
+    {
+      "id": "washbasin",
+      "name": "Washbasin & Bath Door",
+      "category": "facility",
+      "aliases": [
+        "sink",
+        "basin",
+        "handwash",
+        "bathroom",
+        "restroom",
+        "washroom"
+      ],
+      "description": "Wall-mounted ceramic washbasin on the teal accent wall beside the wooden bathroom door.",
+      "x": 1.688,
+      "y": 0.175,
+      "z": 0.0,
+      "radius_m": 0.8,
+      "view": {
+        "x": 1.792,
+        "y": -0.159,
+        "z": 1.062,
+        "yaw": 0.3,
+        "pitch": -0.279
+      }
+    },
+    {
+      "id": "wooden-wardrobe",
+      "name": "Wooden Wardrobe",
+      "category": "landmark",
+      "aliases": [
+        "almirah",
+        "closet",
+        "cupboard",
+        "wardrobe"
+      ],
+      "description": "Twin-door grain-patterned wooden wardrobe inside the master bedroom.",
+      "x": -0.448,
+      "y": 1.716,
+      "z": 0.0,
+      "radius_m": 0.85,
+      "view": {
+        "x": -0.101,
+        "y": 1.761,
+        "z": 0.893,
+        "yaw": 1.699,
+        "pitch": -0.425
+      }
+    },
+    {
+      "id": "bedroom-alcove",
+      "name": "Bedroom Alcove & Beds",
+      "category": "area",
+      "aliases": [
+        "master bedroom",
+        "bed",
+        "sleeping area",
+        "single bed",
+        "double bed"
+      ],
+      "description": "Master bedroom sleeping zone with iron-frame single bed, recessed wall niche, and carved double bed.",
+      "x": -1.408,
+      "y": 2.436,
+      "z": 0.0,
+      "radius_m": 1.0,
+      "view": {
+        "x": -1.308,
+        "y": 2.101,
+        "z": 0.772,
+        "yaw": 0.29,
+        "pitch": -0.241
+      }
+    },
+    {
+      "id": "dressing-mirror",
+      "name": "Dressing Mirror & Cabinet",
+      "category": "landmark",
+      "aliases": [
+        "mirror",
+        "dresser",
+        "vanity",
+        "black cabinet",
+        "storage"
+      ],
+      "description": "Wooden dressing mirror and matte-black storage cabinet along the bedroom return loop.",
+      "x": -1.152,
+      "y": 0.419,
+      "z": 0.0,
+      "radius_m": 0.85,
+      "view": {
+        "x": -1.434,
+        "y": 0.626,
+        "z": 0.902,
+        "yaw": -2.203,
+        "pitch": -0.361
+      }
+    },
+    {
+      "id": "washing-machine",
+      "name": "Washing Machine Alcove",
+      "category": "facility",
+      "aliases": [
+        "laundry",
+        "washer",
+        "utility",
+        "utility cabinet",
+        "basket"
+      ],
+      "description": "Front-loading white washing machine in the utility alcove off the central hall.",
+      "x": 1.708,
+      "y": 0.619,
+      "z": 0.0,
+      "radius_m": 0.85,
+      "view": {
+        "x": 1.365,
+        "y": 0.69,
+        "z": 0.718,
+        "yaw": -1.776,
+        "pitch": -0.153
+      }
+    }
+  ]
+}

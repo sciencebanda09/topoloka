@@ -94,7 +94,7 @@ def test_build_costmap_continuous_carving_bridges_strided_poses():
 
 def test_align_scene_gravity_ransac_survives_dominant_vertical_walls():
     rng = np.random.default_rng(7)
-    # Wall has 5x more points than the horizontal floor (mimics masonry-heavy hallways like guildhall-v2)
+    # Wall has 5x more points than the horizontal floor (mimics masonry-heavy hallways)
     wall = np.column_stack([rng.uniform(-4, 4, 2500), np.full(2500, 1.5), rng.uniform(0.1, 3.0, 2500)])
     floor = np.column_stack([rng.uniform(-4, 4, 500), rng.uniform(-2, 2, 500), np.zeros(500)])
     pts = np.vstack([wall, floor]).astype(np.float32)
@@ -105,6 +105,23 @@ def test_align_scene_gravity_ransac_survives_dominant_vertical_walls():
     assert info["floor_inliers"] >= 450
     assert abs(scale - 1.35 / 1.4) < 0.05
     assert R[2, 2] > 0.99
+
+
+def test_align_scene_rejects_mid_height_bed_plane_on_metric_input():
+    rng = np.random.default_rng(11)
+    # Large dense bed/table plane at z=0.45 m (5000 pts) vs true floor at z=0.0 m (2500 pts)
+    bed = np.column_stack([rng.uniform(-2, 2, 5000), rng.uniform(-2, 2, 5000), np.full(5000, 0.45)])
+    floor = np.column_stack([rng.uniform(-3, 3, 2500), rng.uniform(-3, 3, 2500), np.zeros(2500)])
+    pts = np.vstack([bed, floor]).astype(np.float32)
+    cams = np.column_stack([np.linspace(-1.5, 1.5, 10), np.zeros(10), np.full(10, 1.0)])
+    down = np.array([0.0, 0.0, -1.0])
+
+    R, origin, scale, info = align_scene(pts, cams, down, fixed_scale=1.0)
+    assert scale == 1.0
+    # Must snap to the true z=0.0 floor (cam height ~1.0 m), NOT the z=0.45 m bed (0.55 m)
+    assert abs(info["cam_height_units"] - 1.0) < 0.08, info
+    p_floor = ((np.array([0.5, 0.5, 0.0]) - origin) @ R) * scale
+    assert abs(p_floor[2]) < 0.05, p_floor
 
 
 def main() -> None:

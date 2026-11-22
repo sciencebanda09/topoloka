@@ -86,45 +86,56 @@ and prints the follow-up commands.
 This writes `test/room-v1/` (QA report, nav, preview frames, web splat). It is
 the redistributable artifact; the raw phone video is not committed.
 
-## 5. Deploy and check
+## 5. Activate, build & deploy
 
 ```powershell
-git add test/room-v1
-git commit -m "Sample: room-v1 from live phone capture"
+# Stage into web/public/artifacts/, update main.ts / index.html / web-pages.yml,
+# and print exact metrics for docs/abstract.md:
+python tools\activate_capture.py home_v1 --label "Home 3-Room Twin — POIs & nav"
+
+cd web
+npm run typecheck
+npm test
+npm run build
+```
+
+Test locally with `npm run dev`: press **E** to click-tag POIs across every room,
+export `pois.json`, validate with `python -m namma.cli pois test\room_v1 --source <exported.json>`,
+and verify `capture_qa.json` reports `PASS` before pushing:
+
+```powershell
+git add -A
+git commit -m "feat: publish self-captured room_v1 twin and POIs"
 git push origin main
-```
-
-The hosted viewer currently publishes Melbourne Metro only. A new capture can
-be checked locally with `npm run dev` and `?capture=room-v1`; adding a sample to
-the public site requires deliberately adding it to the viewer's allowlist and
-Pages staging workflow. The public viewer link remains:
-
-```
-https://sciencebanda09.github.io/topoloka/?v=20261031-clean
 ```
 
 Then check the QA report before claiming success:
 
 - `capture_qa.json` / `.md` — sharpness, registered fraction, reprojection,
-  coverage. The R1 bar used on metro: registered ≥ 60%, median reprojection
-  ≤ 1.0 px, QA overall PASS.
-- `nav/nav_report.json` — scale MAD and walkable area.
-- The viewer HUD — spawn, minimap, collision, route.
+  coverage (registered ≥ 60%, median reprojection ≤ 1.0 px, QA overall PASS).
+- `depth/depth_report.json` — Apache-2.0 `Depth-Anything-V2-Metric-Indoor-Small-hf`
+  scale MAD (`≤ 10%`).
+- `nav/nav_report.json` — walkable area and floor inliers.
+- The live viewer HUD — spawn, 2D minimap, wall collision, POI search, A\* route,
+  and sandbox barrier reroute.
 
-## 6. Update the R1 story
+## 6. Finalize Round 2 abstract, video & Drive submission
 
-The abstract and demo currently feature the **public metro** capture. If the
-submission must show your own space, rebuild those with `room-v1`:
+Once `room_v1` is live on GitHub Pages:
 
-- `docs/abstract.md` → new numbers from `capture_qa` / `nav_report`; rebuild
-  `docs/abstract.pdf` with `tools/build_pdf.ps1`.
-- `docs/demo_script.md` → replace the metro chapter with the room walkthrough;
-  keep the licensed-metro clip only as a generality example.
-- `README.md` → add `test/room-v1/README.md` to the repository sample table.
-  Keep the hosted viewer link on the curated public sample unless the new
-  capture is explicitly approved for publication.
-- `docs/submission.md` / `docs/submission_notes.md` → record the capture date,
-  device, and the new commit.
+- `capture/SOP.md` Section 6 → add the public raw capture video URL + `test/room_v1/frames/` & `capture_qa.md`.
+- `docs/abstract.md` → paste the measured metrics printed by `activate_capture.py`, then rebuild PDFs:
+  ```powershell
+  python tools\build_pdf.py docs\abstract.md docs\abstract.pdf
+  Copy-Item docs\abstract.pdf submission\Technical_Abstract_Topoloka.pdf -Force
+  python tools\build_pdf.py docs\MASTER_SUBMISSION_DOCUMENT.md docs\MASTER_SUBMISSION_DOCUMENT.pdf
+  python tools\build_pdf.py submission\MASTER_SUBMISSION_DOCUMENT.md submission\MASTER_SUBMISSION_DOCUMENT.pdf
+  ```
+- Record your **own-voice** 3–5 min narration (`docs/demo/NARRATION_SCRIPT.md`) over a 1080p walkthrough of `room_v1` and mux cleanly:
+  ```powershell
+  python docs\demo\mux_submission_video.py --video walkthrough.mp4 --audio my_voice.m4a --out docs\demo\topoloka_r2_submission.mp4
+  ```
+- Fast-forward `r2-pois-nav` to `main`, push both branches, upload `submission/` to Google Drive ("Anyone with the link can view"), and verify every single link in an **Incognito browser window**.
 
 Do not claim "live reconstruction" anywhere. The capture is live; the twin is
 built after the walk.

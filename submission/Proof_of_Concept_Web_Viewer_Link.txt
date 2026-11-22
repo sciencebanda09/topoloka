@@ -1,15 +1,15 @@
 Project: Topoloka — Indoor Twins in a Link
 Competition: Namma Space — Techfest 2026-27 (IIT Bombay)
-Deliverable: Proof of Concept & Web Viewer Link (Round 2)
+Deliverable: Live Web App Link (Round 2)
 
 Working Web Viewer URL:
 https://sciencebanda09.github.io/topoloka/
 
-Features:
-- Default opens Melbourne Metro (`metro_v1`) with 7 authored POIs across 5 categories; dropdown switches to Studio Room (`room`).
-- Multi-word fuzzy + spatial POI search (`/`) and category filter chips.
-- Click-to-select 3D POI pins and minimap markers with explicit "Navigate" (A* pathfinding with turn-by-turn guidance) and "Jump" actions.
-- Interactive Sandbox (`G`) to place physical barriers that immediately block the costmap and trigger live route recalculation.
-- In-browser POI tagging/editing (`E`) with `pois.json` export.
-- R3 AR Wayfinding Preview (`AR` button) supporting live camera feed + QR-anchor (`anchors.json`) relocalization.
-- Sub-50 MB zero-install static WebGL payload running at 50–60 FPS on desktop and mobile.
+Active Self-Captured Space (`home_v1`):
+- Reconstructed strictly from the team's own 3-room flat walkthrough video (Entry Study Room, Central Hall, and Master Bedroom loop — all third-party/public datasets purged).
+- Zero-install static WebGL viewer (GitHub Pages) streaming an instant colored 3D point cloud preview before swapping seamlessly into compressed Level-1 `.ksplat` 3D Gaussian Splats (11.55 MB, 480,000 Gaussians) at ~51.5 FPS on hardware WebGL (0 console/HTTP errors).
+- Free first-person roaming (WASD/arrows, pointer-lock mouse look, mobile touch stick) with captured-VFOV shell clamping, 5 cm metric costmap wall collision (22.21 m^2 walkable), and a live 2D metric minimap (`M`).
+- Spatial + fuzzy POI search (`/`, 1 m spatial buckets + inverted token + Levenshtein <= 2) across 9 validated POIs in 4 categories (e.g., typo "wardobe" -> "Wooden Wardrobe"), clickable 3D & minimap markers, explicit "Jump here" (`?poi=`), and "Navigate" (VCCW/EDT A* floor pathfinding with landmark-anchored turn-by-turn guidance, ETA, and off-route rerouting; e.g., Entry Study Desk -> Bedroom Alcove 9.8 m).
+- Interactive Sandbox (`G`) to place physical props (Cone, Barrier, Crate, Sign) that immediately block the costmap and trigger live loop rerouting (verified: 6.5 m -> 7.7 m Central Hall -> Bedroom Alcove around the Dressing Mirror leg).
+- In-browser click-floor POI tagging/editing (`E`) with localStorage persistence and contract-validated `pois.json` export.
+- R3 Bonus AR Wayfinding Mode (`AR`) supporting live camera feed + QR-anchor (`anchors.json`) relocalization and directional turn overlays.

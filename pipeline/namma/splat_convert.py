@@ -27,7 +27,12 @@ from pathlib import Path
 import numpy as np
 
 SH_C0 = 0.28209479177387814
-ALPHA_MIN = 0.02  # gaussians this transparent are never worth their bytes
+ALPHA_MIN = 0.02            # gaussians this transparent are never worth their bytes
+FLOATER_MAX_SCALE = 0.35    # oversized semi-transparent blobs (meters in metricized runs)
+FLOATER_ALPHA_CEIL = 0.35
+NEEDLE_MAX_SCALE = 0.15     # elongated spiky streak splats
+NEEDLE_MAX_ASPECT = 25.0
+NEEDLE_ALPHA_CEIL = 0.85
 
 
 @dataclass
@@ -38,6 +43,7 @@ class SplatReport:
     gaussians_in: int = 0
     gaussians_out: int = 0
     dropped_alpha: int = 0
+    dropped_floaters: int = 0
     dropped_budget: int = 0
     splat_bytes: int = 0
     source_bytes: int = 0
@@ -81,7 +87,8 @@ def _read_ply_props(path: Path) -> tuple[np.ndarray, list[str]]:
 
 
 def convert_splat(ply_path: Path, out_path: Path,
-                  max_gaussians: int = 0) -> SplatReport:
+                  max_gaussians: int = 0,
+                  prune_floaters: bool = True) -> SplatReport:
     ply_path, out_path = Path(ply_path), Path(out_path)
     data, names = _read_ply_props(ply_path)
     need = ["x", "y", "z", "f_dc_0", "f_dc_1", "f_dc_2", "opacity",
@@ -96,25 +103,40 @@ def convert_splat(ply_path: Path, out_path: Path,
     # color: SH DC -> [0,1]; alpha: sigmoid(opacity)
     rgb = 0.5 + SH_C0 * np.stack([data["f_dc_0"], data["f_dc_1"], data["f_dc_2"]], axis=1)
     rgb = np.clip(rgb, 0.0, 1.0)
-    alpha = 1.0 / (1.0 + np.exp(-np.asarray(data["opacity"], np.float64)))
+    raw_opacity = np.clip(np.asarray(data["opacity"], np.float64), -60.0, 60.0)
+    alpha = 1.0 / (1.0 + np.exp(-raw_opacity))
 
     # scale: exp(); clamp wild values so a viewer never explodes
-    scale = np.exp(np.stack([data["scale_0"], data["scale_1"], data["scale_2"]], axis=1))
+    raw_scale = np.stack([data["scale_0"], data["scale_1"], data["scale_2"]], axis=1).astype(np.float64)
+    finite_mask = np.isfinite(pos).all(axis=1) & np.isfinite(raw_scale).all(axis=1) & np.isfinite(alpha)
+    scale = np.exp(np.clip(raw_scale, -20.0, 5.0))
     scale = np.clip(scale, 1e-5, 1.0).astype(np.float32)
 
     # rotation: (w,x,y,z) normalized -> uint8
     quat = np.stack([data["rot_0"], data["rot_1"], data["rot_2"], data["rot_3"]], axis=1).astype(np.float64)
+    finite_mask &= np.isfinite(quat).all(axis=1)
     norm = np.linalg.norm(quat, axis=1, keepdims=True)
     quat = np.where(norm > 1e-12, quat / norm, np.array([1.0, 0.0, 0.0, 0.0]))
     quat_u8 = np.clip(quat * 128 + 128, 0, 255).astype(np.uint8)
 
     color_u8 = np.empty((n_in, 4), np.uint8)
-    color_u8[:, :3] = np.round(rgb * 255).astype(np.uint8)
-    color_u8[:, 3] = np.round(alpha * 255).astype(np.uint8)
+    color_u8[:, :3] = np.round(np.nan_to_num(rgb, nan=0.0) * 255).astype(np.uint8)
+    color_u8[:, 3] = np.round(np.nan_to_num(alpha, nan=0.0) * 255).astype(np.uint8)
 
-    # -- pruning: bytes and load time are product constraints ----------------
-    keep = alpha >= ALPHA_MIN
-    dropped_alpha = int(n_in - keep.sum())
+    # -- pruning: bytes, load time, and floater clarity are product constraints --
+    keep_alpha = finite_mask & (alpha >= ALPHA_MIN)
+    dropped_alpha = int(n_in - keep_alpha.sum())
+    dropped_floaters = 0
+    keep = keep_alpha
+    if prune_floaters:
+        max_s = scale.max(axis=1)
+        min_s = np.maximum(scale.min(axis=1), 1e-5)
+        aspect = max_s / min_s
+        is_fog_floater = (max_s > FLOATER_MAX_SCALE) & (alpha < FLOATER_ALPHA_CEIL)
+        is_needle = (aspect > NEEDLE_MAX_ASPECT) & (max_s > NEEDLE_MAX_SCALE) & (alpha < NEEDLE_ALPHA_CEIL)
+        keep = keep_alpha & ~(is_fog_floater | is_needle)
+        dropped_floaters = int(keep_alpha.sum() - keep.sum())
+
     idx = np.flatnonzero(keep)
     dropped_budget = 0
     if max_gaussians and len(idx) > max_gaussians:
@@ -140,13 +162,14 @@ def convert_splat(ply_path: Path, out_path: Path,
     report = SplatReport(
         ply=str(ply_path), out=str(out_path),
         gaussians_in=n_in, gaussians_out=n,
-        dropped_alpha=dropped_alpha, dropped_budget=dropped_budget,
+        dropped_alpha=dropped_alpha, dropped_floaters=dropped_floaters,
+        dropped_budget=dropped_budget,
         splat_bytes=out_path.stat().st_size, source_bytes=ply_path.stat().st_size,
         dropped_sh_bands=len(names) - 14, max_gaussians=max_gaussians,
     )
     (out_path.parent / "splat_convert_report.json").write_text(
         json.dumps(report.to_dict(), indent=2), encoding="utf-8")
     print(f"[splat_convert] {n_in} gaussians -> {n} kept ({dropped_alpha} low-alpha, "
-          f"{dropped_budget} over budget) -> {report.splat_bytes / 1e6:.1f} MB "
-          f"(from {report.source_bytes / 1e6:.1f} MB)")
+          f"{dropped_floaters} floaters/needles, {dropped_budget} over budget) -> "
+          f"{report.splat_bytes / 1e6:.1f} MB (from {report.source_bytes / 1e6:.1f} MB)")
     return report

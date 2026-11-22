@@ -143,6 +143,7 @@ export class Viewer {
   private outline: THREE.LineLoop | null = null;
   private renderScale: number;
   private hFovRad = THREE.MathUtils.degToRad(DEFAULT_HFOV_DEG);
+  private maxVFovRad: number | null = null;
   private poiRoot = new THREE.Group();
   private markers = new Map<string, PoiMarker>();
   private selectedPoi: string | null = null;
@@ -210,16 +211,21 @@ export class Viewer {
     if (c?.w && c?.fl_x) {
       this.hFovRad = 2 * Math.atan(c.w / (2 * c.fl_x));
     }
+    if (c?.h && (c?.fl_y || c?.fl_x)) {
+      const fy = c.fl_y || c.fl_x;
+      this.maxVFovRad = 2 * Math.atan(c.h / (2 * fy));
+    } else {
+      this.maxVFovRad = null;
+    }
     this.applyFov();
   }
 
   private applyFov(): void {
     const aspect = Math.max(window.innerWidth / window.innerHeight, 0.05);
     let v = 2 * Math.atan(Math.tan(this.hFovRad / 2) / aspect);
-    // Preserve the capture's horizontal FOV in landscape. On a portrait
-    // phone that would imply a ~110° vertical FOV and show the unobserved
-    // ceiling; cap the vertical lens instead so the phone stays inside the
-    // captured shell.
+    // Keep vertical FOV within the captured vertical lens shell (prevents wider
+    // 16:9/portrait viewports from exposing unobserved black ceiling on 20:9 captures).
+    if (this.maxVFovRad !== null) v = Math.min(v, this.maxVFovRad);
     if (aspect < 1) v = Math.min(v, THREE.MathUtils.degToRad(50));
     this.camera.fov = THREE.MathUtils.radToDeg(v);
     this.camera.updateProjectionMatrix();
@@ -375,33 +381,33 @@ export class Viewer {
       color, transparent: true, opacity: 0.34, depthWrite: false, side: THREE.DoubleSide,
       toneMapped: false,
     });
-    const ring = new THREE.Mesh(new THREE.RingGeometry(0.25, 0.34, 40), material);
+    const ring = new THREE.Mesh(new THREE.RingGeometry(0.14, 0.19, 40), material);
     ring.rotation.x = -Math.PI / 2;
     ring.position.set(poi.x, floorZ + 0.025, -poi.y);
-    const outerRing = new THREE.Mesh(new THREE.RingGeometry(0.41, 0.45, 44), haloMaterial);
+    const outerRing = new THREE.Mesh(new THREE.RingGeometry(0.23, 0.255, 44), haloMaterial);
     outerRing.rotation.x = -Math.PI / 2;
     outerRing.position.set(poi.x, floorZ + 0.023, -poi.y);
-    const dot = new THREE.Mesh(new THREE.CircleGeometry(0.085, 24), material);
+    const dot = new THREE.Mesh(new THREE.CircleGeometry(0.045, 24), material);
     dot.rotation.x = -Math.PI / 2;
     dot.position.set(poi.x, floorZ + 0.028, -poi.y);
 
     // Subtle vertical beacon pin tying the floor anchor visually to the floating pill
     const stem = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.008, 0.018, 1.32, 10, 1, true),
+      new THREE.CylinderGeometry(0.004, 0.008, 0.72, 10, 1, true),
       haloMaterial,
     );
-    stem.position.set(poi.x, floorZ + 0.70, -poi.y);
+    stem.position.set(poi.x, floorZ + 0.38, -poi.y);
 
     // A tall invisible cylinder makes aiming forgiving, especially on mobile.
     const pick = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.5, 0.5, 2.0, 12, 1, true),
+      new THREE.CylinderGeometry(0.38, 0.38, 1.8, 12, 1, true),
       new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false, side: THREE.DoubleSide }),
     );
-    pick.position.set(poi.x, floorZ + 1.0, -poi.y);
+    pick.position.set(poi.x, floorZ + 0.9, -poi.y);
     pick.userData.poiId = poi.id;
 
     const label = roundedLabel(poi.name, color);
-    label.position.set(poi.x, floorZ + 1.55, -poi.y);
+    label.position.set(poi.x, floorZ + 0.88, -poi.y);
 
     group.add(outerRing, ring, dot, stem, pick, label);
     group.userData.poiId = poi.id;
@@ -637,11 +643,21 @@ export class Viewer {
       focused: boolean;
     }[] = [];
     for (const marker of this.markers.values()) {
+      const horizDist = Math.hypot(cam.x - marker.poi.x, cam.z + marker.poi.y);
+      const isSelected = marker.poi.id === this.selectedPoi;
+      // Avoid occluding nearby objects with floor rings/stems (especially right after Jump here),
+      // and declutter unselected POI rings while an active route ribbon is on the floor.
+      const showFloorMarker = horizDist > 0.85 && (!navigating || isSelected);
+      marker.ring.visible = showFloorMarker;
+      marker.outerRing.visible = showFloorMarker;
+      marker.dot.visible = showFloorMarker;
+      marker.stem.visible = showFloorMarker && horizDist > 1.4;
+
       const label = marker.label;
       const distance = Math.hypot(
         cam.x - label.position.x, cam.y - label.position.y, cam.z - label.position.z,
       );
-      const scale = Math.min(2.4, Math.max(0.25, distance / 12));
+      const scale = Math.min(2.2, Math.max(0.22, distance / 12));
       label.scale.set(1.9 * scale, 0.475 * scale, 1);
       this.labelProbe.copy(label.position).project(this.camera);
       // Check the projected sprite bounds, not just its centre, so a wide
@@ -661,8 +677,8 @@ export class Viewer {
         && this.labelProbe.x - halfW < this.labelExclusion.x1
         && this.labelProbe.y + halfH > this.labelExclusion.y0
         && this.labelProbe.y - halfH < this.labelExclusion.y1;
-      const focused = navigating && marker.poi.id === this.selectedPoi;
-      const eligible = onScreen && !underCard && distance > 3
+      const focused = navigating && isSelected;
+      const eligible = onScreen && !underCard && distance > 1.5
         && (focused || (!navigating && distance < 24));
       if (!eligible) {
         label.visible = false;

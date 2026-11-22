@@ -104,6 +104,28 @@ def render_nav(nav_path: Path, out_path: Path) -> dict:
     ax.scatter(*traj2d[0], s=32, color="#2e7d32", zorder=5)
     ax.scatter(*traj2d[-1], s=32, color="#0b5fa5", marker="s", zorder=5)
 
+    pois_path = nav_path.parent / "pois.json"
+    has_pois = False
+    if pois_path.exists():
+        pois_doc = json.loads(pois_path.read_text(encoding="utf-8"))
+        pois_list = pois_doc.get("pois") or []
+        if pois_list:
+            has_pois = True
+            px = [p["x"] for p in pois_list]
+            py = [p["y"] for p in pois_list]
+            ax.scatter(px, py, s=42, color="#f59e0b", edgecolor="#0d2b45", lw=0.8, zorder=6)
+            for idx_p, p in enumerate(pois_list, 1):
+                ax.annotate(
+                    f"{idx_p}. {p['name']}",
+                    (p["x"], p["y"]),
+                    xytext=(4, 3),
+                    textcoords="offset points",
+                    fontsize=6.2,
+                    color="#0d2b45",
+                    bbox=dict(boxstyle="round,pad=0.14", fc="#ffffffcc", ec="none"),
+                    zorder=7,
+                )
+
     from matplotlib.lines import Line2D
     handles = [
         Patch(facecolor="#ffffff", edgecolor="#c9ced6", label="free (visited)"),
@@ -114,15 +136,19 @@ def render_nav(nav_path: Path, out_path: Path) -> dict:
         Line2D([], [], marker="o", ls="", color="#2e7d32", label="start"),
         Line2D([], [], marker="s", ls="", color="#0b5fa5", label="end"),
     ]
-    ax.legend(handles=handles, loc="upper right", fontsize=7.0,
+    if has_pois:
+        handles.append(
+            Line2D([], [], marker="o", ls="", color="#f59e0b", markeredgecolor="#0d2b45", label="authored POI")
+        )
+    ax.legend(handles=handles, loc="upper right", fontsize=6.8,
               framealpha=0.95, borderpad=0.4, labelspacing=0.3)
 
     report = json.loads((nav_path.parent / "nav_report.json").read_text(encoding="utf-8")) \
         if (nav_path.parent / "nav_report.json").exists() else {}
     area = report.get("walkable_area_m2")
-    title = "Indoor capture: metric occupancy grid"
+    title = "home_v1 (3-room flat): metric 5 cm occupancy grid & POIs"
     if area:
-        title += f" -- {area:.2f} m² walkable"
+        title += f" — {area:.2f} m² walkable"
     ax.set_title(title, fontsize=10.5)
     ax.set_xlabel("x (m)")
     ax.set_ylabel("y (m)")
@@ -144,25 +170,24 @@ def render_pipeline(out_path: Path) -> None:
 
     stages = [
         ("phone capture\n(SOP: slow walk)", "capture"),
-        ("frames\nsharpest @ 2.5 Hz", "cpu"),
-        ("SfM\npycolmap 4.2.1", "cpu"),
-        ("metric depth\nDepth Anything V2", "gpu"),
-        ("geometry\nfloor + 5 cm costmap", "gpu"),
-        ("metricize\n(SfM -> metres)", "gpu"),
-        ("splatfacto\n25k it, 1.5 M caps", "gpu"),
-        ("package\ntwin + nav.json", "local"),
-        ("web viewer\nstatic link", "web"),
+        ("frames\nsharpest @ 5 Hz", "sfm"),
+        ("SfM (Apache 2.0)\nDISK + LightGlue\npycolmap 4.2.1", "sfm"),
+        ("metric depth\nDepth Anything V2\nSmall (Apache 2.0)", "gpu"),
+        ("geometry\nRANSAC floor +\n5 cm costmap", "gpu"),
+        ("metricize +\nsplatfacto 25k\n(Apache 2.0)", "gpu"),
+        ("floater cull +\nLevel-1 .ksplat\n+ POIs & QA", "local"),
+        ("web viewer\nPOIs / A* / Sandbox\n+ QR AR", "web"),
     ]
     tints = {
         "capture": "#e8f1f8",
-        "cpu": "#eef3ee",
+        "sfm": "#eef3ee",
         "gpu": "#efeaf6",
         "local": "#fdf1e3",
         "web": "#e6f4f1",
     }
     edges = {
         "capture": "#2d6a9f",
-        "cpu": "#4b7a4b",
+        "sfm": "#4b7a4b",
         "gpu": "#6a4b9f",
         "local": "#b0722d",
         "web": "#2d8a7a",
@@ -173,11 +198,11 @@ def render_pipeline(out_path: Path) -> None:
     ax.set_ylim(0, 2.2)
     ax.axis("off")
 
-    width, height = 2.1, 0.95
+    width, height = 2.15, 0.98
     centers = []
     for i, (label, kind) in enumerate(stages):
         x = 0.15 + i * 2.5
-        y = 0.65
+        y = 0.62
         box = FancyBboxPatch(
             (x, y), width, height,
             boxstyle="round,pad=0.02,rounding_size=0.08",
@@ -185,7 +210,7 @@ def render_pipeline(out_path: Path) -> None:
         )
         ax.add_patch(box)
         ax.text(x + width / 2, y + height / 2, label, ha="center", va="center",
-                fontsize=8.0, color="#16222e", zorder=3)
+                fontsize=7.6, color="#16222e", zorder=3)
         centers.append((x, y, width, height))
         if i:
             px, py, pw, ph = centers[i - 1]
@@ -197,10 +222,10 @@ def render_pipeline(out_path: Path) -> None:
 
     groups = [
         ("phone", 0, 0, "capture"),
-        ("Kaggle CPU kernel", 1, 2, "cpu"),
-        ("Kaggle GPU kernel", 3, 6, "gpu"),
-        ("repo tooling", 7, 7, "local"),
-        ("any static host", 8, 8, "web"),
+        ("Kaggle GPU SfM kernel", 1, 2, "sfm"),
+        ("Kaggle T4 GPU kernel", 3, 5, "gpu"),
+        ("local tooling", 6, 6, "local"),
+        ("static GitHub Pages ($0/view)", 7, 7, "web"),
     ]
     for label, a, b, kind in groups:
         x0, y0, w0, h0 = centers[a]
@@ -212,8 +237,8 @@ def render_pipeline(out_path: Path) -> None:
                 fontsize=8.0, color=edges[kind])
 
     ax.text(len(stages) * 2.5 / 2, 0.22,
-            "one phone video in  ->  splat + metric nav graph out  ->  a link anyone can open",
-            ha="center", va="center", fontsize=9.0, color="#33424f", style="italic")
+            "one smartphone video in  ->  floater-pruned .ksplat + 5 cm metric nav graph + POIs out  ->  a link anyone can open",
+            ha="center", va="center", fontsize=8.8, color="#33424f", style="italic")
 
     fig.tight_layout(pad=0.2)
     fig.savefig(out_path, dpi=200)
@@ -223,7 +248,7 @@ def render_pipeline(out_path: Path) -> None:
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--nav", type=Path,
-                    default=ROOT / "kaggle/out/namma_splat/out/nav.json")
+                    default=ROOT / "test/home_v1/nav/nav.json")
     ap.add_argument("--out-dir", type=Path, default=FIG)
     args = ap.parse_args()
 

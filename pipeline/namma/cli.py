@@ -29,6 +29,8 @@ def main() -> None:
 
     s = sub.add_parser("sfm", help="sparse reconstruction (structure from motion)")
     s.add_argument("capture_dir", type=Path, help="capture working dir (must contain frames/)")
+    s.add_argument("--features", choices=["sift", "disk_lightglue"], default="sift",
+                   help="feature/matcher backend (default sift; disk_lightglue uses Apache-2.0 Kornia DISK+LightGlue)")
     s.add_argument("--matcher", choices=["auto", "exhaustive", "sequential"], default="auto")
     s.add_argument("--exhaustive-max", type=int, default=sfm.EXHAUSTIVE_MAX_IMAGES)
 
@@ -42,6 +44,8 @@ def main() -> None:
     sc.add_argument("out", type=Path, help="output .splat file")
     sc.add_argument("--max-gaussians", type=int, default=0,
                     help="prune to this many gaussians (0 = keep all above alpha floor)")
+    sc.add_argument("--no-prune-floaters", action="store_true",
+                    help="disable foggy floater & elongated needle splat pruning")
 
     q = sub.add_parser("qa", help="capture QA report (never blocks, always reports)")
     q.add_argument("capture_dir", type=Path, help="capture working dir")
@@ -84,12 +88,14 @@ def main() -> None:
             args.capture_dir,
             matcher=args.matcher,
             exhaustive_max=args.exhaustive_max,
+            features=args.features,
         )
     elif args.stage == "geometry":
         geometry.run_geometry(args.capture_dir, cloud_path=args.cloud)
     elif args.stage == "splat-convert":
         splat_convert.convert_splat(args.ply, args.out,
-                                    max_gaussians=args.max_gaussians)
+                                    max_gaussians=args.max_gaussians,
+                                    prune_floaters=not args.no_prune_floaters)
     elif args.stage == "qa":
         checks = qa.run_qa(args.capture_dir)
         qa.write_qa(args.capture_dir, checks)

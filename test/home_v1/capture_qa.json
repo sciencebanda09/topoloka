@@ -1,0 +1,78 @@
+{
+  "stage": "qa",
+  "capture": "home_v1",
+  "time": "2026-11-22 20:16:14",
+  "overall": "FAIL",
+  "checks": [
+    {
+      "name": "frame_sharpness",
+      "status": "FAIL",
+      "detail": "p10 Laplacian 26 (threshold 100)",
+      "compensation": "watch the demo video for soft zones; recapture the worst rooms in brighter light",
+      "value": null
+    },
+    {
+      "name": "frame_count",
+      "status": "PASS",
+      "detail": "375 frames kept (stride 6)",
+      "compensation": "fewer views -> weaker splat around fast-motion areas",
+      "value": null
+    },
+    {
+      "name": "sfm_registered_fraction",
+      "status": "WARN",
+      "detail": "296/375 frames registered",
+      "compensation": "unregistered stretches get no texture; walk slower with more overlap there",
+      "value": 0.789
+    },
+    {
+      "name": "sfm_reprojection_error",
+      "status": "FAIL",
+      "detail": "median 1.569px (threshold 1.0)",
+      "compensation": "check video stabilization is OFF; EIS warps break rigid geometry",
+      "value": 1.569
+    },
+    {
+      "name": "floor_outline",
+      "status": "PASS",
+      "detail": "69 outline points, 22.21 m2 walkable",
+      "compensation": "sparse cloud can under-draw the footprint; the depth stage densifies it",
+      "value": null
+    },
+    {
+      "name": "geometry_warnings",
+      "status": "PASS",
+      "detail": "none",
+      "compensation": "see nav_report.json for details",
+      "value": null
+    },
+    {
+      "name": "poi_dataset",
+      "status": "PASS",
+      "detail": "9 POIs across 4 categories",
+      "compensation": "indexed by the viewer at load time",
+      "value": 9
+    },
+    {
+      "name": "video_stabilization",
+      "status": "SKIP",
+      "detail": "capture_info.json EIS flag not present",
+      "compensation": "",
+      "value": null
+    },
+    {
+      "name": "imu_motion_blur",
+      "status": "SKIP",
+      "detail": "sensors.csv / Gyroscope.csv not found",
+      "compensation": "",
+      "value": null
+    },
+    {
+      "name": "qr_anchors",
+      "status": "SKIP",
+      "detail": "nav/anchors.json not found",
+      "compensation": "run `namma anchors` when QR markers are recorded for R3 AR",
+      "value": null
+    }
+  ]
+}

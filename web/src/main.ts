@@ -31,8 +31,8 @@ let curRx = Number(params.get('rx')) || 0;
 let curRy = Number(params.get('ry')) || 0;
 let curRz = Number(params.get('rz')) || 0;
 let curOy = Number(params.get('oy')) || 0;
-const DEFAULT_CAPTURE = 'metro_v1';
-const AVAILABLE_CAPTURES = new Set(['metro_v1', 'playroom', 'room']);
+const DEFAULT_CAPTURE = 'home_v1';
+const AVAILABLE_CAPTURES = new Set(['home_v1']);
 const requestedCapture = params.get('capture');
 const cleanCapture = requestedCapture && /^[a-zA-Z0-9_-]+$/.test(requestedCapture)
   ? requestedCapture
@@ -686,7 +686,7 @@ async function boot(): Promise<void> {
   });
 
   const orientSection = document.getElementById('orientation-section');
-  const ORIENT_ENABLED = CAPTURE === 'room' || params.has('orient');
+  const ORIENT_ENABLED = params.has('orient');
   if (!ORIENT_ENABLED) {
     orientSection?.classList.add('hidden');
     curRx = 0; curRy = 0; curRz = 0; curOy = 0;
@@ -1059,10 +1059,6 @@ async function boot(): Promise<void> {
   // A quick first-run hint: the search bar is the headline R2 feature.
   window.setTimeout(() => {
     if (!linkedQuery && !linkedPoiId) {
-      if (CAPTURE === 'room' && poiIndexCount === 0) {
-        showToast('Studio Room (visual benchmark) · switch to Melbourne Metro for POIs & navigation');
-        return;
-      }
       const touches = window.matchMedia('(pointer: coarse)').matches;
       showToast(touches
         ? `${poiIndexCount} POIs · tap Search to explore or Tag to add one`

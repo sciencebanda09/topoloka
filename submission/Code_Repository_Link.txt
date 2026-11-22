@@ -1,13 +1,18 @@
 Project: Topoloka — Indoor Twins in a Link
 Competition: Namma Space — Techfest 2026-27 (IIT Bombay)
-Deliverable: Code Repository
+Deliverable: Updated Code Repository Link (Round 2)
 
-GitHub Repository URL:
+GitHub Repository URL (main branch):
 https://github.com/sciencebanda09/topoloka
 
+Synced Round 2 Branch URL:
+https://github.com/sciencebanda09/topoloka/tree/r2-pois-nav
+
 Specifications:
-- Open-source codebase (MIT License).
-- Contains full setup instructions in README.md and pipeline/README.md for reconstructing twins.
-- End-to-end Python pipeline: frame extraction + EIS/IMU validation (`imu.py`), pycolmap SfM, Depth Anything V2 metric scaling, nerfstudio 3DGS, 5 cm costmap + connected corridor carving, QR anchor pose solver (`anchors.py`), POI validation (`pois.py`), QA gating (`qa.py`), and bundle packaging (`package.py`).
-- Static TypeScript/Three.js WebGL client (`web/`) with Vitest unit tests, A* router, spatial POI search, sandbox physics, and R3 AR preview (`ar.ts`).
-- Includes reproducible sample artifacts in `test/` (`test/metro_v1/`, `test/guildhall-v1/`) and Kaggle GPU kernels under `kaggle/kernels/`.
+- Open-source codebase (MIT License); 100% commercially licensed third-party dependencies (zero CC-BY-NC weights).
+- Full setup instructions in README.md, capture/SOP.md, capture/phone-to-twin.md, and pipeline/README.md.
+- End-to-end Python pipeline (`pipeline/namma/`): stride-adaptive blur filtering (`frames.py`), EIS/IMU validation (`imu.py`), Apache-2.0 Kornia DISK+LightGlue + pycolmap 4.2.1 SfM (`sfm.py`), Apache-2.0 Depth Anything V2 Metric Indoor Small scale fusion (`depth.py`, `metricize.py`), bed-rejecting gravity RANSAC floor alignment + 5 cm corridor-carved costmap (`geometry.py`), 3DGS + fog-floater/needle/ceiling-spike pruning (`splat_convert.py`), QR anchor solver (`anchors.py`), POI validation (`pois.py`), honest QA gating (`qa.py`), and bundle packaging (`package.py`).
+- Static TypeScript/Three.js WebGL viewer (`web/src/`): instant cloud preview + Level-1 `.ksplat` streaming, captured-VFOV lens clamping, 2D minimap, 1 m spatial bucket + fuzzy POI search, proximity marker decluttering, VCCW/EDT A* router, Pure-Pursuit tracker, dynamic obstacle sandbox, in-browser POI editor, and R3 QR-AR preview.
+- Committed self-captured 3-room twin (`test/home_v1/`, 17.12 MB total, 9 POIs, 11.55 MB `.ksplat`, complete honest QA paper trail); zero public or third-party datasets remain.
+- Automated verification: 30/30 pipeline pytest tests + 63/63 web vitest tests + strict TypeScript + Vite production build + Chrome D3D11 Playwright E2E (51.5 FPS, 0 errors) all passing.
+- Kaggle GPU automation under `kaggle/kernels/` (incl. `namma_sfm_gpu/` and `namma_splat/`) plus one-command capture activation (`tools/activate_capture.py`).

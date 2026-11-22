@@ -1,0 +1,26 @@
+{
+  "capture": "home_v1",
+  "created": "2026-11-22 14:12:41",
+  "cloud_source": "depth/map.npz",
+  "cloud_points": 250000,
+  "splat": {
+    "present": true,
+    "format": "ksplat",
+    "file": "splat.ksplat",
+    "bytes": 11547664,
+    "gaussians": 480000
+  },
+  "pois": {
+    "present": true,
+    "count": 9
+  },
+  "anchors": {
+    "present": false,
+    "count": 0
+  },
+  "scale_source": "metric-input",
+  "walkable_area_m2": 22.21,
+  "qa_overall": "FAIL",
+  "packaging_seconds": 0.1,
+  "sample": "decimated copy of the Kaggle pipeline output"
+}

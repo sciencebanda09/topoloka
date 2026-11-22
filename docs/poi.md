@@ -11,33 +11,33 @@ same 5 cm costmap as collision for turn-by-turn routing.
 - Validation / packaging: `pipeline/namma/pois.py`
 - UI wiring: `web/src/ui.ts`, `web/src/main.ts`
 
-The sample dataset is `test/metro_v1/nav/pois.json`: **7 POIs across 5
-categories** (`area` 2, `landmark` 2, `facility` 1, `exit` 1, `platform` 1),
-all on known free floor, all with a camera view.
+The active self-captured dataset is `test/home_v1/nav/pois.json`: **9 POIs across 4
+categories** (`area` 3, `facility` 3, `landmark` 2, `exit` 1),
+all on known free floor across 3 rooms, all with exact captured camera views.
 
 ## 1. Schema (`version: 1`)
 
 ```json
 {
   "version": 1,
-  "capture": "metro_v1",
+  "capture": "home_v1",
   "pois": [
     {
-      "id": "tunnel-walkway",
-      "name": "Tunnel Walkway",
-      "category": "area",
-      "aliases": ["tunnel", "walkway", "corridor", "passage"],
-      "description": "Long, level tiled walkway under the curved ceiling, with tactile paving at the edges.",
-      "x": 1.422,
-      "y": -11.216,
+      "id": "wooden-wardrobe",
+      "name": "Wooden Wardrobe",
+      "category": "landmark",
+      "aliases": ["almirah", "closet", "cupboard", "wardrobe"],
+      "description": "Twin-door grain-patterned wooden wardrobe inside the master bedroom.",
+      "x": -0.448,
+      "y": 1.716,
       "z": 0.0,
-      "radius_m": 1.6,
+      "radius_m": 0.85,
       "view": {
-        "x": 2.393,
-        "y": -11.573,
-        "z": 1.754,
-        "yaw": 0.4418,
-        "pitch": 0.0
+        "x": -0.101,
+        "y": 1.761,
+        "z": 0.893,
+        "yaw": 1.699,
+        "pitch": -0.425
       }
     }
   ]
@@ -75,7 +75,7 @@ validator) refuses to ship an ambiguous index:
 | **hard error** | wrong version; missing `pois` array; more than 10,000 POIs; malformed/duplicate id; empty name; non-finite or out-of-grid x/y; non-finite z; `radius_m` outside 0.1–20; non-string alias/description |
 | **warning** | duplicate display names; POI on a blocked/unknown cell (route snaps to nearby floor); missing `view` (jump uses the POI position) |
 
-Warnings are written to `nav/poi_report.json` and printed. The Metro dataset
+Warnings are written to `nav/poi_report.json` and printed. The `home_v1` dataset
 has **0 warnings**.
 
 ## 3. Authoring from the viewer
@@ -91,8 +91,8 @@ has **0 warnings**.
 
    ```powershell
    cd pipeline
-   python -m namma.cli pois ..\test\metro_v1 --source ..\test\metro_v1\nav\pois.json
-   python -m namma.cli package ..\test\metro_v1
+   python -m namma.cli pois ..\test\home_v1 --source ..\test\home_v1\nav\pois.json
+   python -m namma.cli package ..\test\home_v1
    ```
 
 `pois` normalises the document and writes `nav/poi_report.json`; `package`

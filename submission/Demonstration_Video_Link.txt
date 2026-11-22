@@ -1,15 +1,16 @@
 Project: Topoloka — Indoor Twins in a Link
 Competition: Namma Space — Techfest 2026-27 (IIT Bombay)
-Deliverable: Round 2 Demonstration Video (3 to 5 minutes)
+Deliverable: Round 2 Demonstration Video (3 to 5 minutes, Mandatory Own-Voice Narration)
 
-Direct Video Stream / Download URL (R2):
-https://github.com/sciencebanda09/topoloka/releases/download/r2-demo/topoloka_r2_demo.mp4
+Direct Video URL (R2 — Own-Voice Narrated Walkthrough + Technical Approach):
+[PENDING: Record human-voice narration following docs/demo/NARRATION_SCRIPT.md over a 1080p walkthrough of live `home_v1` (https://sciencebanda09.github.io/topoloka/), mux via `python docs/demo/mux_submission_video.py`, upload publicly to Google Drive / GitHub Releases, paste URL here, and verify in an Incognito browser window.]
 
-Baseline R1 Video URL:
-https://github.com/sciencebanda09/topoloka/releases/download/r1-demo/topoloka_demo.mp4
+Raw Unedited Capture Video URL (Capture SOP Evidence — `home_v1_raw_full.mp4`, 98.6 s, 50.3 MB):
+[PENDING: Upload `kaggle/staging/raw_captures/home_v1_raw_full.mp4` publicly to the Google Drive folder / GitHub Release, paste URL here, and verify in Incognito.]
 
-Specifications (R2):
-- Duration: 4 minutes 11 seconds (4:11) — within the 3–5 minute requirement.
-- Resolution: Full HD (1920x1080), 30 FPS.
-- Format: H.264 video with AAC audio.
-- Content: Live GitHub Pages captures demonstrating Melbourne Metro default load, 7 authored POIs, spatial & fuzzy search, explicit jump, A* obstacle-aware navigation, interactive sandbox barrier rerouting (31.66 m -> 31.86 m), in-browser POI authoring/JSON export, and Studio Room orientation controls.
+Mandatory Compliance Checklist (Rule 9):
+- Duration: 3 to 5 minutes (180-300 seconds).
+- Resolution & Codec: 1920x1080 @ 30 FPS, H.264 + AAC (+faststart).
+- Content Part 1 (Technical Approach): Capture SOP, SIFT (15.6%) vs. Apache-2.0 Kornia DISK+LightGlue (78.9%) SfM ablation, Apache-2.0 Depth Anything V2 Metric Indoor Small scale alignment (0.658 m/unit), bed-rejecting RANSAC floor/costmap (22.21 m^2, 0.868 m cam height), 3DGS + floater/needle/ceiling-spike pruning + 11.55 MB Level-1 .ksplat compression, original contributions, commercial licensing, and API vs. Own GPU cost analysis.
+- Content Part 2 (Live 3D Walkthrough of `home_v1`): Browser roaming across Entry Study Room, Central Hall, and Master Bedroom (~51.5 FPS), 2D minimap, point-cloud/splat switcher, fuzzy POI search ("wardobe" -> Wooden Wardrobe), click-to-select & Jump, multi-room A* navigation (Entry Study Desk -> Bedroom Alcove 9.8 m), live Sandbox barrier loop rerouting (Central Hall -> Bedroom 6.5 m -> 7.7 m around Dressing Mirror), in-browser POI tagging (`E`), and AR QR anchor preview (`AR`).
+- Voiceover: 100% YOUR OWN HUMAN VOICE (AI/TTS voiceovers are strictly prohibited and cause direct elimination).

@@ -6,205 +6,106 @@
 the place-world. Turns a walk-through video of an indoor space into an
 interactive, metric 3D digital twin served as a shareable web link: free
 first-person roaming, spatial point-of-interest (POI) search, and
-obstacle-aware walking directions in the browser. Built for Techfest 2026-27
-(IIT Bombay).
+obstacle-aware walking directions in the browser. Built for **Namma Space — Techfest 2026–27 (IIT Bombay)**.
 
 ```
-walk-through video ──► Kaggle pipeline ──► artifact bundle ──► web app (static link)
- (phone SOP or         frames → SfM          splat + nav graph      search / jump / route
-  licensed clip)       → depth → 3DGS       + POIs + QA           + sandbox / (R3) AR
+walk-through video ──► Kaggle GPU pipeline ──► artifact bundle ──► web app (static link)
+ (phone SOP)           5 Hz frames → DISK+LG    .ksplat + nav       search / jump / route
+                       → Apache-2.0 depth       + 9 POIs + QA       + sandbox / AR (R3)
+                       → 3DGS + floater cull
 ```
 
-## Repository layout
-
-| Path          | What it is |
-|---------------|------------|
-| `capture/`    | Capture SOP + capture QA tooling (the "how to record" contract) |
-| `pipeline/`   | Reconstruction pipeline (frames → SfM → geometry → depth → splat → POIs → export) |
-| `web/`        | The viewer web app (roaming, minimap, navigation, splat renderer) |
-| `kaggle/`     | Kaggle tooling: code dataset, kernels, push/fetch scripts |
-| `docs/`       | Technical abstract, submission links, figures, demo build |
-| `test/`       | Redistributable sample capture + reproduction instructions |
-| `tools/`      | Sample builder and figure helpers |
-
-## Compute rule
-
-**All pipeline runs execute on Kaggle** (CPU or GPU), driven by `kaggle/`.
-The local machine only edits code, commits, and talks to the Kaggle CLI.
-See `kaggle/README.md`.
-
-## Captured and benchmark samples
-
-The repository packages sample builds with complete paper trails. The hosted
-viewer publishes both the **Studio Room** (`room`) with 1.59M Gaussians and
-live in-viewer orientation controls, and the **Melbourne Metro benchmark**
-(`metro_v1`), switchable from the in-viewer dropdown:
-
-| Sample | Source | Size | Measured |
-|---|---|---|---|
-| `web/public/artifacts/room/` | High-fidelity studio interior (30k 3DGS, floater-free) | 48.6 MB | 1,593,376 splats, 73.3 m² walkable, real-time in-viewer orientation controls |
-| `test/metro_v1/` | *Modern Melbourne Metro Walkway Urban Design* by Joolsmagool (Pexels License), 86.07 s | 24.7 MB | 216/216 registered, 0.403 px median, 457,221 splats; 315.05 m² walkable |
-
-The hosted viewer opens **Melbourne Metro — POIs & navigation** by default (the
-R2 sample: 7 authored POIs, spatial search, and walkable routes) and allows
-switching to **Studio Room** (a visual benchmark with interactive orientation
-controls) via the **VIEW SAMPLE** picker.
+## Hosted viewer & self-captured 3-room twin (`home_v1`)
 
 **Hosted viewer:** <https://sciencebanda09.github.io/topoloka/>
 
-It opens Melbourne Metro. **View model** switches between the Gaussian splat
-and point cloud; A/D sidesteps around objects. Press `/` to search the POIs,
-click a result to inspect it, and **Navigate** for a route. The Studio Room
-costmap is synthetic all-free space, so it demonstrates rendering and
-orientation, not pathfinding. R2 evidence and the shipped demo shot map live in
-[`docs/r2_evidence.md`](docs/r2_evidence.md); the POI contract is
-[`docs/poi.md`](docs/poi.md).
+All third-party and public datasets (`room`, `playroom`, `guildhall-*`, `metro_v1`)
+have been permanently removed to comply with Round 2 Rule 1 (*Use your own data*).
+The deployed twin (`test/home_v1/`, `17.12 MB` total committed) was reconstructed
+end-to-end strictly from the team's own handheld 3-room flat walkthrough (**Entry
+Study Room**, **Central Hall**, and a full closed loop through the **Master
+Bedroom**):
 
-![The metro twin in a browser: splat, minimap, QA status](docs/fig/twin.png)
+| Measured Metric (`test/home_v1/`) | Result |
+|---|---|
+| **SfM Ablation (SIFT → DISK+LightGlue)** | SIFT 3 Hz `35/225` (`15.6%`, 10 models) → **Apache-2.0 Kornia `DISK+LightGlue` 5 Hz `296/375` (`78.9%`, `51,304` 3D pts, unbroken 293-frame 3-room loop)** |
+| **Metric Depth (Apache 2.0)** | `Depth-Anything-V2-Metric-Indoor-Small-hf` · `296/296` fused (`648,579` voxels) · `scale = 0.65836 m/unit` (`MAD = 11.88%`) |
+| **Metric Navigation (`5 cm` grid)** | `22.21 m²` walkable (`232 × 250`, `61,688` floor inliers, `camera_height = 0.868 m`, `0` geometry warnings) |
+| **Compressed 3DGS & Live FPS** | **`11.55 MB`** Level-1 `.ksplat` (`480,000` Gaussians, floater/needle & ceiling-spike culled) · **`51.5 FPS`** @ `1440×810` Chrome D3D11 (`0` errors) |
+| **POIs, Fuzzy Search & A\* Routing** | **9 validated POIs** across 3 rooms (`0` warnings) · `"wardobe"` → `Wooden Wardrobe` (#1 hit) · **Entry Study Desk → Bedroom Alcove: `9.8 m`** (*"In 3.9 m, turn left past Refrigerator"*) |
+| **Dynamic Sandbox Loop Reroute** | Placing 3 barriers across Wooden Wardrobe corridor dynamically reroutes **Central Hall → Bedroom Alcove** from **`6.5 m` → `7.7 m`** (and Bedroom Entry → Alcove **`2.4 m` → `5.4 m`**) around the Dressing Mirror leg |
 
-*The shipped sample twin: 457,221 Gaussian splats, the metric minimap
-(red = obstacles, blue = capture path), and the QA verdict in the HUD. The
-viewer now renders with the capture's own lens (68.0° horizontal / 41.6°
-vertical) instead of a generic wide FOV, and hides the point-cloud debug grid
-once the splat loads. Reflective walls still render softer than the tiled
-floor; the geometry and sightlines are metric.*
+![Reconstructed 3-room home_v1 twin in Chrome: A* navigation, sandbox reroute, fuzzy POI search, and 5 cm occupancy grid](docs/fig/home_v1_showcase.png)
 
-**Locally** (Node 20+):
+## Repository layout
+
+| Path | What it is |
+|---|---|
+| `capture/` | Deterministic Capture SOP (`capture/SOP.md`) + live capture runbook (`capture/phone-to-twin.md`) |
+| `pipeline/` | Reconstruction pipeline (`frames` → `sfm` [SIFT / `disk_lightglue`] → `depth` → `geometry` → `metricize` → `splat-convert` → `pois` → `anchors` → `qa` → `package`) |
+| `web/` | Static TypeScript + Three.js WebGL viewer (roaming, captured-VFOV clamp, 2D minimap, POI index, A\* navigation, sandbox, AR preview) |
+| `kaggle/` | Kaggle CLI tooling: GPU `DISK+LightGlue` SfM (`kaggle/kernels/namma_sfm_gpu/`), T4 Depth+3DGS (`kaggle/kernels/namma_splat/`), and automation scripts |
+| `docs/` | 4-page Technical Abstract & SOP (`docs/abstract.pdf`), R2 evidence (`docs/r2_evidence.md`), human narration script (`docs/demo/NARRATION_SCRIPT.md`), and loudness-normalized MP4 muxer |
+| `submission/` | Ready-to-upload Round 2 Google Drive submission bundle |
+| `test/home_v1/` | Team's committed self-captured 3-room twin bundle (`17.12 MB`, 9 POIs, complete honest QA trail) |
+| `tools/` | Sample bundler (`make_sample.py`), capture activator (`activate_capture.py`), PDF & figure builders (`build_pdf.py`, `make_figures.py`) |
+
+## Compute rule
+
+**All heavy reconstruction stages execute on Kaggle GPUs** (GPU `DISK+LightGlue` SfM + T4 GPU Apache-2.0 metric depth & 3DGS), driven via `kaggle/`. Local hardware only edits code, runs unit tests, builds static web assets, and runs the Kaggle CLI. See [`kaggle/README.md`](kaggle/README.md).
+
+## Local development (Node 20+ & Python 3.10+)
 
 ```powershell
-# stage every committed sample where the viewer fetches artifacts
-foreach ($sampleDir in Get-ChildItem test -Directory) {
-  $bundlePath = Join-Path $sampleDir.FullName 'web'
-  if (Test-Path $bundlePath) {
-    $artifactPath = Join-Path 'web\public\artifacts' $sampleDir.Name
-    New-Item -ItemType Directory -Force $artifactPath | Out-Null
-    Copy-Item -Recurse -Force (Join-Path $bundlePath '*') $artifactPath
-  }
-}
+# Stage the committed home_v1 twin where the viewer fetches artifacts
+python tools\activate_capture.py home_v1 --label "Home 3-Room Twin — POIs & nav"
 cd web
 npm ci
-npm run dev        # open http://127.0.0.1:5173/ (Metro sample by default)
+npm run dev        # open http://127.0.0.1:5173/
 ```
 
 ```bash
-# same, on a POSIX shell
-for web_bundle in test/*/web; do
-  sample_name="$(basename "$(dirname "$web_bundle")")"
-  mkdir -p "web/public/artifacts/$sample_name"
-  cp -r "$web_bundle"/. "web/public/artifacts/$sample_name"/
-done
+# Same, on POSIX shells
+mkdir -p web/public/artifacts/home_v1
+cp -r test/home_v1/web/. web/public/artifacts/home_v1/
 cd web && npm ci && npm run dev
 ```
 
-Drag to look, **WASD/arrows** to walk, **M** toggles the minimap, **P** toggles
-the point cloud behind the splat. The viewer opens at a clear captured camera
-pose inside the reconstructed volume; append `?t=<index>` to spawn at a
-specific trajectory point (`?t=0` is the true start), and
-`?clean` to hide the click prompt and fps readout. Unobserved space is not
-walkable: collision blocks it and carves a 1 m free corridor along the capture
-path, which the camera proved traversable.
+### Controls & features
 
-**R2 controls.** `/` (or `Ctrl/Cmd+K`) focuses search; typing never moves the
-walker. Results cover names, aliases, categories, prefixes, substrings, and
-small typos. Selecting a result, a 3D marker, or a minimap dot highlights the
-POI but leaves the camera alone; **Jump here** flies to its authored view, and
-**Navigate** plans a route. **E** opens the POI editor (click the floor, name
-the place, save locally, export `pois.json`). `?q=<query>` opens search and
-`?poi=<id>` deep-links to a POI view. The dev flag `?route` still draws the A*
-route to the end of the capture (20.3 m / 350 waypoints from the default
-spawn). On touch devices the left half is a walk stick and the right half
-looks; **M** hides the map for a full-screen view. `npm run build` produces a
-static `dist/` that can be served from any web host.
+- **Free-roam & visualization:** Drag to look, **WASD / arrows** to walk (wall-colliding on the 5 cm metric costmap), **M** toggles the live 2D minimap, **P** toggles the colored metric point cloud behind the splat. Clamps vertical FOV to the captured smartphone lens shell (`23.9°`), streams an instant `cloud.ply` preview before swapping into `.ksplat`, and supports `?t=<index>`, `?orient`, and `?clean`.
+- **R2 POIs, spatial search & A\* navigation:** Press **`/`** (or `Ctrl/Cmd+K`) to search names, aliases, categories, prefixes, substrings, and typos (1 m spatial bucket + inverted token + Levenshtein `≤ 2` index). Selecting a result, 3D marker, or minimap dot opens the card without moving the camera; **Jump here** flies to its authored pose (with proximity marker decluttering) and **Navigate** draws an obstacle-aware VCCW/EDT A\* floor route with landmark-anchored turn-by-turn guidance, ETA, off-route rerouting, and arrival detection. Press **`E`** to click-tag new POIs (`localStorage` + `pois.json` export). Supports `?q=<query>` and `?poi=<id>` deep links.
+- **R2 Sandbox (`G` / `?sandbox=1`):** Keys **1–4** add cones, barriers, crates, or signs that dynamically carve obstacles into the live A\* router (see [`docs/sandbox.md`](docs/sandbox.md)).
+- **R3 Bonus — AR Wayfinding (`AR` button):** Relocalizes onto printed QR fiducials (`anchors.json`, `namma anchors`) and overlays directional turn guidance over the live camera feed.
 
-**R2 bonus — sandbox pick-and-place.** Press **G** in the viewer (or append
-`?sandbox=1` to the same URL): keys **1–4** add a cone, barrier, crate, or wet-floor sign;
-click to pick up/place; **R** rotates; **Del** removes; **T** toggles the route.
-Placed props are real meshes layered over the read-only splat and become
-dynamic costmap obstacles, so A* and collision reroute around them — including
-an active POI route. They are not scanned furniture — see
-[`docs/sandbox.md`](docs/sandbox.md) for the honest boundary, controls, and
-implementation.
+## Original work vs. third-party commercial dependencies
 
-**Frame budget (measured, live Pages build).** On an AMD Radeon integrated GPU
-through ANGLE/D3D11 at a 1600×900 viewport, the adaptive renderer holds
-**51.0 fps idle / 60.1 fps walking** at the default spawn and **43.0 / 40.2
-fps** at the worst corridor view `?t=90`; both runs kept the internal buffer
-at 1155×650. In a 390×844 DPR2 mobile layout with touch emulation it holds
-**59.9 / 60.2 fps** (desktop GPU, so this validates the layout and input path,
-not phone thermals). The viewer renders with `antialias: false` — MSAA was
-the dominant cost on this iGPU and the splat edges do not need it — and drops
-the internal buffer in 0.08 steps only when the true frame rate falls below
-32 fps (`?scale=` pins it for measurement). The HUD reports true frame time;
-it previously clamped `dt` before computing FPS, which put a fake 20 fps floor
-on every reading.
+**Original team contributions (MIT License):**
+- Deterministic multi-room smartphone Capture SOP (`capture/SOP.md`) & automated 6-gate QA / IMU blur checks (`qa.py`, `imu.py`).
+- Apache-2.0 `DISK + LightGlue` GPU SfM integration (`sfm.py`, `kaggle/kernels/namma_sfm_gpu/`).
+- Pairwise median SfM-to-metric-depth scale fusion (`depth.py`, `metricize.py`).
+- Bed-rejecting gravity-prior RANSAC floor aligner & continuous corridor-carved 5 cm 2.5D occupancy costmap with exported look directions (`geometry.py`).
+- Fog-floater, elongated needle-splat & ceiling-spike pruner (`splat_convert.py`, `make_sample.py`) and QR fiducial pose solver (`anchors.py`).
+- Complete zero-backend TypeScript/WebGL viewer (`web/src/`): captured-VFOV shell clamping, proximity marker decluttering, spatial/fuzzy POI index (`pois.ts`), VCCW/EDT A\* router & Pure-Pursuit tracker (`nav.ts`, `navigation.ts`), dynamic obstacle sandbox (`sandbox.ts`, `props.ts`), minimap (`minimap.ts`), and AR HUD (`ar.ts`).
 
-**Reproduce the pipeline:** the exact kernels that produced this capture are in
-`kaggle/kernels/` and are driven by the scripts in `kaggle/tools/` — see
-`kaggle/README.md` and `test/metro_v1/README.md`.
+**Commercial-use open-source dependencies:** Every model and library permits commercial use (`pycolmap 4.2.1` BSD-3-Clause, `Kornia DISK + LightGlue` Apache 2.0, `Depth-Anything-V2-Metric-Indoor-Small-hf` Apache 2.0, `nerfstudio`/`gsplat` Apache 2.0, `PyTorch` BSD-3-Clause, `transformers` Apache 2.0, `OpenCV`/`NumPy`/`SciPy` Apache 2.0 / BSD, `Three.js`/`@mkkellogg/gaussian-splats-3d` MIT, `FFmpeg` CLI). Full licensing matrix and **Third-Party API vs. Own GPU Cost Analysis** (`~$0.50–$0.56/scene` self-hosted vs. `$2.50–$5.50/scene` commercial APIs; ~200-scene workstation breakeven) live in [`docs/abstract.pdf`](docs/abstract.pdf).
 
-## Status
+## Verification & Round 2 status
 
-- [x] Repo skeleton, capture SOP, frame picking, QA gates
-- [x] SfM (`pycolmap` 4.2.1) — 216/216 registered on the metro clip
-- [x] Metric depth fusion (Depth Anything V2 Metric Indoor Small, Apache 2.0) + scale alignment
-- [x] Geometry: floor plane, gravity align, 2.5D 5 cm costmap, outline
-- [x] Splat training (nerfstudio 1.1.5 splatfacto, 25 k iters) + web `.splat` / `.ksplat` export
-- [x] Web: first-person viewer, collision, minimap, splat renderer, `?t` spawn
-- [x] Viewer fidelity/perf pass: capture-matched lens, adaptive resolution,
-      true-FPS HUD, minimap legend, debug geometry hidden after splat load
-- [x] End-to-end public run — CPU SfM 59.2 min; GPU 79.0 min total; 510,336
-      gaussians exported; 315.05 m² walkable; QA 6/6 PASS
-- [x] Hosted Metro sample at the single public link; Guildhall outputs remain
-      in the repository but are excluded from the deployed viewer
-- [x] Guildhall MVS photo mesh: `test/guildhall-mvs` (5.52M fused points,
-      650k mesh faces, 89.54% textured-face coverage; capture navigation is
-      retained because the dense cloud did not yield a floor fit)
-- [x] R1 public stand-in twin: `test/guildhall-v1` (90.0 s CC BY-SA 4.0 crypt
-      walk; 218/218 registered, 0.515 px median, 458.81 m², 632,993 gaussians,
-      QA 6/6 PASS; retained as a repository sample)
-- [x] Demo video (3:33, 1920×1080/30) — hosted twin walk-through, QA/metric
-      cards, A* route, limitations and roadmap:
-      <https://github.com/sciencebanda09/topoloka/releases/download/r1-demo/topoloka_demo.mp4>
-- [x] R2 bonus: sandbox pick-and-place with dynamic obstacles + rerouting
-      (`?sandbox=1`; see `docs/sandbox.md`)
-- [x] R2: POI contract + authoring editor; 7 authored Metro POIs across 5
-      categories; validated/staged by `namma pois` and `namma package`
-- [x] R2: in-browser 1 m bucket + inverted token index with fuzzy search,
-      ranked results, category facets, 3D/minimap selection, and Jump/Navigate
-- [x] R2: A* POI navigation with clearance, smoothing, turn instructions,
-      remaining distance/ETA, live reroute, arrival toast, and `?poi`/`?q` links
-- [x] R2 verification: 50 web tests + 21 pipeline tests, typecheck/build pass,
-      `poi_dataset` QA PASS, 76/76 browser checks, 27/27 live Pages checks;
-      evidence in `docs/r2_evidence.md`
-- [x] R2 demo video (4:11, 1920×1080/30) — live search, jump, navigation,
-      sandbox reroute, authoring/export, and verification:
-      <https://github.com/sciencebanda09/topoloka/releases/download/r2-demo/topoloka_r2_demo.mp4>
-- [x] AR mode (`#mode=ar`: QR-anchored pose relocalization + directional turn overlay)
-- [x] Round 2 compliance pass: Apache-2.0 commercial depth switch (`Depth-Anything-V2-Metric-Indoor-Small-hf`), updated Data Capture SOP (`capture/SOP.md`), 3-page Technical Abstract (`docs/abstract.pdf`) with Third-Party Commercial License Matrix & API vs. Own GPU Cost Analysis, plus human narration script (`docs/demo/NARRATION_SCRIPT.md`)
-
-## Credit and licences
-
-- *Modern Melbourne Metro Walkway Urban Design* by **Joolsmagool** on Pexels,
-  used under the [Pexels License](https://www.pexels.com/license/) and trimmed
-  to 86 s. The derived artifacts in `test/metro_v1` are redistributed under
-  that licence.
-- *Guildhall City of London England interior walkaround video* by **Acabashi**,
-  Wikimedia Commons, used under
-  [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/) and trimmed
-  to 305–395 s. The derived artifacts in `test/guildhall-v1` are distributed
-  under CC BY-SA 4.0; see `test/guildhall-v1/LICENSE`.
-- The same Guildhall source is used for `test/guildhall-v2`, with a stream-copied
-  91.925 s segment beginning near 94 s. It is also distributed under CC BY-SA
-  4.0; see `test/guildhall-v2/LICENSE`.
-- The Guildhall MVS mesh uses that same licensed trim and is distributed under
-  CC BY-SA 4.0; see `test/guildhall-mvs/LICENSE`.
-
-The pipeline code is MIT; see [`docs/abstract.pdf`](docs/abstract.pdf) for the full commercial licensing matrix (`Depth-Anything-V2-Metric-Indoor-Small-hf` Apache 2.0, `nerfstudio`/`gsplat` Apache 2.0, `pycolmap` BSD-3-Clause, `Three.js`/`@mkkellogg/gaussian-splats-3d` MIT) and self-hosted GPU vs. third-party API cost analysis. Existing public samples are temporary stand-in benchmarks pending replacement by the team's own multi-room smartphone capture.
+- [x] Deterministic Capture SOP (`capture/SOP.md`), automated QA, and IMU/EIS validation (`imu.py`, `qa.py`)
+- [x] Self-captured 3-room indoor twin (`test/home_v1/`) reconstructed end-to-end on Kaggle GPUs; all public/third-party datasets purged
+- [x] Commercially licensed Apache-2.0 `DISK+LightGlue` SfM (`78.9%` vs. `15.6%` SIFT baseline) + Apache-2.0 `Depth-Anything-V2-Metric-Indoor-Small-hf` scale alignment
+- [x] Bed-rejecting RANSAC floor alignment (`22.21 m²`, `0` warnings), 25k `splatfacto` + floater/needle/ceiling-spike pruning + `11.55 MB` Level-1 `.ksplat`
+- [x] R2 POIs & navigation: 9 validated POIs across 3 rooms, 1 m bucket + fuzzy search, Jump/Navigate, landmark-anchored A\* (`9.8 m` 3-room route), live Sandbox loop reroute (`6.5 m → 7.7 m`), POI tagging (`E`), and R3 AR preview (`ar.ts`)
+- [x] Automated test suite & live E2E passing: **63/63 web tests** (`vitest`), strict TypeScript, Vite build, **30/30 pipeline tests** (`pytest`), and Chrome D3D11 Playwright E2E (`51.5 FPS`, `0` errors)
+- [x] 4-page Technical Abstract & SOP PDF compiled within 5-page limit ([`docs/abstract.pdf`](docs/abstract.pdf)) with visual showcase, commercial license matrix & API-vs-GPU cost analysis
+- [x] AI-TTS narration scripts & synthetic audio completely removed
+- [ ] **Upload raw capture video & record own-voice R2 narration** (`home_v1_raw_full.mp4` + record human voice using [`docs/demo/NARRATION_SCRIPT.md`](docs/demo/NARRATION_SCRIPT.md) → mux via [`docs/demo/mux_submission_video.py`](docs/demo/mux_submission_video.py) → verify links in Incognito)
 
 ## Deadlines
 
 | Round | Due | Scope |
-|-------|-----|-------|
+|---|---|---|
 | R1 | 31 Oct 2026 | SOP + 3D reconstruction + free-roam web viewer |
-| R2 | 30 Nov 2026 | POIs + spatial search + desktop navigation |
+| R2 | 30 Nov 2026 | Self-captured multi-room space + POIs + spatial search + desktop navigation + human-narrated video |
 | R3 | 16–17 Dec 2026 | On-site capture at IIT Bombay + live demo (+ AR bonus) |

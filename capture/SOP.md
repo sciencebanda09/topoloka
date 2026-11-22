@@ -77,13 +77,14 @@ Every video pass must clear all 6 automated checks in `capture_qa.json` before r
 
 ---
 
-## 6. Actual Team Capture Examples & Raw Videos
+## 6. Actual Team Capture Examples & Raw Videos (`home_v1`)
 
-> **Team Submission Slot (Self-Captured Multi-Room / Multi-Floor Space):**
-> Follow Sections 1–5 to record your continuous loop walkthrough video (`my_space_raw.mp4`/`.mov`), run `kaggle/tools/push_video.ps1`, extract 6 sample raw keyframes (`capture/examples/`), and update the table below + public release link before Round 2 submission.
+Our Round 2 deployed twin (`test/home_v1/`) was recorded strictly by the Topoloka team walking continuously across a **3-room residential flat** (**Entry Study Room** → **Central Hall** → closed loop through the **Master Bedroom** → loop closure back into the **Central Hall**), trimmed at `00:00–01:15` to exclude the final dark balcony transition, and reconstructed end-to-end on Kaggle using Apache-2.0 `DISK + LightGlue` SfM (`296/375` = `78.9%`, continuous 293-frame 3-room loop) + Apache-2.0 `Depth-Anything-V2-Metric-Indoor-Small` + 25k `splatfacto` 3DGS.
 
 | Capture Asset | Format / Specs | Public Link / Repo Path |
 |---|---|---|
-| Raw Continuous Capture Video | Unedited phone MP4/MOV (`4K/30` or `1080p/30`, EIS OFF) | `[To be populated with user capture GitHub Release / Drive URL]` |
-| Extracted Raw Frame Previews | 6–14 keyframes covering corners, doorway, stairwell | `test/<team_capture>/frames/` |
-| Automated Capture QA Report | 6/6 QA thresholds + scale MAD report | `test/<team_capture>/capture_qa.md` |
+| Raw Continuous Capture Video (`home_v1_raw_full.mp4`) | Unedited handheld smartphone MP4 (`98.6 s`, `50.3 MB`, `1280×576 @ 30 fps`, landscape) | `[Upload kaggle/staging/raw_captures/home_v1_raw_full.mp4 to Google Drive folder & paste link]` |
+| Reconstructed Indoor Trim (`home_v1_trim75s.mp4`) | Clean 3-room indoor loop (`00:00–01:15`, `75.0 s`, `44.1 MB`, `375` extracted keyframes @ `5.0 Hz`) | Local staging (`kaggle/staging/raw_captures/home_v1_trim75s.mp4`) |
+| Extracted Raw Frame Previews | 14 sampled raw frames spanning Study Room, Central Hall, and Master Bedroom loop | [`test/home_v1/frames/`](../test/home_v1/frames/) |
+| Automated Capture QA Report | Full unedited QA trail (PASS: frame count, floor outline `22.21 m²`, `0` geom warnings, `9` POIs; WARN: `78.9%` reg; honest FAIL notes on `p10=26` soft walls & `1.569 px` CNN DISK grid) | [`test/home_v1/capture_qa.md`](../test/home_v1/capture_qa.md) |
+| Metric Occupancy & POI Map | 5 cm costmap (`232 × 250`, `22.21 m²`), 293-pose trajectory, and all 9 validated POIs | [`docs/fig/nav.png`](../docs/fig/nav.png) & [`test/home_v1/nav/pois.json`](../test/home_v1/nav/pois.json) |

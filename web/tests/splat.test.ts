@@ -47,7 +47,7 @@ describe('inferSplatFormat', () => {
   it('detects .ksplat and .splat ignoring query parameters and honoring explicit override', () => {
     expect(inferSplatFormat('/artifacts/metro_v1/splat.ksplat')).toBe('ksplat');
     expect(inferSplatFormat('/artifacts/metro_v1/splat.ksplat?v=2')).toBe('ksplat');
-    expect(inferSplatFormat('/artifacts/room/splat.splat')).toBe('splat');
+    expect(inferSplatFormat('/artifacts/my_space/splat.splat')).toBe('splat');
     expect(inferSplatFormat('blob:https://example.com/1234', 'ksplat')).toBe('ksplat');
   });
 });

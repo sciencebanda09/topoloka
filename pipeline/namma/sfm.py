@@ -68,7 +68,18 @@ def run_sfm(
     *,
     matcher: str = "auto",
     exhaustive_max: int = EXHAUSTIVE_MAX_IMAGES,
+    features: str = "sift",
+    seq_window: int = 18,
+    loop_topk: int = 12,
+    max_kpts: int = 2048,
 ) -> SfMReport:
+    if features == "disk_lightglue":
+        return _run_sfm_disk_lightglue(
+            capture_dir,
+            seq_window=seq_window,
+            loop_topk=loop_topk,
+            max_kpts=max_kpts,
+        )
     capture_dir = Path(capture_dir)
     import pycolmap
     frames_dir = capture_dir / "frames"
@@ -109,7 +120,7 @@ def run_sfm(
 
     rec = recs[0]
     if len(recs) > 1:
-        sizes = [r.num_reg_images for r in recs]
+        sizes = [int(_get(r, "num_reg_images")) for r in recs]
         report.warnings.append(f"{len(recs)} disconnected models {sizes}; kept the largest")
 
     # canonical single model on disk
@@ -382,6 +393,223 @@ def _principal(cam: Any, axis: int) -> float:
     if hasattr(cam, names[axis]):
         return float(_get(cam, names[axis]))
     return float(cam.params[1 + axis])
+
+
+def _pair_id(id1: int, id2: int) -> int:
+    if id1 > id2:
+        id1, id2 = id2, id1
+    return id1 * 2147483647 + id2
+
+
+def _run_sfm_disk_lightglue(
+    capture_dir: Path,
+    *,
+    seq_window: int = 18,
+    loop_topk: int = 12,
+    max_kpts: int = 2048,
+    min_matches: int = 20,
+) -> SfMReport:
+    """Learned multi-room SfM using Apache-2.0 Kornia DISK + LightGlue + pycolmap BA."""
+    import shutil
+    import sqlite3
+    import cv2
+    import kornia.feature as KF
+    import pycolmap
+    import torch
+
+    capture_dir = Path(capture_dir)
+    frames_dir = capture_dir / "frames"
+    if not frames_dir.is_dir():
+        raise SystemExit(f"no frames dir: {frames_dir} (run `frames` first)")
+    images = sorted(p.name for p in frames_dir.glob("*.jpg"))
+    n_imgs = len(images)
+    if n_imgs < 2:
+        raise SystemExit(f"need >=2 frames, found {n_imgs}")
+
+    out_dir = capture_dir / "sfm"
+    out_dir.mkdir(parents=True, exist_ok=True)
+    db_path = out_dir / "database.db"
+    if db_path.exists():
+        db_path.unlink()
+    sparse_dir = out_dir / "sparse"
+    if sparse_dir.exists():
+        shutil.rmtree(sparse_dir)
+    sparse_dir.mkdir(parents=True, exist_ok=True)
+
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    t0 = time.time()
+    report = SfMReport(
+        frames_in=n_imgs,
+        backend="disk+lightglue+pycolmap",
+        pycolmap_version=pycolmap.__version__,
+        matcher=f"disk_lightglue_seq{seq_window}_loop{loop_topk}",
+        extract_strategy=f"kornia.DISK(depth, max_kpts={max_kpts}) + CameraMode.SINGLE",
+    )
+
+    # Initialize valid pycolmap schema (rigs/frames/cameras/images) under CameraMode.SINGLE
+    try:
+        ext_opts = pycolmap.FeatureExtractionOptions()
+        ext_opts.sift.max_num_features = 64
+        pycolmap.extract_features(
+            str(db_path), str(frames_dir),
+            camera_mode=pycolmap.CameraMode.SINGLE,
+            extraction_options=ext_opts,
+        )
+    except Exception:
+        pycolmap.extract_features(
+            str(db_path), str(frames_dir),
+            camera_mode=pycolmap.CameraMode.SINGLE,
+        )
+
+    conn = sqlite3.connect(str(db_path))
+    cur = conn.cursor()
+    name_to_id = {name: int(iid) for iid, name in cur.execute("SELECT image_id, name FROM images").fetchall()}
+
+    disk = KF.DISK.from_pretrained("depth").to(device).eval()
+    kpts_cpu: list[np.ndarray] = []
+    kpts_gpu: list[torch.Tensor] = []
+    descs_gpu: list[torch.Tensor] = []
+    global_vecs: list[np.ndarray] = []
+    img_sizes: list[tuple[int, int]] = []
+
+    for name in images:
+        bgr = cv2.imread(str(frames_dir / name))
+        h, w = bgr.shape[:2]
+        img_sizes.append((w, h))
+        rgb = cv2.cvtColor(bgr, cv2.COLOR_BGR2RGB)
+        ten = torch.from_numpy(rgb).permute(2, 0, 1).float().div_(255.0).unsqueeze(0).to(device)
+        with torch.inference_mode():
+            feat = disk(ten, n=max_kpts, pad_if_not_divisible=True)[0]
+            kp = feat.keypoints.float()
+            desc = feat.descriptors.float()
+        kpts_gpu.append(kp)
+        descs_gpu.append(desc)
+        kpts_cpu.append(kp.cpu().numpy().astype(np.float32))
+        gv = desc.mean(dim=0).cpu().numpy()
+        global_vecs.append((gv / max(float(np.linalg.norm(gv)), 1e-8)).astype(np.float32))
+
+    cur.execute("DELETE FROM keypoints")
+    cur.execute("DELETE FROM descriptors")
+    cur.execute("DELETE FROM matches")
+    cur.execute("DELETE FROM two_view_geometries")
+    for name, kp_np in zip(images, kpts_cpu):
+        iid = name_to_id[name]
+        n = len(kp_np)
+        kp6 = np.zeros((n, 6), dtype=np.float32)
+        if n > 0:
+            kp6[:, 0:2] = kp_np
+            kp6[:, 2] = 1.0
+            kp6[:, 5] = 1.0
+        cur.execute("INSERT INTO keypoints (image_id, rows, cols, data) VALUES (?, ?, ?, ?)",
+                    (iid, n, 6, kp6.tobytes()))
+    conn.commit()
+
+    pair_set: set[tuple[int, int]] = set()
+    for i in range(n_imgs):
+        for j in range(i + 1, min(n_imgs, i + 1 + seq_window)):
+            pair_set.add((i, j))
+    if n_imgs > seq_window + 1 and loop_topk > 0:
+        G = np.stack(global_vecs, axis=0)
+        sim = G @ G.T
+        for i in range(n_imgs):
+            row = sim[i].copy()
+            row[max(0, i - seq_window):min(n_imgs, i + seq_window + 1)] = -1.0
+            k = min(loop_topk, n_imgs - 1)
+            for j in np.argpartition(row, -k)[-k:]:
+                if row[j] > 0.55:
+                    a, b = (i, int(j)) if i < int(j) else (int(j), i)
+                    pair_set.add((a, b))
+
+    pairs = sorted(pair_set)
+    lg = KF.LightGlue(features="disk").to(device).eval()
+    verified_pairs: list[tuple[str, str]] = []
+    for i, j in pairs:
+        wi, hi = img_sizes[i]
+        wj, hj = img_sizes[j]
+        inp = {
+            "image0": {
+                "keypoints": kpts_gpu[i].unsqueeze(0),
+                "descriptors": descs_gpu[i].unsqueeze(0),
+                "image_size": torch.tensor([[wi, hi]], device=device, dtype=torch.float32),
+            },
+            "image1": {
+                "keypoints": kpts_gpu[j].unsqueeze(0),
+                "descriptors": descs_gpu[j].unsqueeze(0),
+                "image_size": torch.tensor([[wj, hj]], device=device, dtype=torch.float32),
+            },
+        }
+        with torch.inference_mode():
+            m = lg(inp)["matches"][0]
+        if m.shape[0] < min_matches:
+            continue
+        m_np = m.cpu().numpy().astype(np.uint32)
+        id_i, id_j = name_to_id[images[i]], name_to_id[images[j]]
+        if id_i > id_j:
+            m_np = m_np[:, [1, 0]]
+            id_i, id_j = id_j, id_i
+        cur.execute("INSERT OR REPLACE INTO matches (pair_id, rows, cols, data) VALUES (?, ?, ?, ?)",
+                    (_pair_id(id_i, id_j), int(len(m_np)), 2, m_np.tobytes()))
+        verified_pairs.append((images[i], images[j]))
+    conn.commit()
+    conn.close()
+
+    report.match_strategy = f"kornia.LightGlue(disk) -> {len(verified_pairs)}/{len(pairs)} pairs"
+    pairs_txt = out_dir / "pairs.txt"
+    pairs_txt.write_text("\n".join(f"{a} {b}" for a, b in verified_pairs) + "\n", encoding="utf-8")
+    try:
+        vopts = pycolmap.TwoViewGeometryOptions()
+        vopts.min_num_inliers = 15
+        vopts.ransac.max_error = 4.0
+        pycolmap.verify_matches(str(db_path), str(pairs_txt), options=vopts)
+    except Exception:
+        pycolmap.verify_matches(str(db_path), str(pairs_txt))
+
+    mopts = pycolmap.IncrementalPipelineOptions()
+    for attr, val in (("min_num_matches", 12), ("multiple_models", True)):
+        if hasattr(mopts, attr):
+            setattr(mopts, attr, val)
+    if hasattr(mopts, "mapper"):
+        for attr, val in (("init_min_num_inliers", 50), ("abs_pose_min_num_inliers", 15), ("filter_max_reproj_error", 4.0)):
+            if hasattr(mopts.mapper, attr):
+                setattr(mopts.mapper, attr, val)
+    recs = sorted(_as_list(pycolmap.incremental_mapping(str(db_path), str(frames_dir), str(sparse_dir), options=mopts)),
+                  key=lambda r: _get(r, "num_reg_images"), reverse=True)
+    report.map_strategy = "pycolmap.incremental_mapping"
+    report.models_found = len(recs)
+    if not recs:
+        report.status = "failed_no_model"
+        report.timing_seconds = round(time.time() - t0, 1)
+        _write_report(out_dir, report)
+        return report
+
+    rec = recs[0]
+    if len(recs) > 1:
+        sizes = [int(_get(r, "num_reg_images")) for r in recs]
+        report.warnings.append(f"{len(recs)} disconnected models {sizes}; kept the largest")
+    model_dir = sparse_dir / "model"
+    model_dir.mkdir(exist_ok=True)
+    rec.write(str(model_dir))
+    txt_dir = out_dir / "sparse_txt"
+    txt_dir.mkdir(exist_ok=True)
+    rec.write_text(str(txt_dir))
+
+    report.frames_registered = int(_get(rec, "num_reg_images"))
+    report.registered_fraction = round(report.frames_registered / n_imgs, 3)
+    report.points3d = int(_get(rec, "num_points3D"))
+    errors = [p.error for p in rec.points3D.values() if p.error is not None]
+    if errors:
+        report.mean_reprojection_error_px = round(float(np.mean(errors)), 3)
+        report.median_reprojection_error_px = round(float(np.median(errors)), 3)
+    _write_ply(rec, out_dir / "sparse.ply")
+    (out_dir / "poses.json").write_text(json.dumps(_poses(rec, frames_dir), indent=2), encoding="utf-8")
+    (out_dir / "transforms.json").write_text(json.dumps(_transforms(rec, frames_dir), indent=2), encoding="utf-8")
+    report.outputs = {
+        "sparse": str(model_dir), "sparse_ply": str(out_dir / "sparse.ply"),
+        "poses": str(out_dir / "poses.json"), "transforms": str(out_dir / "transforms.json"),
+    }
+    report.timing_seconds = round(time.time() - t0, 1)
+    _write_report(out_dir, report)
+    return report
 
 
 def _write_report(out_dir: Path, report: SfMReport) -> None:
