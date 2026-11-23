@@ -14,7 +14,7 @@ our committed self-captured twin (`test/home_v1/`).
 | Synced R2 branch (`r2-pois-nav`) | <https://github.com/sciencebanda09/topoloka/tree/r2-pois-nav> |
 | Technical Abstract & SOP (4-page PDF) | [`docs/abstract.pdf`](abstract.pdf) |
 | POI contract & schema | [`docs/poi.md`](poi.md) |
-| Self-captured twin artifacts | [`test/home_v1/`](../test/home_v1/) (`17.12 MB` total) |
+| Self-captured twin artifacts | [`test/home_v1/`](../test/home_v1/) (`19.42 MB` total) |
 | Raw capture video (`home_v1_raw_full.mp4`) | `[Upload kaggle/staging/raw_captures/home_v1_raw_full.mp4 to Drive & paste link]` |
 | Own-voice R2 demo video | `[Record with docs/demo/NARRATION_SCRIPT.md & mux via docs/demo/mux_submission_video.py]` |
 
@@ -39,16 +39,19 @@ our committed self-captured twin (`test/home_v1/`).
   registered frames, `51,304` 3D points, and an unbroken **293-frame 3-room loop**
   (`00:00–00:58.4`) with **zero pose teleports**.
 - **Metric Depth & Floor:** Apache-2.0 `Depth-Anything-V2-Metric-Indoor-Small-hf`
-  fused `296/296` views (`24.27 M` raw → `648,579` dense voxels, `scale = 0.65836 m/unit`,
-  `MAD = 11.88%` over `55,274` samples). Bed-rejecting gravity-prior RANSAC fit
-  the true floor (`61,688` inliers, `camera_height = 0.868 m`, **`22.21 m²` walkable**,
-  `232 × 250` @ `5 cm`, **`0` geometry warnings**).
-- **3DGS & Pruning:** `nerfstudio splatfacto` (Apache 2.0, `25,000` iters,
-  `915,558` raw splats) → pruned `154,867` low-alpha + `396` fog-floaters/needles
-  + `32,953` ceiling spikes → packed **Level-1 `.ksplat` (`11.55 MB`, `480,000`
-  Gaussians)**.
+  with edge-discontinuity flying-pixel masking (`|∇D|/D < 0.055`, indoor cap `5.2 m`)
+  fused `293/293` continuous loop views (`22.78 M` raw → **`732,355` multi-view consistent voxels**,
+  `scale = 0.65426 m/unit`, `MAD = 15.21%` over `61,019` samples). Bed-rejecting gravity-prior RANSAC fit
+  the true floor (`59,195` inliers, `camera_height = 0.857 m`, **`21.71 m²` walkable**,
+  `207 × 229` @ `5 cm`, **`0` geometry warnings**, zero doorway radar-spikes).
+- **High-Sharpness Anti-Spike 3DGS & Pruning:** `nerfstudio splatfacto-big` (Apache 2.0, `30,000` iters,
+  seeded with `251,304` SfM + multi-view depth points, `camera_optimizer = SO3xR3`,
+  `use_scale_regularization = True` with `max_gauss_ratio = 3.5`, `sh_degree = 0`,
+  `rasterize_mode = antialiased`, `use_absgrad = True`) reduced 99.9th-percentile Gaussian aspect ratio from
+  `9,646.9:1` → **`3.78:1`** (2,550× spike reduction) → scene-adaptive cigar-spike pruning & local camera-height
+  envelope filtering → packed **Level-1 `.ksplat` (`13.95 MB`, `580,000` Gaussians)**.
 - **Honest QA Trail (`test/home_v1/capture_qa.md`):** `PASS` on frame count
-  (`375`), floor outline (`69 pts`, `22.21 m²`), geometry warnings (`0`), and
+  (`375`), floor outline (`69 pts`, `21.71 m²`), geometry warnings (`0`), and
   POI dataset (`9 POIs / 4 categories`); `WARN` on `78.9%` registration;
   unedited `FAIL` flags on `p10=26` Laplacian sharpness (soft painted walls at
   `1280×576`) and `1.569 px` median reprojection error (expected for 8px-stride
@@ -84,11 +87,11 @@ on `home_v1` in Chrome D3D11 Playwright E2E):
 
 | Scenario | Route & Landmark Instruction | Distance & ETA |
 |---|---|---|
-| **3-Room Full Route:** Entry Study Desk → Bedroom Alcove & Beds | *"In 3.9 m, turn left past Refrigerator"* | **`9.8 m`** (`9 s @ 1.4 m/s`) |
-| **Baseline:** Central Hall → Bedroom Alcove & Beds | *"In 3.8 m, turn left past Washing Machine Alcove"* (via Wooden Wardrobe leg) | **`6.5 m`** (`6 s @ 1.4 m/s`) |
-| **Sandbox Reroute:** Central Hall → Bedroom Alcove (3 barriers blocking Wooden Wardrobe corridor) | *"In 2.4 m, turn left past Washbasin & Bath Door"* (loops around opposite Dressing Mirror leg!) | **`7.7 m`** (`+1.2 m` loop detour) |
+| **3-Room Full Route:** Entry Study Desk → Bedroom Alcove & Beds | *"In 4.6 m, turn left past Refrigerator"* | **`9.6 m`** (`7 s @ 1.4 m/s`) |
+| **Baseline:** Central Hall → Bedroom Alcove & Beds | *"In 3.7 m, turn left past Washing Machine Alcove"* (via Wooden Wardrobe leg) | **`6.5 m`** (`6 s @ 1.4 m/s`) |
+| **Sandbox Reroute:** Central Hall → Bedroom Alcove (3 barriers blocking Wooden Wardrobe corridor) | *"In 2.7 m, turn left past Washing Machine Alcove"* (loops around opposite Dressing Mirror leg!) | **`7.7 m`** (`+1.2 m` loop detour) |
 | **Baseline:** Bedroom Entry → Bedroom Alcove | *"In 1.7 m, turn right past Wooden Wardrobe"* | **`2.4 m`** |
-| **Sandbox Reroute:** Bedroom Entry → Bedroom Alcove (same 3 barriers) | *"In 1.8 m, turn right past Washbasin & Bath Door"* (full reverse loop around Master Bedroom!) | **`5.4 m`** (`+3.0 m` loop detour) |
+| **Sandbox Reroute:** Bedroom Entry → Bedroom Alcove (same 3 barriers) | *"In 2.6 m, turn right past Refrigerator"* (full reverse loop around Master Bedroom!) | **`5.4 m`** (`+3.0 m` loop detour) |
 
 ![Measured home_v1 walkthrough, fuzzy search, A* navigation, sandbox reroute, and occupancy map](fig/home_v1_showcase.png)
 
@@ -101,7 +104,7 @@ on `home_v1` in Chrome D3D11 Playwright E2E):
 | TypeScript strict | `cd web && npm run typecheck` | **Pass** (`tsc --noEmit`) |
 | Production build | `cd web && npm run build` | **Pass** (`web/dist/`) |
 | POI validation (`home_v1`) | `python -m namma.cli pois test/home_v1` | **9 POIs across 4 categories, 0 warnings** |
-| Chrome D3D11 WebGL E2E | Playwright (`1440×810`) on `home_v1` | **`51.5 FPS`**, **0 console errors**, **0 failed HTTP requests** |
+| Chrome D3D11 WebGL E2E | Playwright (`1440×810`, `1.5×` HiDPI) on `home_v1` | **`33.6–51.5 FPS`**, **0 console errors**, **0 failed HTTP requests** |
 
 ## Honest Boundaries & Limitations
 

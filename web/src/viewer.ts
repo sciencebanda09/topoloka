@@ -160,9 +160,9 @@ export class Viewer {
     this.renderer = new THREE.WebGLRenderer({ canvas, antialias: false, powerPreference: 'high-performance' });
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
     this.renderer.toneMappingExposure = 1.05;
-    // Draw at CSS resolution (x renderScale), not devicePixelRatio: a 2x
-    // retina buffer is 4x the splat fill cost on integrated laptop GPUs.
-    this.renderer.setPixelRatio(1);
+    // Honor HiDPI displays up to 1.5x for sharp indoor detail while capping
+    // fill cost on 2x/3x screens (adaptive renderScale still protects FPS).
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
     this.resizeRenderer();
 
     this.scene = new THREE.Scene();
@@ -213,7 +213,9 @@ export class Viewer {
     }
     if (c?.h && (c?.fl_y || c?.fl_x)) {
       const fy = c.fl_y || c.fl_x;
-      this.maxVFovRad = 2 * Math.atan(c.h / (2 * fy));
+      // Keep a 10% inner frustum safety margin so 16:9 viewports stay inside
+      // the multi-view observed interior of 20:9 smartphone frames.
+      this.maxVFovRad = 2 * Math.atan(c.h / (2 * fy)) * 0.90;
     } else {
       this.maxVFovRad = null;
     }
@@ -645,19 +647,21 @@ export class Viewer {
     for (const marker of this.markers.values()) {
       const horizDist = Math.hypot(cam.x - marker.poi.x, cam.z + marker.poi.y);
       const isSelected = marker.poi.id === this.selectedPoi;
-      // Avoid occluding nearby objects with floor rings/stems (especially right after Jump here),
-      // and declutter unselected POI rings while an active route ribbon is on the floor.
-      const showFloorMarker = horizDist > 0.85 && (!navigating || isSelected);
+      // The overlay pass clears depth, so drawing all 9 POI rings/stems at once
+      // projects markers from adjacent rooms right through solid walls ("X-ray clutter").
+      // Show 3D floor rings only for the active/selected POI (or very close unoccluded POIs),
+      // while all POIs remain visible and clickable on the 2D minimap and via search.
+      const showFloorMarker = horizDist > 0.85 && (isSelected || (!navigating && horizDist < 1.85));
       marker.ring.visible = showFloorMarker;
       marker.outerRing.visible = showFloorMarker;
       marker.dot.visible = showFloorMarker;
-      marker.stem.visible = showFloorMarker && horizDist > 1.4;
+      marker.stem.visible = isSelected && horizDist > 1.4;
 
       const label = marker.label;
       const distance = Math.hypot(
         cam.x - label.position.x, cam.y - label.position.y, cam.z - label.position.z,
       );
-      const scale = Math.min(2.2, Math.max(0.22, distance / 12));
+      const scale = Math.min(2.0, Math.max(0.22, distance / 12));
       label.scale.set(1.9 * scale, 0.475 * scale, 1);
       this.labelProbe.copy(label.position).project(this.camera);
       // Check the projected sprite bounds, not just its centre, so a wide
@@ -678,8 +682,8 @@ export class Viewer {
         && this.labelProbe.y + halfH > this.labelExclusion.y0
         && this.labelProbe.y - halfH < this.labelExclusion.y1;
       const focused = navigating && isSelected;
-      const eligible = onScreen && !underCard && distance > 1.5
-        && (focused || (!navigating && distance < 24));
+      const eligible = onScreen && !underCard && distance > 1.2
+        && (isSelected || (!navigating && horizDist < 2.1));
       if (!eligible) {
         label.visible = false;
         continue;

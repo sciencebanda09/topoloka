@@ -58,8 +58,8 @@ const MANUAL_SCALE = Number.isFinite(requestedScale) && requestedScale > 0;
 const INITIAL_SCALE = MANUAL_SCALE
   ? Math.min(1, Math.max(0.35, requestedScale))
   : Math.min(1, Math.max(MIN_ADAPTIVE_SCALE, Math.sqrt(RENDER_PIXELS / (window.innerWidth * window.innerHeight))));
-const SPLAT_ALPHA = Math.min(255, Math.max(1, Number(params.get('alpha')) || 5));
-const SPLAT_MAX_PX = Math.min(2048, Math.max(32, Number(params.get('splatpx')) || 512));
+const SPLAT_ALPHA = Math.min(255, Math.max(1, Number(params.get('alpha')) || 14));
+const SPLAT_MAX_PX = Math.min(2048, Math.max(32, Number(params.get('splatpx')) || 256));
 
 const titleEl = document.getElementById('title');
 if (titleEl) titleEl.textContent = PRODUCT_NAME.toUpperCase();

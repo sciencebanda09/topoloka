@@ -7,8 +7,8 @@
     "present": true,
     "format": "ksplat",
     "file": "splat.ksplat",
-    "bytes": 11547664,
-    "gaussians": 480000
+    "bytes": 13952368,
+    "gaussians": 580000
   },
   "pois": {
     "present": true,
@@ -19,7 +19,7 @@
     "count": 0
   },
   "scale_source": "metric-input",
-  "walkable_area_m2": 22.21,
+  "walkable_area_m2": 21.71,
   "qa_overall": "FAIL",
   "packaging_seconds": 0.1,
   "sample": "decimated copy of the Kaggle pipeline output"

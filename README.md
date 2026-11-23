@@ -21,7 +21,7 @@ walk-through video ──► Kaggle GPU pipeline ──► artifact bundle ─�
 
 All third-party and public datasets (`room`, `playroom`, `guildhall-*`, `metro_v1`)
 have been permanently removed to comply with Round 2 Rule 1 (*Use your own data*).
-The deployed twin (`test/home_v1/`, `17.12 MB` total committed) was reconstructed
+The deployed twin (`test/home_v1/`, `19.42 MB` total committed) was reconstructed
 end-to-end strictly from the team's own handheld 3-room flat walkthrough (**Entry
 Study Room**, **Central Hall**, and a full closed loop through the **Master
 Bedroom**):
@@ -29,10 +29,10 @@ Bedroom**):
 | Measured Metric (`test/home_v1/`) | Result |
 |---|---|
 | **SfM Ablation (SIFT → DISK+LightGlue)** | SIFT 3 Hz `35/225` (`15.6%`, 10 models) → **Apache-2.0 Kornia `DISK+LightGlue` 5 Hz `296/375` (`78.9%`, `51,304` 3D pts, unbroken 293-frame 3-room loop)** |
-| **Metric Depth (Apache 2.0)** | `Depth-Anything-V2-Metric-Indoor-Small-hf` · `296/296` fused (`648,579` voxels) · `scale = 0.65836 m/unit` (`MAD = 11.88%`) |
-| **Metric Navigation (`5 cm` grid)** | `22.21 m²` walkable (`232 × 250`, `61,688` floor inliers, `camera_height = 0.868 m`, `0` geometry warnings) |
-| **Compressed 3DGS & Live FPS** | **`11.55 MB`** Level-1 `.ksplat` (`480,000` Gaussians, floater/needle & ceiling-spike culled) · **`51.5 FPS`** @ `1440×810` Chrome D3D11 (`0` errors) |
-| **POIs, Fuzzy Search & A\* Routing** | **9 validated POIs** across 3 rooms (`0` warnings) · `"wardobe"` → `Wooden Wardrobe` (#1 hit) · **Entry Study Desk → Bedroom Alcove: `9.8 m`** (*"In 3.9 m, turn left past Refrigerator"*) |
+| **Metric Depth (Apache 2.0)** | `Depth-Anything-V2-Metric-Indoor-Small-hf` · `293/293` fused (`732,355` edge-filtered voxels) · `scale = 0.65426 m/unit` (`MAD = 15.21%`) |
+| **Metric Navigation (`5 cm` grid)** | `21.71 m²` walkable (`207 × 229`, `59,195` floor inliers, `camera_height = 0.857 m`, `0` geometry warnings, zero doorway radar-spikes) |
+| **Compressed 3DGS & Live FPS** | **`13.95 MB`** Level-1 `.ksplat` (`580,000` Gaussians; `splatfacto-big` 30k + `SO3xR3` + `max_gauss_ratio = 3.5` reducing `p99.9` spike ratio `9,647:1 → 3.78:1`) · **`33.6–51.5 FPS`** @ `1440×810` (`1.5×` HiDPI) Chrome D3D11 (`0` errors) |
+| **POIs, Fuzzy Search & A\* Routing** | **9 validated POIs** across 3 rooms (`0` warnings) · `"wardobe"` → `Wooden Wardrobe` (#1 hit) · **Entry Study Desk → Bedroom Alcove: `9.6 m`** (*"In 4.6 m, turn left past Refrigerator"*) |
 | **Dynamic Sandbox Loop Reroute** | Placing 3 barriers across Wooden Wardrobe corridor dynamically reroutes **Central Hall → Bedroom Alcove** from **`6.5 m` → `7.7 m`** (and Bedroom Entry → Alcove **`2.4 m` → `5.4 m`**) around the Dressing Mirror leg |
 
 ![Reconstructed 3-room home_v1 twin in Chrome: A* navigation, sandbox reroute, fuzzy POI search, and 5 cm occupancy grid](docs/fig/home_v1_showcase.png)
@@ -47,7 +47,7 @@ Bedroom**):
 | `kaggle/` | Kaggle CLI tooling: GPU `DISK+LightGlue` SfM (`kaggle/kernels/namma_sfm_gpu/`), T4 Depth+3DGS (`kaggle/kernels/namma_splat/`), and automation scripts |
 | `docs/` | 4-page Technical Abstract & SOP (`docs/abstract.pdf`), R2 evidence (`docs/r2_evidence.md`), human narration script (`docs/demo/NARRATION_SCRIPT.md`), and loudness-normalized MP4 muxer |
 | `submission/` | Ready-to-upload Round 2 Google Drive submission bundle |
-| `test/home_v1/` | Team's committed self-captured 3-room twin bundle (`17.12 MB`, 9 POIs, complete honest QA trail) |
+| `test/home_v1/` | Team's committed self-captured 3-room twin bundle (`19.42 MB`, 9 POIs, complete honest QA trail) |
 | `tools/` | Sample bundler (`make_sample.py`), capture activator (`activate_capture.py`), PDF & figure builders (`build_pdf.py`, `make_figures.py`) |
 
 ## Compute rule
@@ -95,9 +95,9 @@ cd web && npm ci && npm run dev
 - [x] Deterministic Capture SOP (`capture/SOP.md`), automated QA, and IMU/EIS validation (`imu.py`, `qa.py`)
 - [x] Self-captured 3-room indoor twin (`test/home_v1/`) reconstructed end-to-end on Kaggle GPUs; all public/third-party datasets purged
 - [x] Commercially licensed Apache-2.0 `DISK+LightGlue` SfM (`78.9%` vs. `15.6%` SIFT baseline) + Apache-2.0 `Depth-Anything-V2-Metric-Indoor-Small-hf` scale alignment
-- [x] Bed-rejecting RANSAC floor alignment (`22.21 m²`, `0` warnings), 25k `splatfacto` + floater/needle/ceiling-spike pruning + `11.55 MB` Level-1 `.ksplat`
-- [x] R2 POIs & navigation: 9 validated POIs across 3 rooms, 1 m bucket + fuzzy search, Jump/Navigate, landmark-anchored A\* (`9.8 m` 3-room route), live Sandbox loop reroute (`6.5 m → 7.7 m`), POI tagging (`E`), and R3 AR preview (`ar.ts`)
-- [x] Automated test suite & live E2E passing: **63/63 web tests** (`vitest`), strict TypeScript, Vite build, **30/30 pipeline tests** (`pytest`), and Chrome D3D11 Playwright E2E (`51.5 FPS`, `0` errors)
+- [x] Bed-rejecting RANSAC floor alignment (`21.71 m²`, `0` warnings), 30k `splatfacto-big` (`SO3xR3` + `max_gauss_ratio = 3.5`) + cigar-spike/floater pruning + `13.95 MB` Level-1 `.ksplat` (`580,000` Gaussians)
+- [x] R2 POIs & navigation: 9 validated POIs across 3 rooms, 1 m bucket + fuzzy search, Jump/Navigate, landmark-anchored A\* (`9.6 m` 3-room route), live Sandbox loop reroute (`6.5 m → 7.7 m`), POI tagging (`E`), and R3 AR preview (`ar.ts`)
+- [x] Automated test suite & live E2E passing: **63/63 web tests** (`vitest`), strict TypeScript, Vite build, **30/30 pipeline tests** (`pytest`), and Chrome D3D11 Playwright E2E (`33.6–51.5 FPS` @ `1.5×` HiDPI, `0` errors)
 - [x] 4-page Technical Abstract & SOP PDF compiled within 5-page limit ([`docs/abstract.pdf`](docs/abstract.pdf)) with visual showcase, commercial license matrix & API-vs-GPU cost analysis
 - [x] AI-TTS narration scripts & synthetic audio completely removed
 - [ ] **Upload raw capture video & record own-voice R2 narration** (`home_v1_raw_full.mp4` + record human voice using [`docs/demo/NARRATION_SCRIPT.md`](docs/demo/NARRATION_SCRIPT.md) → mux via [`docs/demo/mux_submission_video.py`](docs/demo/mux_submission_video.py) → verify links in Incognito)

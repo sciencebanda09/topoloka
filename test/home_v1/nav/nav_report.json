@@ -1,24 +1,24 @@
 {
   "stage": "geometry",
   "status": "ok",
-  "points_in": 648579,
-  "points_used": 648579,
-  "floor_inliers": 61688,
+  "points_in": 732355,
+  "points_used": 732355,
+  "floor_inliers": 59195,
   "down_axis_source": "camera-y-mean",
   "scale_source": "metric-input",
   "scale_m_per_unit": 1.0,
-  "camera_height_units": 0.868,
-  "grid_w": 232,
-  "grid_h": 250,
-  "free_cells": 8882,
-  "obstacle_cells": 9679,
-  "unknown_cells": 39439,
-  "walkable_area_m2": 22.21,
+  "camera_height_units": 0.857,
+  "grid_w": 207,
+  "grid_h": 229,
+  "free_cells": 8684,
+  "obstacle_cells": 7703,
+  "unknown_cells": 31016,
+  "walkable_area_m2": 21.71,
   "outline_points": 69,
-  "timing_seconds": 1.2,
+  "timing_seconds": 1.6,
   "warnings": [],
   "outputs": {
-    "nav": "test/home_v1/nav/nav.json",
-    "occupancy": "test/home_v1/nav/occupancy.png"
+    "nav": "kaggle\\staging\\repack_home_v3\\nav\\nav.json",
+    "occupancy": "kaggle\\staging\\repack_home_v3\\nav\\occupancy.png"
   }
 }

@@ -30,8 +30,9 @@ import numpy as np
 # Depth-Anything-V2-Metric-Indoor-Small-hf uses Apache 2.0 (commercial use permitted);
 # Large/Base upstream weights are CC-BY-NC-4.0.
 MODEL_ID = "depth-anything/Depth-Anything-V2-Metric-Indoor-Small-hf"
-DEPTH_MAX_M = 12.0     # beyond this the model is unreliable indoors
-DEPTH_MIN_M = 0.15
+DEPTH_MAX_M = 8.0      # beyond this monocular indoor depth degrades into starburst rays
+DEPTH_MIN_M = 0.20
+GRAD_REL_MAX = 0.06    # mask depth-discontinuity flying pixels at doorway/furniture edges
 PIXEL_STRIDE = 3       # fuse every 3rd pixel
 VOXEL_M = 0.03         # output cloud voxel size (fine enough for a 5 cm grid)
 SCALE_SAMPLE_FRAMES = 40
@@ -173,12 +174,18 @@ def fuse(capture_dir: Path, scale: float) -> tuple[np.ndarray, np.ndarray, int, 
         if bgr is None:
             continue
         depth = _infer_depth(torch_m, processor, model, bgr, device)
+        # Reject depth-discontinuity "flying pixels" along doorway/furniture boundaries
+        gx = cv2.Sobel(depth, cv2.CV_32F, 1, 0, ksize=3) * 0.25
+        gy = cv2.Sobel(depth, cv2.CV_32F, 0, 1, ksize=3) * 0.25
+        rel_grad = np.hypot(gx, gy) / np.maximum(depth, 0.2)
+        edge_bad = cv2.dilate((rel_grad > GRAD_REL_MAX).astype(np.uint8), np.ones((5, 5), np.uint8)) > 0
+
         h, w = depth.shape
         u = np.arange(0, w, PIXEL_STRIDE)
         v = np.arange(0, h, PIXEL_STRIDE)
         uu, vv = np.meshgrid(u, v)
         d = depth[vv, uu]
-        valid = (d > DEPTH_MIN_M) & (d < DEPTH_MAX_M)
+        valid = (~edge_bad[vv, uu]) & (d > DEPTH_MIN_M) & (d < DEPTH_MAX_M)
         if not valid.any():
             continue
         uu, vv, d = uu[valid], vv[valid], d[valid]

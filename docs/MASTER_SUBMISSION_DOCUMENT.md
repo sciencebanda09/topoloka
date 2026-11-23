@@ -24,8 +24,8 @@ All third-party and public datasets (`room`, `playroom`, `guildhall-*`, `metro_v
 
 ### Core Round 2 Capabilities
 - **Deterministic Multi-Room Capture SOP (`capture/SOP.md`):** Specifies phone lens, 4K/30 landscape (1080p/720p fallback), EIS OFF, AE/AF lock, lighting, `0.4 m/s` pace, `1.2–2.0 m` wall stand-off, dual-tilt passes (`+10°` / `-20°`), 3-second corner arc sweeps, doorway/stairwell transitions, optional 2D plan & 2.00 m scale photos, and an automated QA analyzer (`namma qa`).
-- **Commercially Licensed Reconstruction Pipeline (`pipeline/namma/`):** Uses **Kornia `DISK + LightGlue` (Apache 2.0)** + `pycolmap 4.2.1` (`CameraMode.SINGLE`), **`Depth-Anything-V2-Metric-Indoor-Small-hf` (Apache 2.0 — zero `CC-BY-NC` weights)**, bed-rejecting gravity-prior RANSAC floor alignment (`floor_z = 0.0 m`, `camera_height = 0.868 m`), continuous corridor-carved 5 cm costmaps, `nerfstudio splatfacto` 3DGS (Apache 2.0), fog-floater / needle / ceiling-spike pruning (`splat_convert.py`), and spatial-sorted Level-1 `.ksplat` compression (`11.55 MB`, `480,000` Gaussians).
-- **Browser Walkthrough & 2D Minimap (`web/src/`):** Clamps vertical FOV to the captured smartphone lens shell (`23.9°`) to eliminate unobserved ceiling voids, streams an instant `cloud.ply` preview before swapping seamlessly into `.ksplat`, and supports WASD/mouse/touch roaming with 5 cm wall collision, live 2D minimap (`M`), and `Gaussian splats` / `Point cloud` model switcher (`P`).
+- **Commercially Licensed Reconstruction Pipeline (`pipeline/namma/`):** Uses **Kornia `DISK + LightGlue` (Apache 2.0)** + `pycolmap 4.2.1` (`CameraMode.SINGLE`), **`Depth-Anything-V2-Metric-Indoor-Small-hf` (Apache 2.0 — zero `CC-BY-NC` weights)** with doorway flying-pixel masking (`|∇D|/D < 0.055`), bed-rejecting gravity-prior RANSAC floor alignment (`floor_z = 0.0 m`, `camera_height = 0.857 m`), continuous corridor-carved 5 cm costmaps (`21.71 m²`), `nerfstudio splatfacto-big` 3DGS (Apache 2.0, 30k iters, `SO3xR3` pose refinement, `max_gauss_ratio = 3.5` reducing `p99.9` spike ratio `9,647:1 → 3.78:1`), cigar-spike / floater pruning (`splat_convert.py`), and spatial-sorted Level-1 `.ksplat` compression (`13.95 MB`, `580,000` Gaussians).
+- **Browser Walkthrough & 2D Minimap (`web/src/`):** Clamps vertical FOV to the captured smartphone lens shell (`21.5°` with `0.90` inner margin) at `1.5×` HiDPI to eliminate unobserved ceiling voids, streams an instant `cloud.ply` preview before swapping seamlessly into `.ksplat`, and supports WASD/mouse/touch roaming with 5 cm wall collision, live 2D minimap (`M`), and `Gaussian splats` / `Point cloud` model switcher (`P`).
 - **Spatial + Fuzzy POI Search & A\* Navigation:** Versioned `pois.json` contract (`9` validated POIs across all 3 rooms, `0` warnings), 1 m spatial bucket + inverted token + Levenshtein `≤ 2` index (`/`), proximity-decluttered 3D & minimap markers without unwanted camera jumps, explicit **Jump here** (`?poi=`), VCCW/EDT clearance-weighted A\* floor routing with landmark-anchored turn-by-turn banners, ETA, 1.2 m off-route rerouting, 0.7 m arrival detection, and in-browser click-floor POI tagging (`E`) with JSON export.
 - **Interactive Sandbox (`G`) & R3 AR Bonus (`AR`):** Pick-and-place physical props (`Cone`, `Barrier`, `Crate`, `Sign`) that dynamically carve obstacles into the A\* router (`6.5 m → 7.7 m` Central Hall → Bedroom loop reroute verified live); optional WebRTC camera + QR fiducial relocalization (`anchors.json`, `namma anchors`) for directional AR overlays.
 
@@ -40,17 +40,17 @@ All third-party and public datasets (`room`, `playroom`, `guildhall-*`, `metro_v
 [Kaggle GPU Pipeline (DISK+LightGlue SfM + T4 Depth & 3DGS)]
    ├─ Stride-Adaptive Blur Filter (frames.py, Laplacian variance @ 5.0 Hz -> 375 frames)
    ├─ Learned GPU SfM (sfm.py, Kornia DISK+LightGlue Apache 2.0 + pycolmap 4.2.1 -> 296/375 = 78.9%)
-   ├─ Commercial Metric Depth Fusion (depth.py, Depth-Anything-V2-Metric-Indoor-Small Apache 2.0)
-   ├─ Bed-Rejecting Gravity RANSAC Floor & 5 cm Costmap (geometry.py -> 22.21 m², 0 warnings)
-   ├─ 3DGS Training & Floater/Needle/Spike Pruning (nerfstudio splatfacto 25k + splat_convert.py)
-   ├─ Spatial Bucket Level-1 .ksplat Compression (convert_to_ksplat.mjs -> 11.55 MB, 480k splats)
+   ├─ Commercial Metric Depth Fusion (depth.py, Depth-Anything-V2-Metric-Indoor-Small Apache 2.0, edge-masked 732k voxels)
+   ├─ Bed-Rejecting Gravity RANSAC Floor & 5 cm Costmap (geometry.py -> 21.71 m², 0 warnings)
+   ├─ Anti-Spike 3DGS Training & Pruning (nerfstudio splatfacto-big 30k SO3xR3 + scale reg + splat_convert.py)
+   ├─ Spatial Bucket Level-1 .ksplat Compression (convert_to_ksplat.mjs -> 13.95 MB, 580k splats)
    └─ Automated QA, 9-POI Validation & QR Anchors (qa.py, pois.py, anchors.py, package.py)
            │
            ▼
-[Static Artifact Bundle (test/home_v1/web/, 15.3 MB web / 17.12 MB total committed)]
+[Static Artifact Bundle (test/home_v1/web/, 17.7 MB web / 19.42 MB total committed)]
            │
            ▼
-[Client-Side WebGL Viewer (Static GitHub Pages, $0/view runtime cost, ~51.5 FPS)]
+[Client-Side WebGL Viewer (Static GitHub Pages, $0/view runtime cost, 33.6–51.5 FPS @ 1.5x HiDPI)]
    ├─ Instant Point-Cloud Preview → Level-1 .ksplat Streaming (@mkkellogg/gaussian-splats-3d)
    ├─ Captured-VFOV First-Person Roaming, Collision & Live 2D Minimap (controls.ts, minimap.ts)
    ├─ Spatial + Fuzzy POI Search & Click-Floor Authoring (pois.ts, ui.ts)
@@ -93,9 +93,9 @@ p_three = A · p_nav,    A = [[1, 0, 0], [0, 0, 1], [0, -1, 0]]
 |---|---|---|
 | **Raw Capture & Rooms** | `98.6 s` → `75.0 s` indoor trim (`1280×576 @ 30 fps`); 3 rooms (Entry Study Room, Central Hall, Master Bedroom loop) | `home_v1_raw_full.mp4`, `frames_meta.json` |
 | **SfM Ablation (SIFT → DISK+LightGlue)** | `35/225` (`15.6%`) SIFT 3 Hz → **`296/375` (`78.9%`) DISK+LightGlue 5 Hz** (`51,304` 3D pts, unbroken 293-frame 3-room loop) | `sfm/sfm_report.json` |
-| **Apache-2.0 Metric Depth Scale** | `scale = 0.65836 m/unit`, `MAD = 11.88%` (`55,274` samples), `648,579` dense voxels, `camera_height = 0.868 m` | `depth/depth_report.json`, `nav/nav_report.json` |
-| **Walkable Area & `.ksplat` Payload** | `22.21 m²` walkable (`232 × 250` @ 5 cm, `0` geometry warnings), **`11.55 MB` `.ksplat`** (`480,000` splats) | `web/meta.json`, `nav/nav_report.json` |
-| **POIs, Fuzzy Search & Multi-Room A\*** | **9 POIs** across 4 categories (`0` warnings); `"wardobe"` → `Wooden Wardrobe`; Entry Study Desk → Bedroom Alcove **`9.8 m`** (*"In 3.9 m, turn left past Refrigerator"*) | `nav/pois.json`, Playwright E2E |
+| **Apache-2.0 Metric Depth Scale** | `scale = 0.65426 m/unit`, `MAD = 15.21%` (`61,019` samples), `732,355` edge-filtered voxels, `camera_height = 0.857 m` | `depth/depth_report.json`, `nav/nav_report.json` |
+| **Walkable Area & `.ksplat` Payload** | `21.71 m²` walkable (`207 × 229` @ 5 cm, `0` geometry warnings), **`13.95 MB` `.ksplat`** (`580,000` splats, `p99.9` spike ratio `3.78:1`) | `web/meta.json`, `nav/nav_report.json` |
+| **POIs, Fuzzy Search & Multi-Room A\*** | **9 POIs** across 4 categories (`0` warnings); `"wardobe"` → `Wooden Wardrobe`; Entry Study Desk → Bedroom Alcove **`9.6 m`** (*"In 4.6 m, turn left past Refrigerator"*) | `nav/pois.json`, Playwright E2E |
 | **Dynamic Sandbox Loop Reroute** | 3 barriers across Wooden Wardrobe corridor reroute Central Hall → Bedroom Alcove **`6.5 m` → `7.7 m`** (Bedroom Entry → Alcove **`2.4 m` → `5.4 m`**) | Playwright E2E (`?props=...`) |
 | **Honest QA Notes** | `PASS`: frame count, floor outline, geometry warnings, POI dataset; `WARN`: `78.9%` reg.; `FAIL`: `p10=26` sharpness (soft walls) & `1.569 px` reproj (expected for 8px CNN DISK features) | `capture_qa.json` / `capture_qa.md` |
 

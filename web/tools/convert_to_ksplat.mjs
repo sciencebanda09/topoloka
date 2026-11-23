@@ -36,7 +36,7 @@ function parseArgs(argv) {
   return args;
 }
 
-/** Keep the most visually significant splats when pruning to a web budget. */
+/** Keep the sharpest, most opaque, spike-free splats when pruning to a web budget. */
 function filterAndBudgetSplat(rawBuf, minAlpha, maxGaussians) {
   const n = Math.floor(rawBuf.byteLength / ROW_BYTES);
   const dv = new DataView(rawBuf.buffer, rawBuf.byteOffset, n * ROW_BYTES);
@@ -45,13 +45,19 @@ function filterAndBudgetSplat(rawBuf, minAlpha, maxGaussians) {
     const off = i * ROW_BYTES;
     const alpha = rawBuf[off + 27];
     if (alpha < minAlpha) continue;
+    const sx = dv.getFloat32(off + 12, true);
+    const sy = dv.getFloat32(off + 16, true);
+    const sz = dv.getFloat32(off + 20, true);
+    const maxS = Math.max(sx, sy, sz);
+    const minS = Math.max(Math.min(sx, sy, sz), 1e-6);
+    if (!Number.isFinite(maxS) || !Number.isFinite(minS)) continue;
+    const aspect = maxS / minS;
     if (maxGaussians > 0) {
-      const sx = dv.getFloat32(off + 12, true);
-      const sy = dv.getFloat32(off + 16, true);
-      const sz = dv.getFloat32(off + 20, true);
-      const maxS = Math.max(sx, sy, sz);
-      if (!Number.isFinite(maxS)) continue;
-      candidates.push({ i, score: alpha * Math.min(maxS, 2.0) });
+      // Favor crisp, opaque, compact surface splats over bloated fog blobs and needle spikes.
+      // (Previously `alpha * maxS` kept giant blurry blobs and discarded fine surface detail.)
+      const spikePenalty = 1 + Math.max(0, aspect - 6) * 0.25;
+      const bloatPenalty = 1 + Math.max(0, maxS - 0.04) * 30.0;
+      candidates.push({ i, score: alpha / (spikePenalty * bloatPenalty) });
     } else {
       candidates.push({ i, score: 1 });
     }

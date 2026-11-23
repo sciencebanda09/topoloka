@@ -9,14 +9,14 @@ Self-captured 3-room indoor flat walkthrough by the Topoloka team (75 s clean
 indoor trim of a 98.6 s 1280x576 @ 30 fps handheld walk covering the Entry
 Study Room, Central Hall, and Master Bedroom loop; reconstructed with
 Apache-2.0 Kornia DISK+LightGlue SfM + Apache-2.0 Depth-Anything-V2-Metric-Indoor-Small
-+ 25k splatfacto 3DGS + 9 authored POIs across 4 categories).
++ 30k splatfacto-big 3DGS with SO3xR3 pose refinement & scale regularization + 9 authored POIs across 4 categories).
 
 | file | size |
 |---|---|
 | `capture_qa.json` | 2 KB |
 | `capture_qa.md` | 1 KB |
-| `depth/depth_report.json` | 330 B |
-| `depth/scale.json` | 145 B |
+| `depth/depth_report.json` | 377 B |
+| `depth/scale.json` | 184 B |
 | `frames/00000.jpg` | 98 KB |
 | `frames/00029.jpg` | 78 KB |
 | `frames/00058.jpg` | 104 KB |
@@ -32,9 +32,9 @@ Apache-2.0 Kornia DISK+LightGlue SfM + Apache-2.0 Depth-Anything-V2-Metric-Indoo
 | `frames/00345.jpg` | 130 KB |
 | `frames/00374.jpg` | 112 KB |
 | `frames_meta.json` | 69 KB |
-| `metricize.json` | 243 B |
-| `nav/nav.json` | 17 KB |
-| `nav/nav_report.json` | 588 B |
+| `metricize.json` | 245 B |
+| `nav/nav.json` | 15 KB |
+| `nav/nav_report.json` | 628 B |
 | `nav/occupancy.png` | 2 KB |
 | `nav/poi_report.json` | 260 B |
 | `nav/pois.json` | 5 KB |
@@ -43,13 +43,13 @@ Apache-2.0 Kornia DISK+LightGlue SfM + Apache-2.0 Depth-Anything-V2-Metric-Indoo
 | `sfm/sparse.ply` | 752 KB |
 | `web/cloud.ply` | 3.58 MB |
 | `web/meta.json` | 573 B |
-| `web/nav.json` | 17 KB |
+| `web/nav.json` | 15 KB |
 | `web/occupancy.png` | 2 KB |
 | `web/pois.json` | 5 KB |
-| `web/splat.ksplat` | 11.01 MB |
+| `web/splat.ksplat` | 13.31 MB |
 
-Total: **17.12 MB** (cloud decimated to 250,000 points,
-Level-1 `.ksplat` pruned to 480,000 Gaussians with floater/needle and ceiling-spike
+Total: **19.42 MB** (cloud decimated to 250,000 points,
+Level-1 `.ksplat` pruned to 580,000 Gaussians with SO3xR3 pose refinement, scale-ratio regularization, and floater/needle/ceiling-spike
 culling, 9 authored POIs across 4 categories, 14 preview frames).
 
 ## View it
@@ -72,7 +72,7 @@ the splat.
 ## What each piece proves
 
 - `nav/nav.json` -- the metric navigation contract: 5 cm occupancy grid
-  (`22.21 m^2` walkable), 69-point floor outline, 293-pose continuous 3-room
+  (`21.71 m^2` walkable), 69-point floor outline, 293-pose continuous 3-room
   loop trajectory with captured look yaws/pitches, camera intrinsics, and the
   `align` block mapping SfM coordinates into metres.
 - `nav/pois.json` and `web/pois.json` -- 9 authored POIs across all 3 rooms
@@ -80,8 +80,8 @@ the splat.
   warnings against the 5 cm free-space grid.
 - `web/cloud.ply` -- the same metric geometry in the nav frame; open it in any
   viewer to check that "up" is up and a metre is a metre.
-- `web/splat.ksplat` -- the Level-1 compressed Gaussian-splat twin (`11.55 MB`,
-  480,000 splats) exactly as the browser viewer loads it.
+- `web/splat.ksplat` -- the Level-1 compressed Gaussian-splat twin (`13.95 MB`,
+  580,000 splats) exactly as the browser viewer loads it.
 - `sfm/`, `depth/`, `capture_qa.*` -- the honest paper trail: every quality
   number the pipeline measured, including the ones that triggered warnings/fails
   (such as 1.569 px median reprojection error inherent to 8px-stride CNN DISK

@@ -33,6 +33,8 @@ FLOATER_ALPHA_CEIL = 0.35
 NEEDLE_MAX_SCALE = 0.15     # elongated spiky streak splats
 NEEDLE_MAX_ASPECT = 25.0
 NEEDLE_ALPHA_CEIL = 0.85
+SPIKE_ELONGATION = 6.0      # cigar-shaped spike ratio (s_max / s_mid), preserves flat wall surfels
+SPIKE_MIN_SCALE = 0.04      # meters (scaled adaptively to scene median)
 
 
 @dataclass
@@ -129,18 +131,39 @@ def convert_splat(ply_path: Path, out_path: Path,
     dropped_floaters = 0
     keep = keep_alpha
     if prune_floaters:
-        max_s = scale.max(axis=1)
-        min_s = np.maximum(scale.min(axis=1), 1e-5)
+        sorted_s = np.sort(scale, axis=1)
+        min_s = np.maximum(sorted_s[:, 0], 1e-5)
+        mid_s = np.maximum(sorted_s[:, 1], 1e-5)
+        max_s = sorted_s[:, 2]
         aspect = max_s / min_s
-        is_fog_floater = (max_s > FLOATER_MAX_SCALE) & (alpha < FLOATER_ALPHA_CEIL)
-        is_needle = (aspect > NEEDLE_MAX_ASPECT) & (max_s > NEEDLE_MAX_SCALE) & (alpha < NEEDLE_ALPHA_CEIL)
+        elongation = max_s / mid_s
+        s_med = float(np.median(max_s[keep_alpha])) if keep_alpha.any() else 0.02
+        # 1) Volumetric semi-transparent fog blobs (adaptive to room scale + global ceiling)
+        fog_thresh = min(FLOATER_MAX_SCALE, max(0.08, 10.0 * s_med))
+        is_fog_floater = ((max_s > FLOATER_MAX_SCALE) & (alpha < FLOATER_ALPHA_CEIL)) | (
+            (max_s > fog_thresh) & (alpha < 0.65)
+        )
+        # 2) Elongated needle/cigar spikes (s_max >> s_mid), preserving flat wall pancake surfels
+        spike_thresh = max(SPIKE_MIN_SCALE, 4.5 * s_med)
+        is_needle = (
+            ((aspect > NEEDLE_MAX_ASPECT) & (max_s > NEEDLE_MAX_SCALE) & (alpha < NEEDLE_ALPHA_CEIL))
+            | ((elongation > SPIKE_ELONGATION) & (max_s > spike_thresh))
+        )
         keep = keep_alpha & ~(is_fog_floater | is_needle)
         dropped_floaters = int(keep_alpha.sum() - keep.sum())
 
     idx = np.flatnonzero(keep)
     dropped_budget = 0
     if max_gaussians and len(idx) > max_gaussians:
-        importance = alpha[idx] * np.cbrt(scale[idx].astype(np.float64).prod(axis=1))
+        sorted_k = np.sort(scale[idx].astype(np.float64), axis=1)
+        max_k = sorted_k[:, 2]
+        mid_k = np.maximum(sorted_k[:, 1], 1e-5)
+        elong_k = max_k / mid_k
+        # Favor opaque, compact surface splats over bloated blobs and elongated streaks
+        importance = alpha[idx] / (
+            (1.0 + np.maximum(0.0, elong_k - 3.0) * 0.4)
+            * (1.0 + np.maximum(0.0, max_k - 0.04) * 25.0)
+        )
         sel = np.argpartition(importance, -max_gaussians)[-max_gaussians:]
         dropped_budget = len(idx) - max_gaussians
         idx = idx[sel]

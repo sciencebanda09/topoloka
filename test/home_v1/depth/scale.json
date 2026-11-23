@@ -1,6 +1,6 @@
 {
-  "scale_m_per_unit": 0.65835980884806,
-  "method": "median(depth_m / sparse_camera_z)",
-  "samples": 55274,
-  "mad_rel": 0.11877171605077241
+  "scale_m_per_unit": 0.6542563033472801,
+  "method": "median(depth_m / sparse_camera_z) + per-frame Huber edge-masked fusion",
+  "samples": 61019,
+  "mad_rel": 0.15207715270378622
 }
