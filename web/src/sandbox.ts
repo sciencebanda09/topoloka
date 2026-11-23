@@ -340,7 +340,7 @@ export class Sandbox {
     c.ghost.visible = true;
     c.ring.visible = true;
     c.ghost.position.set(p.x, p.z, -p.y);
-    c.ghost.rotation.y = p.rot;
+    c.ghost.rotation.y = -p.rot;
     c.ring.position.set(p.x, p.z + 0.012, -p.y);
     c.ring.scale.setScalar((Math.max(def.hw, def.hh) + 0.12) / 0.5);
     const color = p.valid ? 0x40ff9a : 0xff5d5d;
@@ -379,11 +379,10 @@ export class Sandbox {
       new THREE.Vector3(tx, cam.y + 0.8, tz),
       new THREE.Vector3(0, -1, 0),
     );
-    const defaultFloorY = Math.max(-0.5, player[2] - this.opts.nav.cam_height_units);
-    let floorY = defaultFloorY;
+    let floorY = 0;
     let floorOk = true;
     if (down && down.distance < 5) {
-      if (down.point.y < cam.y - 0.35) {
+      if (down.point.y >= -0.25 && down.point.y <= 0.25) {
         floorY = down.point.y;
       } else if (this.opts.costmap.valueAtWorld(navX, navY) !== FREE) {
         // Splat BVH bounding spheres near spawn can occlude the floor ray; only
@@ -396,7 +395,7 @@ export class Sandbox {
     const mapFree = this.footprintFree(footprint);
     const nearPlayer = Math.hypot(navX - player[0], navY - player[1])
       < 0.55 + Math.max(def.hw, def.hh) * 0.5;
-    const heightOk = floorY > player[2] - 2.6 && floorY < player[2] - 0.25;
+    const heightOk = floorY >= -0.35 && floorY <= 0.35;
 
     let valid = true;
     let reason = '';
@@ -572,7 +571,7 @@ export class Sandbox {
       if (![x, y, z, rot].every((v) => typeof v === 'number' && Number.isFinite(v))) continue;
       const p = { x: x as number, y: y as number, z: z as number, rot: rot as number };
       if (this.opts.costmap.valueAtWorld(p.x, p.y) !== FREE) continue;
-      if (Math.hypot(p.x - px, p.y - py) < 0.8) continue;
+      if (Math.hypot(p.x - px, p.y - py) < 0.35) continue;
       this.addPlaced({ id: this.nextId++, type, x: p.x, y: p.y, z: p.z, rot: p.rot });
     }
   }
@@ -580,7 +579,7 @@ export class Sandbox {
   private addPlaced(t: PropTransform): void {
     const group = buildProp(t.type);
     group.position.set(t.x, t.z, -t.y);
-    group.rotation.y = t.rot;
+    group.rotation.y = -t.rot;
     group.userData.propId = t.id;
     this.root.add(group);
     this.placed.push({ ...t, group });

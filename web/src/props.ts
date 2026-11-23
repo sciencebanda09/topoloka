@@ -23,10 +23,10 @@ export interface PropDef {
 }
 
 export const PROP_DEFS: Record<PropType, PropDef> = {
-  cone: { label: 'Cone', hotkey: '1', hw: 0.24, hh: 0.24, height: 0.68 },
-  barrier: { label: 'Barrier', hotkey: '2', hw: 0.80, hh: 0.28, height: 1.02 },
-  crate: { label: 'Crate', hotkey: '3', hw: 0.30, hh: 0.30, height: 0.52 },
-  sign: { label: 'Wet floor sign', hotkey: '4', hw: 0.30, hh: 0.26, height: 0.72 },
+  cone: { label: 'Cone', hotkey: '1', hw: 0.17, hh: 0.17, height: 0.48 },
+  barrier: { label: 'Barrier', hotkey: '2', hw: 0.48, hh: 0.18, height: 0.62 },
+  crate: { label: 'Crate', hotkey: '3', hw: 0.22, hh: 0.22, height: 0.38 },
+  sign: { label: 'Wet floor sign', hotkey: '4', hw: 0.22, hh: 0.18, height: 0.52 },
 };
 
 export const PROP_TYPES: PropType[] = ['cone', 'barrier', 'crate', 'sign'];
@@ -203,28 +203,28 @@ export function buildProp(type: PropType, override?: THREE.Material): THREE.Grou
   const m = materials();
 
   if (type === 'cone') {
-    mesh(group, new THREE.BoxGeometry(0.44, 0.06, 0.44), mat ?? m.dark, 0, 0.03, 0);
-    mesh(group, new THREE.ConeGeometry(0.20, 0.62, 24), mat ?? m.orange, 0, 0.37, 0);
-    mesh(group, new THREE.CylinderGeometry(0.105, 0.135, 0.11, 24, 1, true), mat ?? m.white, 0, 0.36, 0);
+    mesh(group, new THREE.BoxGeometry(0.30, 0.04, 0.30), mat ?? m.dark, 0, 0.02, 0);
+    mesh(group, new THREE.ConeGeometry(0.14, 0.44, 24), mat ?? m.orange, 0, 0.26, 0);
+    mesh(group, new THREE.CylinderGeometry(0.075, 0.095, 0.08, 24, 1, true), mat ?? m.white, 0, 0.25, 0);
   } else if (type === 'barrier') {
-    for (const x of [-0.64, 0.64]) {
-      mesh(group, new THREE.BoxGeometry(0.34, 0.07, 0.50), mat ?? m.dark, x, 0.035, 0);
-      mesh(group, new THREE.BoxGeometry(0.07, 0.98, 0.07), mat ?? m.dark, x, 0.49, 0);
+    for (const x of [-0.40, 0.40]) {
+      mesh(group, new THREE.BoxGeometry(0.22, 0.045, 0.32), mat ?? m.dark, x, 0.0225, 0);
+      mesh(group, new THREE.BoxGeometry(0.045, 0.58, 0.045), mat ?? m.dark, x, 0.29, 0);
     }
-    mesh(group, new THREE.BoxGeometry(1.32, 0.28, 0.06), mat ?? m.plank, 0, 0.86, 0);
-    mesh(group, new THREE.BoxGeometry(1.32, 0.10, 0.05), mat ?? m.dark, 0, 0.46, 0);
+    mesh(group, new THREE.BoxGeometry(0.86, 0.16, 0.04), mat ?? m.plank, 0, 0.50, 0);
+    mesh(group, new THREE.BoxGeometry(0.86, 0.06, 0.035), mat ?? m.dark, 0, 0.27, 0);
   } else if (type === 'crate') {
-    mesh(group, new THREE.BoxGeometry(0.56, 0.50, 0.56), mat ?? m.crate, 0, 0.25, 0);
-    mesh(group, new THREE.BoxGeometry(0.58, 0.012, 0.10), mat ?? m.tape, 0, 0.506, 0);
+    mesh(group, new THREE.BoxGeometry(0.40, 0.36, 0.40), mat ?? m.crate, 0, 0.18, 0);
+    mesh(group, new THREE.BoxGeometry(0.41, 0.01, 0.08), mat ?? m.tape, 0, 0.365, 0);
   } else {
     // A-frame floor sign
-    const panel = new THREE.BoxGeometry(0.56, 0.70, 0.025);
-    mesh(group, panel, mat ?? m.sign, 0, 0.36, -0.075, -0.18, 0, 0);
-    mesh(group, panel, mat ?? m.sign, 0, 0.36, 0.075, 0.18, 0, 0);
-    for (const x of [-0.22, 0.22]) {
-      mesh(group, new THREE.BoxGeometry(0.10, 0.05, 0.42), mat ?? m.dark, x, 0.025, 0);
+    const panel = new THREE.BoxGeometry(0.40, 0.50, 0.02);
+    mesh(group, panel, mat ?? m.sign, 0, 0.26, -0.055, -0.18, 0, 0);
+    mesh(group, panel, mat ?? m.sign, 0, 0.26, 0.055, 0.18, 0, 0);
+    for (const x of [-0.16, 0.16]) {
+      mesh(group, new THREE.BoxGeometry(0.07, 0.035, 0.30), mat ?? m.dark, x, 0.0175, 0);
     }
-    mesh(group, new THREE.CylinderGeometry(0.025, 0.025, 0.60, 12), mat ?? m.dark, 0, 0.72, 0, 0, 0, Math.PI / 2);
+    mesh(group, new THREE.CylinderGeometry(0.02, 0.02, 0.42, 12), mat ?? m.dark, 0, 0.52, 0, 0, 0, Math.PI / 2);
   }
   if (!override) {
     const def = PROP_DEFS[type];

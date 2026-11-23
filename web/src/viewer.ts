@@ -127,11 +127,11 @@ interface PoiMarker {
 export class Viewer {
   readonly renderer: THREE.WebGLRenderer;
   readonly scene: THREE.Scene;
+  readonly overlayScene = new THREE.Scene();
   readonly camera: THREE.PerspectiveCamera;
   pointsVisible = true;
   private modelRoot = new THREE.Group();
   private routeRoot = new THREE.Group();
-  private overlayScene = new THREE.Scene();
   private routeMesh: THREE.Mesh | null = null;
   private routeUnderlay: THREE.Mesh | null = null;
   private destination: THREE.Group | null = null;
@@ -550,7 +550,7 @@ export class Viewer {
         color: 0x40ff9a, transparent: true, opacity: 0.92, side: THREE.DoubleSide,
         depthWrite: false, toneMapped: false,
       });
-      this.destinationRing = new THREE.Mesh(new THREE.RingGeometry(0.42, 0.52, 48), ringMat);
+      this.destinationRing = new THREE.Mesh(new THREE.RingGeometry(0.24, 0.31, 48), ringMat);
       this.destinationRing.rotation.x = -Math.PI / 2;
       this.destinationRing.position.set(target.x, 0.036, -target.y);
       this.destinationRing.renderOrder = 3;
@@ -559,21 +559,13 @@ export class Viewer {
         color: 0x40ff9a, transparent: true, opacity: 0.24, side: THREE.DoubleSide,
         depthWrite: false, toneMapped: false,
       });
-      const coreDisc = new THREE.Mesh(new THREE.CircleGeometry(0.38, 36), coreMat);
+      const coreDisc = new THREE.Mesh(new THREE.CircleGeometry(0.20, 36), coreMat);
       coreDisc.rotation.x = -Math.PI / 2;
       coreDisc.position.set(target.x, 0.034, -target.y);
       coreDisc.renderOrder = 2;
 
-      const beamMat = new THREE.MeshBasicMaterial({
-        color: 0x40ff9a, transparent: true, opacity: 0.20, side: THREE.DoubleSide,
-        depthWrite: false, toneMapped: false,
-      });
-      const beam = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.12, 1.35, 18, 1, true), beamMat);
-      beam.position.set(target.x, 0.71, -target.y);
-      beam.renderOrder = 2;
-
       this.destination = new THREE.Group();
-      this.destination.add(this.destinationRing, coreDisc, beam);
+      this.destination.add(this.destinationRing, coreDisc);
       this.routeRoot.add(this.destination);
     }
   }
@@ -651,18 +643,20 @@ export class Viewer {
       // projects markers from adjacent rooms right through solid walls ("X-ray clutter").
       // Show 3D floor rings only for the active/selected POI (or very close unoccluded POIs),
       // while all POIs remain visible and clickable on the 2D minimap and via search.
-      const showFloorMarker = horizDist > 0.85 && (isSelected || (!navigating && horizDist < 1.85));
+      // Do not duplicate the floor ring over the destination when navigating:
+      // `this.destination` already draws the pulsing emerald target ring.
+      const showFloorMarker = horizDist > 0.85 && !navigating && (isSelected || horizDist < 1.85);
       marker.ring.visible = showFloorMarker;
       marker.outerRing.visible = showFloorMarker;
       marker.dot.visible = showFloorMarker;
-      marker.stem.visible = isSelected && horizDist > 1.4;
+      marker.stem.visible = false;
 
       const label = marker.label;
       const distance = Math.hypot(
         cam.x - label.position.x, cam.y - label.position.y, cam.z - label.position.z,
       );
-      const scale = Math.min(2.0, Math.max(0.22, distance / 12));
-      label.scale.set(1.9 * scale, 0.475 * scale, 1);
+      const scale = Math.min(1.05, Math.max(0.24, distance / 8.5));
+      label.scale.set(1.38 * scale, 0.345 * scale, 1);
       this.labelProbe.copy(label.position).project(this.camera);
       // Check the projected sprite bounds, not just its centre, so a wide
       // label near the viewport edge cannot be clipped mid-word.
@@ -682,8 +676,8 @@ export class Viewer {
         && this.labelProbe.y + halfH > this.labelExclusion.y0
         && this.labelProbe.y - halfH < this.labelExclusion.y1;
       const focused = navigating && isSelected;
-      const eligible = onScreen && !underCard && distance > 1.2
-        && (isSelected || (!navigating && horizDist < 2.1));
+      const eligible = onScreen && !underCard && distance > 1.25
+        && (isSelected || (!navigating && horizDist < 1.65));
       if (!eligible) {
         label.visible = false;
         continue;

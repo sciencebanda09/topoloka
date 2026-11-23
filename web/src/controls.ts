@@ -52,6 +52,7 @@ export class WalkControls {
   private keys = new Set<string>();
   private canvas: HTMLCanvasElement;
   private costmap: Costmap;
+  private trajectory: [number, number, number][];
   private touchLookId: number | null = null;
   private touchMoveId: number | null = null;
   private touchMoveStart: [number, number] = [0, 0];
@@ -66,9 +67,11 @@ export class WalkControls {
     private camera: THREE.PerspectiveCamera,
     costmap: Costmap,
     spawn: WalkPose,
+    trajectory: [number, number, number][] = [],
   ) {
     this.canvas = canvas;
     this.costmap = costmap;
+    this.trajectory = trajectory;
     this.position = [...spawn.position];
     this.yaw = spawn.yaw;
     this.pitch = clamp(spawn.pitch ?? 0, PITCH_MIN, PITCH_MAX);
@@ -181,11 +184,13 @@ export class WalkControls {
 
   /**
    * Ease the camera yaw toward a nav-plane point without moving the walker.
-   * Used when navigation starts so the first W press follows the route.
+   * Used when navigation starts so the first W press follows the route, but
+   * only when the target is outside the current forward view cone (> 55 deg).
    */
   turnTo(x: number, y: number, duration = 0.55): void {
     const to = Math.atan2(-(x - this.position[0]), y - this.position[1]);
-    if (duration <= 0.05 || Math.abs(shortestDelta(this.yaw, to)) < 0.01) {
+    if (Math.abs(shortestDelta(this.yaw, to)) < 0.95) return;
+    if (duration <= 0.05) {
       this.turn = null;
       this.yaw = to;
       this.syncCamera();
@@ -284,14 +289,38 @@ export class WalkControls {
 
   private tryMove(dx: number, dy: number): void {
     const [x, y] = this.position;
+    let moved = false;
     if (!this.blocked(x + dx, y + dy)) {
       this.position[0] = x + dx;
       this.position[1] = y + dy;
-      return;
+      moved = true;
+    } else if (!this.blocked(x + dx, y)) {
+      // slide: keep the axis that stays clear
+      this.position[0] = x + dx;
+      moved = true;
+    } else if (!this.blocked(x, y + dy)) {
+      this.position[1] = y + dy;
+      moved = true;
     }
-    // slide: keep the axis that stays clear
-    if (!this.blocked(x + dx, y)) this.position[0] = x + dx;
-    else if (!this.blocked(x, y + dy)) this.position[1] = y + dy;
+    if (moved && this.trajectory.length >= 2) {
+      // Smoothly track the local captured trajectory height so walking across
+      // rooms keeps the camera inside the multi-view reconstructed sweet spot.
+      const px = this.position[0], py = this.position[1];
+      let wSum = 0, zSum = 0;
+      for (let i = 0; i < this.trajectory.length; i++) {
+        const tp = this.trajectory[i];
+        const d2 = (tp[0] - px) * (tp[0] - px) + (tp[1] - py) * (tp[1] - py);
+        if (d2 < 2.25) {
+          const w = 1 / (d2 + 0.08);
+          wSum += w;
+          zSum += w * tp[2];
+        }
+      }
+      if (wSum > 0) {
+        const targetZ = zSum / wSum;
+        this.position[2] = this.position[2] * 0.85 + targetZ * 0.15;
+      }
+    }
   }
 
   private blocked(x: number, y: number): boolean {

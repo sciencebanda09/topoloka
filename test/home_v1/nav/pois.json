@@ -203,17 +203,17 @@
         "utility cabinet",
         "basket"
       ],
-      "description": "Front-loading white washing machine in the utility alcove off the central hall.",
-      "x": 1.708,
-      "y": 0.619,
+      "description": "Utility alcove off the central hall with laundry basket, storage cabinet, and washing machine corner.",
+      "x": 1.32,
+      "y": 0.78,
       "z": 0.0,
       "radius_m": 0.85,
       "view": {
-        "x": 1.365,
-        "y": 0.69,
-        "z": 0.718,
-        "yaw": -1.776,
-        "pitch": -0.153
+        "x": 0.716,
+        "y": 0.632,
+        "z": 0.91,
+        "yaw": -0.92,
+        "pitch": -0.178
       }
     }
   ]

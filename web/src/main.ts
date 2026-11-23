@@ -235,7 +235,7 @@ async function boot(): Promise<void> {
     ? desiredRepresentation
     : 'points';
 
-  const controls = new WalkControls(canvas, viewer.camera, costmap, spawn);
+  const controls = new WalkControls(canvas, viewer.camera, costmap, spawn, nav.trajectory);
   const minimap = new Minimap(minimapCanvas, nav,
     { w: costmap.w, h: costmap.h, data: costmap.data });
 
@@ -387,12 +387,14 @@ async function boot(): Promise<void> {
     }
     selectPoi(goal);
     showRoute(plan, goal);
-    // Face the route so W walks toward the target instead of away from it.
-    // Skip the current position and any waypoints closer than 1.5 m.
-    const ahead = plan.waypoints.find(
-      ([wx, wy]) => Math.hypot(wx - from[0], wy - from[1]) > 1.5,
-    );
-    if (ahead) controls.turnTo(ahead[0], ahead[1]);
+    // Face the route so W walks toward the target instead of away from it,
+    // except in Sandbox mode where the user is inspecting placed obstacles.
+    if (!sandbox.isEnabled) {
+      const ahead = plan.waypoints.find(
+        ([wx, wy]) => Math.hypot(wx - from[0], wy - from[1]) > 1.5,
+      );
+      if (ahead) controls.turnTo(ahead[0], ahead[1]);
+    }
     lastReroute = performance.now();
   }
 
@@ -472,7 +474,7 @@ async function boot(): Promise<void> {
     : null;
 
   const sandbox = new Sandbox({
-    scene: viewer.scene,
+    scene: viewer.overlayScene,
     camera: viewer.camera,
     canvas,
     costmap,
